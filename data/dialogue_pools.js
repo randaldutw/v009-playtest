@@ -1,0 +1,1 @@
+window.LIYUAN_DIALOGUE_POOLS = {};
