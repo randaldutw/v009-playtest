@@ -7840,6 +7840,21 @@ button.v009-list-row:hover {
   line-height: 1.35;
 }
 
+.v009-item-ability-list em {
+  float: right;
+  margin-left: 8px;
+  font-style: normal;
+  font-weight: 950;
+}
+
+.v009-item-ability-list em.up {
+  color: #83ffb1;
+}
+
+.v009-item-ability-list em.down {
+  color: #ff6d7f;
+}
+
 .v009-item-set-block {
   display: grid;
   gap: 4px;
@@ -9313,10 +9328,9 @@ button.v009-list-row:hover {
 .combat-float.critical {
   color: #ffe36f;
   font-size: 34px;
-  -webkit-text-stroke: 1px rgba(82, 38, 0, 0.82);
+  -webkit-text-stroke: 0;
   filter: drop-shadow(0 0 10px rgba(255, 209, 102, 0.9)) drop-shadow(0 0 22px rgba(255, 74, 38, 0.62));
   text-shadow:
-    0 0 4px rgba(255, 255, 255, 1),
     0 0 12px rgba(255, 246, 150, 1),
     0 0 30px rgba(255, 209, 102, 0.96),
     0 0 42px rgba(255, 76, 38, 0.72),

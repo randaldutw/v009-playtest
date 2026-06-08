@@ -1374,9 +1374,13 @@ function bindDelegatedUiEvents() {
       startDragScroll(ev, dragScroller);
       return;
     }
-    if (state.focusedInventoryItem && !ev.target.closest("[data-v009-item-focus], .v009-item-popout")) {
+    if (state.focusedInventoryItem && !ev.target.closest("[data-v009-sell-focused], [data-v009-dismantle-focused]")) {
       clearFocusedInventoryItem();
+      pendingItemFocusPointer = null;
+      ev.preventDefault();
+      ev.stopPropagation();
       render();
+      return;
     }
     if (state.v009SkillDrawerOpen && !ev.target.closest(".v009-skill-loadout")) {
       ev.preventDefault();
@@ -7145,7 +7149,7 @@ function v009InventoryDetailBody(detail) {
   if (Array.isArray(detail.lines) || detail.setProgress) {
     return `
       ${Array.isArray(detail.lines) && detail.lines.length ? `<div class="v009-item-ability-list">
-        ${detail.lines.map((line) => `<span>${escapeHtml(line)}</span>`).join("")}
+        ${detail.lines.map((line) => v009InventoryAbilityLineHtml(line)).join("")}
       </div>` : ""}
       ${detail.setProgress ? `<div class="v009-item-set-block">
         <strong>${escapeHtml(detail.setProgress.title)}</strong>
@@ -7156,11 +7160,55 @@ function v009InventoryDetailBody(detail) {
   return `<p>${escapeHtml(detail.body)}</p>`;
 }
 
-function gearAbilityLines(gear) {
+function v009InventoryAbilityLineHtml(line) {
+  if (!line || typeof line !== "object") return `<span>${escapeHtml(line)}</span>`;
+  const delta = Number(line.delta || 0);
+  const deltaHtml = delta
+    ? `<em class="${delta > 0 ? "up" : "down"}">${delta > 0 ? "+" : ""}${escapeHtml(delta)}${escapeHtml(line.deltaUnit || "")}</em>`
+    : "";
+  return `<span>${escapeHtml(line.text)}${deltaHtml}</span>`;
+}
+
+function gearAbilityLines(gear, member = null, compareGear = null) {
   if (!gear) return [];
-  const statLines = (gear.stats || []).map((entry) => `${STAT_LABELS[entry.key]} +${entry.value}`);
-  const combatLines = gearCombatEntries(gear).map((entry) => `${combatBonusLabel(entry.key)} +${entry.value}${combatBonusUnit(entry.key)}`);
+  const compareStats = gearCompareStatMap(compareGear);
+  const compareCombat = gearCompareCombatMap(compareGear);
+  const statLines = (gear.stats || []).map((entry) => {
+    const value = safeNumber(entry.value, 0, 0);
+    return {
+      text: `${STAT_LABELS[entry.key]} +${value}`,
+      delta: compareGear ? value - (compareStats[entry.key] || 0) : 0,
+    };
+  });
+  const combatLines = gearCombatEntries(gear).map((entry) => {
+    const value = safeNumber(entry.value, 0, 0);
+    return {
+      text: `${combatBonusLabel(entry.key)} +${value}${combatBonusUnit(entry.key)}`,
+      delta: compareGear ? value - (compareCombat[entry.key] || 0) : 0,
+      deltaUnit: combatBonusUnit(entry.key),
+    };
+  });
   return [...statLines, ...combatLines].filter(Boolean);
+}
+
+function gearCompareStatMap(gear) {
+  return (gear?.stats || []).reduce((map, entry) => {
+    map[entry.key] = (map[entry.key] || 0) + safeNumber(entry.value, 0, 0);
+    return map;
+  }, {});
+}
+
+function gearCompareCombatMap(gear) {
+  return gearCombatEntries(gear).reduce((map, entry) => {
+    map[entry.key] = (map[entry.key] || 0) + safeNumber(entry.value, 0, 0);
+    return map;
+  }, {});
+}
+
+function equippedGearInSlot(member, slotKey) {
+  const equipment = normalizeEquipment(member?.equipment);
+  const gear = equipment[slotKey];
+  return gear && typeof gear === "object" ? gear : null;
 }
 
 function gearSetProgress(gear, member = null) {
@@ -7181,9 +7229,11 @@ function v009InventoryItemDetail(entry, member = null) {
   if (entry.category === "gear" && entry.gear) {
     const gear = entry.gear;
     const className = gear.classId ? CLASS_DATA[gear.classId]?.name : "";
+    const currentGear = member && !entry.member ? equippedGearInSlot(member, gear.slot) : null;
+    const compareGear = currentGear && currentGear.id !== gear.id ? currentGear : null;
     return {
       tags: [`${gearSlotLabel(gear.slot)}`, `Lv${gear.level}`, className].filter(Boolean),
-      lines: gearAbilityLines(gear),
+      lines: gearAbilityLines(gear, member, compareGear),
       body: gearAbilitySummary(gear) || "未標示能力。",
       setProgress: gearSetProgress(gear, member),
       note: "雙擊或拖曳裝卸。",
@@ -11993,7 +12043,7 @@ function applyPoison(enemy, actor, key, duration, damage) {
   poisons[key] = {
     key,
     duration: Math.max(1, duration),
-    damage: Math.max(current.damage || 0, Math.floor(damage)),
+    damage: Math.max(current.damage || 0, Math.floor(Number(damage) || 0)),
     sourceId: actor?.sourceId || current.sourceId || "",
   };
   if (isNewType && state.battle) {
@@ -12991,6 +13041,16 @@ function classDamageStatScore(classId, stats) {
   return main * 3.15 + secondary * 0.85;
 }
 
+function damageResult(amount, critical = false) {
+  const value = new Number(Math.max(3, Number(amount) || 0));
+  value.critical = !!critical;
+  return value;
+}
+
+function damageCriticalFlag(amount) {
+  return !!(amount && typeof amount === "object" && amount.critical);
+}
+
 function computeDamage(ally, enemy, scale) {
   let offense = classDamageStatScore(ally?.classId, ally?.stats);
   offense *= 1 + Math.max(0, ally.combatBonuses?.powerAmp || 0) / 100;
@@ -13008,10 +13068,12 @@ function computeDamage(ally, enemy, scale) {
   damage *= classBattleDamageMultiplier(ally);
   damage *= 0.92 + Math.random() * 0.18;
   const critRate = finalCritRatePercent(ally, enemy) / 100;
+  let critical = false;
   if (Math.random() < critRate) {
+    critical = true;
     damage *= 1.5 + (Math.max(0, ally.combatBonuses?.critDamage || 0) + (enemy.seals?.spirit ? 10 : 0)) / 100;
   }
-  return Math.max(3, damage);
+  return damageResult(damage, critical);
 }
 
 function finalCritRatePercent(ally, enemy = null) {
@@ -13047,32 +13109,35 @@ function dealPoisonDamage(enemy, amount, actor, label) {
 function dealSplitDamage(enemy, totalAmount, actor, label, hits = 1, options = {}) {
   const count = Math.max(1, Math.floor(hits) || 1);
   let remaining = Math.max(0, Number(totalAmount) || 0);
+  const critical = options.critical ?? damageCriticalFlag(totalAmount);
   const fxKind = triggerPlayerAttackFx(actor, enemy, label, count);
   const impactDelay = v009AttackImpactDelayMs(fxKind);
   for (let i = 0; i < count && enemy.hp > 0 && remaining > 0; i += 1) {
     const partsLeft = count - i;
     const amount = i === count - 1 ? remaining : remaining / partsLeft;
     const hitLabel = typeof options.labelForHit === "function" ? options.labelForHit(i + 1, count) : label;
-    dealDamage(enemy, amount, actor, hitLabel, { suppressAttackFx: true, impactDelayMs: impactDelay + i * 86 });
+    dealDamage(enemy, amount, actor, hitLabel, { suppressAttackFx: true, impactDelayMs: impactDelay + i * 86, critical });
     remaining -= amount;
   }
 }
 
 function dealDamage(enemy, amount, actor, label, options = {}) {
+  const numericAmount = Math.max(0, Number(amount) || 0);
   const before = enemy.hp;
-  enemy.hp = Math.max(0, enemy.hp - amount);
-  const dealt = Math.max(0, Math.min(before, amount));
+  enemy.hp = Math.max(0, enemy.hp - numericAmount);
+  const dealt = Math.max(0, Math.min(before, numericAmount));
   trackPlayerDamage(actor, dealt);
   addContribution(actor, "damage", dealt);
   const fxKind = options.suppressAttackFx ? "" : triggerPlayerAttackFx(actor, enemy, label, 1);
   const impactDelay = Number.isFinite(options.impactDelayMs) ? Math.max(0, options.impactDelayMs) : v009AttackImpactDelayMs(fxKind);
-  scheduleCombatHitFeedback(enemy, `-${Math.floor(amount)}`, amount > 28 ? "critical" : "damage", impactDelay);
-  addFeed(`${actor.name} 以${label}命中 ${enemy.name}，造成 ${Math.floor(amount)} 點傷害。`, amount > 28 ? "gold" : "");
+  const critical = options.critical ?? damageCriticalFlag(amount);
+  scheduleCombatHitFeedback(enemy, `-${Math.floor(numericAmount)}`, critical ? "critical" : "damage", impactDelay);
+  addFeed(`${actor.name} 以${label}命中 ${enemy.name}，造成 ${Math.floor(numericAmount)} 點傷害。`, critical ? "gold" : "");
   triggerHighLevelBossPhasePressure(enemy, actor, before);
   if (enemy.marked) triggerTianshuCalibrate(actor);
   if (poisonCount(enemy) && hasPassive(actor, "tang_reflux")) gainResource(actor, 4, classResourceLabel(actor.classId));
   if (hasPassive(actor, "furnace_heat")) {
-    actor.heat += amount > 22 ? 1 : 0;
+    actor.heat += numericAmount > 22 ? 1 : 0;
     if (actor.heat >= 4) {
       actor.heat = 0;
       actor.guard = Math.min(actor.guard, -2);
