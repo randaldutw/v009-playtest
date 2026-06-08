@@ -733,58 +733,58 @@ const EVENT_SPEAKERS = {
   yao_hengzhou: { name: "姚衡舟", avatar: "姚", role: "華山軍工劍宗鍛造宗師", image: "./assets/v009_runtime_preview/dialogue/yao_hengzhou_dialogue_cute_128_preview_v004_clean.png" },
 };
 const INTRO_POST_CREATOR_CLASS_LINES = {
-  xinhuo: "數據綁定成功，登陸完成了！",
-  chanlin: "咦？禪林寺是不是不用義體主義啊？也無所謂啦。",
-  leishi: "翠穹聚落裡到處都是樹，嚴禁煙火呦～",
-  tianshu: "數據綁定成功，登陸完成了！",
-  emei: "第一次親眼看到呢，這義體真美啊～應該也很貴吧？",
-  furnace: "數據綁定成功，登陸完成了！",
-  wangchuan: "咦？真的假的？就這麼說出來沒問題嗎？我什麼都沒看到沒看到（棒讀）。",
-  tang: "數據綁定成功，登陸完成了！",
+  xinhuo: "薪火幫……嗯，這裡勾選後勤支援，應該就可以了。",
+  chanlin: "禪林寺……這邊有一欄備註說，如果不使用義體設備，要另外登記替代流程。",
+  leishi: "雷氏火器……啊，這裡跳出火器管制提醒。我、我等一下照流程傳給你。",
+  tianshu: "天樞派……身份驗證通過了。系統顯示可以放行。",
+  emei: "峨眉派……這邊顯示已經完成高端義體登錄，可以直接通行。",
+  furnace: "華山軍工……這裡備註說，工坊那邊有人可以接應你。",
+  wangchuan: "忘川渡……啊，這一欄我沒有權限查看。總、總之登記已經完成了。",
+  tang: "唐家生化……隔離容器和樣本封存權限……我看看，嗯，系統說已經開通了。",
 };
 const EVENT_DIALOGUE_SEQUENCES = {
   intro_pre_creator: {
     lines: [
-      { speaker: "yu_xiaosui", text: "你看起來超級迷茫的耶，是第一次來到【翠穹聚落】嗎？" },
-      { speaker: "yu_xiaosui", text: "難道你就是會長提過的那位【武林盟】派遣員？原來如此，瞧瞧這身行頭，果然不一般。" },
-      { speaker: "yu_xiaosui", text: "歡迎來到森羅學會的大荒據點……雖然我們也就只有這麼一個據點啦。" },
-      { speaker: "yu_xiaosui", text: "我叫俞小穗，是一名魔物學者……的實習生。因為這裡人手實在太缺了，我現在還要兼職做進出登記。" },
-      { speaker: "yu_xiaosui", text: "來，給我你的身分代碼！" },
+      { speaker: "yu_xiaosui", text: "那、那個……不好意思，請問你是第一次來到嗎？" },
+      { speaker: "yu_xiaosui", text: "你、你看起來不像一般調查員……啊，難道是會長提過的那位武林盟的派遣員？" },
+      { speaker: "yu_xiaosui", text: "歡迎來到森羅學會的大荒據點。雖然……雖然這裡其實也只有這麼一個據點。" },
+      { speaker: "yu_xiaosui", text: "我叫俞小穗，是魔物學者……實習生。因為人手不夠，所以今天也被叫來負責進出登記。" },
+      { speaker: "yu_xiaosui", text: "請、請把身分代碼給我。我登記完就不打擾你了。" },
     ],
     onComplete: "openCreator",
   },
   intro_post_creator: {
     lines: [
-      { speaker: "yu_xiaosui", text: "（在全息螢幕上飛快地滑動）{className}的……{playerName}對吧？{postCreatorClassLine}" },
-      { speaker: "yu_xiaosui", text: "那接下來的任務就拜託你啦，這位大俠～" },
+      { speaker: "yu_xiaosui", text: "（低頭在全息螢幕上確認資料）{className}的……{playerName}，對吧？{postCreatorClassLine}" },
+      { speaker: "yu_xiaosui", text: "資料沒有問題。接下來……任務就麻煩你了。" },
     ],
     onComplete: "openMainIntro",
   },
   intro_main_tutorial: {
     lines: [
-      { speaker: "yu_xiaosui", text: "什麼？你說你不是來打怪的？哎呀俗話說的好，沒在大荒拔過劍就不算進過江湖，就算沒吃過魔物基因餐也該看過魔物滿街跑嘛……" },
-      { speaker: "yu_xiaosui", text: "言歸正傳，會長是有交待你是來執行武林盟密令的啦。但是呢～會長也特別吩咐，好不容易來了個超可靠的冤大頭就要好好壓榨……哎呀失禮了，喔呵呵呵～" },
-      { speaker: "yu_xiaosui", text: "雖然你有那個什麼「密令」在身，但你有頭緒從何下手嗎？沒有對吧？而且要在這片大荒行動，沒有個落腳的訊號據點可是寸步難行喔。" },
-      { speaker: "yu_xiaosui", text: "那我們不如互惠一下，你為森羅學會解決麻煩，我們提供你安全住所和後勤支援，聽起來超划算吧？" },
-      { speaker: "yu_xiaosui", text: "如果你的任務一時半刻完成不了，沒得維修整備可不得了，之後我再介紹姚大叔給你認識，他可是調校晶片的高手。" },
-      { speaker: "yu_xiaosui", text: "別擔心，不麻煩的，就只是出門繞繞、順便跟魔物過幾招，然後多帶點生物樣本回來。很簡單吧！" },
-      { speaker: "yu_xiaosui", text: "（在全息螢幕上傳送座標）那麼總之就從黑水砂原的巡查開始吧！祝你開工大吉囉！" },
+      { speaker: "yu_xiaosui", text: "咦？你說你不是來打怪的？可、可是會長交代說，抵達大荒後要先建立基本巡查紀錄……" },
+      { speaker: "yu_xiaosui", text: "我知道你有武林盟的密令，但如果沒有據點權限、路線資料和補給紀錄，後面應該會很麻煩。" },
+      { speaker: "yu_xiaosui", text: "所以……那個，我們可以先互相配合一下嗎？你幫學會處理周邊魔物，我們提供住所和後勤支援。" },
+      { speaker: "yu_xiaosui", text: "我、我不是要使喚你。只是這裡離安全區太遠了，沒有穩定據點真的很危險。" },
+      { speaker: "yu_xiaosui", text: "之後如果需要維修或整備，我會介紹姚大叔給你。他說話有點大聲，但技術很可靠。" },
+      { speaker: "yu_xiaosui", text: "第一次巡查不用走太遠。從黑水砂原外圍開始，採集一些樣本、確認魔物活動就可以了。" },
+      { speaker: "yu_xiaosui", text: "（把座標小心傳送過去）路線傳好了。請、請小心一點，真的遇到危險就先撤回來。" },
     ],
     onComplete: "startFirstMapTutorial",
   },
   wolf_king_workshop_intro: {
     lines: [
-      { speaker: "yu_xiaosui", text: "哈囉哈囉，今天勞動得還開心嗎？哇，你居然已經狩獵到王級強度的魔物了？！" },
-      { speaker: "yu_xiaosui", text: "正好，帶著狼王的核心素材，我們去和姚大叔打聲招呼吧。" },
+      { speaker: "yu_xiaosui", text: "你、你回來了……咦？這是王級魔物的核心素材嗎？" },
+      { speaker: "yu_xiaosui", text: "那個……如果方便的話，我們最好帶去給姚大叔看看。" },
     ],
     onComplete: "startWolfWorkshopIntroTutorial",
   },
   wolf_king_workshop_yao: {
     lines: [
-      { speaker: "yu_xiaosui", text: "姚大叔～今天工坊生意如何啊？" },
+      { speaker: "yu_xiaosui", text: "姚大叔……你現在方便嗎？我、我帶了素材過來。" },
       { speaker: "yao_hengzhou", text: "不如何！老子千里迢迢到大荒這鬼地方，又不是為了給人打鐵當客服的！怎麼，妳這丫頭又拐了哪個冤大頭來？" },
       { speaker: "yao_hengzhou", condition: "playerClass:furnace", text: "嘖，居然還是我們華山的小輩？氣宗那幾個把腦袋都裝滿紫氣的老骨頭，還沒死透吧。" },
-      { speaker: "yu_xiaosui", text: "說冤大頭也太難聽了吧？這叫互惠，互惠啦！大叔你不也需要一個地方測試你的飛劍模組，順便穩定採集數據嗎？雙贏～" },
+      { speaker: "yu_xiaosui", text: "不是冤大頭啦……至少不要當著本人這樣說。這、這應該算互惠吧？你也需要測試飛劍模組和採集數據……對吧？" },
       { speaker: "yao_hengzhou", text: "哼，姓紀的那小子不知道又去哪裡野了，沒人試，老子的飛劍參數根本動不了。閒著也是閒著，有什麼需要自己把材料備齊，稍微搭把手還是可以的。" },
       { speaker: "yao_hengzhou", text: "給老子聽好了。我不管那些大廠門派幫你們裝了什麼高端晶片，又在道場教過什麼花拳繡腿，這裡可是大荒，離淵最後的蠻荒之地。" },
       { speaker: "yao_hengzhou", text: "在這個魔物滿地走、地形氣候又極端的魔境，你們那套混跡江湖、只考慮『對人戰』的武裝，在這全都是廢鐵！" },
@@ -795,9 +795,9 @@ const EVENT_DIALOGUE_SEQUENCES = {
   body_management_intro: {
     lines: [
       { speaker: "yao_hengzhou", text: "小子，來來來瞧瞧我幫你搞到什麼新玩具。" },
-      { speaker: "yu_xiaosui", text: "呀！怎麼有屍體，大叔你殺人了？" },
+      { speaker: "yu_xiaosui", text: "呀！那、那是人嗎？大叔，你不會真的做了什麼奇怪的事吧？" },
       { speaker: "yao_hengzhou", text: "呸呸呸，什麼屍體！這是我整天在這幫你們搞維修，用湊下來的邊角料組裝出來的空白義體！" },
-      { speaker: "yu_xiaosui", text: "啊？邊角料？這靠譜嗎？" },
+      { speaker: "yu_xiaosui", text: "邊角料……組出來的？這樣真的可以用嗎？" },
       { speaker: "yao_hengzhou", text: "不靠譜又怎了，人大荒漂，能用就是福！還嫌呢。最重要的是，靠這空白義體，你能體驗一把其他門派的打法，怎樣，有意思吧？" },
       { speaker: "yao_hengzhou", condition: "playerClass:chanlin", text: "你們禪林寺這些不用義體的死腦筋，我這正好有上次喝酒時，從全真老鬼那打賭贏來的虛擬實境操控終端，遙控一下湊和著也能用。" },
       { speaker: "yao_hengzhou", text: "當然和正式的身體多少有點差距，而且連接新的身體，你的丹田傳輸效率和行動演算都得重新調教過，白話點說就是得從頭練起。" },
@@ -1339,6 +1339,7 @@ let activeEquippedGearDrag = null;
 let pendingItemFocusPointer = null;
 let lastInventoryGearTap = null;
 let eventDialogTypingTimer = null;
+let renderedScrollScope = "";
 
 function init() {
   bindDelegatedUiEvents();
@@ -3118,7 +3119,75 @@ function paidRefreshCandidates() {
   render();
 }
 
+function scrollScopeKey() {
+  return [
+    state.view || "",
+    state.homePrimaryMenu || "",
+    state.homeSecondaryMenu || "",
+    state.overlayView || "",
+    state.bodyUpgradeMode || "",
+    state.workshopTalkEntry || "",
+  ].join("|");
+}
+
+function scrollElementSignature(el) {
+  const classes = Array.from(el.classList || []).sort().join(".");
+  const attrs = [
+    el.dataset?.view ? `view=${el.dataset.view}` : "",
+    el.dataset?.homePrimary ? `primary=${el.dataset.homePrimary}` : "",
+    el.dataset?.homeSecondary ? `secondary=${el.dataset.homeSecondary}` : "",
+    el.dataset?.overlayView ? `overlay=${el.dataset.overlayView}` : "",
+    el.dataset?.gearCraftSet ? `craftSet=${el.dataset.gearCraftSet}` : "",
+    el.dataset?.codexCategoryToggle ? `codex=${el.dataset.codexCategoryToggle}` : "",
+  ].filter(Boolean).join("|");
+  return `${el.tagName.toLowerCase()}${classes ? `.${classes}` : ""}${attrs ? `[${attrs}]` : ""}`;
+}
+
+function viewScrollableElements() {
+  const root = document.getElementById("view");
+  if (!root) return [];
+  return [root, ...root.querySelectorAll("*")].filter((el) => {
+    if (!(el instanceof HTMLElement)) return false;
+    if (el.scrollHeight <= el.clientHeight + 1 && el.scrollWidth <= el.clientWidth + 1) return false;
+    const style = getComputedStyle(el);
+    return /\b(auto|scroll|overlay)\b/.test(`${style.overflowY} ${style.overflowX}`);
+  });
+}
+
+function captureScrollPositions() {
+  const elements = viewScrollableElements();
+  if (!elements.length) return { scope: renderedScrollScope, positions: [] };
+  const counts = new Map();
+  const positions = [];
+  elements.forEach((el) => {
+    const signature = scrollElementSignature(el);
+    const index = counts.get(signature) || 0;
+    counts.set(signature, index + 1);
+    if (el.scrollTop > 0 || el.scrollLeft > 0) {
+      positions.push({ key: `${signature}#${index}`, top: el.scrollTop, left: el.scrollLeft });
+    }
+  });
+  return { scope: renderedScrollScope, positions };
+}
+
+function restoreScrollPositions(snapshot) {
+  if (!snapshot || !snapshot.positions?.length) return;
+  if (snapshot.scope !== scrollScopeKey()) return;
+  const wanted = new Map(snapshot.positions.map((entry) => [entry.key, entry]));
+  const counts = new Map();
+  viewScrollableElements().forEach((el) => {
+    const signature = scrollElementSignature(el);
+    const index = counts.get(signature) || 0;
+    counts.set(signature, index + 1);
+    const entry = wanted.get(`${signature}#${index}`);
+    if (!entry) return;
+    el.scrollTop = entry.top;
+    el.scrollLeft = entry.left;
+  });
+}
+
 function render() {
+  const scrollSnapshot = captureScrollPositions();
   syncProgressUnlocks();
   updateRecruitRefreshByClock();
   updateTimedTasks();
@@ -3167,6 +3236,8 @@ function render() {
   if (!state.battle || state.battle.over) saveGame();
   scheduleEventDialogueTyping();
   requestAnimationFrame(() => {
+    restoreScrollPositions(scrollSnapshot);
+    renderedScrollScope = scrollScopeKey();
     clampFocusedInventoryPopout();
     showPendingTutorials();
   });
