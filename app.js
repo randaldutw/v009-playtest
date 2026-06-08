@@ -30,13 +30,13 @@ const CLASS_ROLE_TONES = {
 
 const CLASS_BATTLE_DAMAGE_MULTIPLIER = {
   tianshu: 1.68,
-  tang: 0.95,
-  chanlin: 1.25,
+  tang: 1.02,
+  chanlin: 1.34,
   leishi: 1.85,
-  xinhuo: 1.16,
-  wangchuan: 1.4,
-  emei: 1.32,
-  furnace: 1.35,
+  xinhuo: 1.24,
+  wangchuan: 1.46,
+  emei: 1.38,
+  furnace: 1.4,
 };
 
 const V009_PLAYER_ATTACK_FX_BY_CLASS = {
@@ -11302,14 +11302,14 @@ function enemyMaxHp(level, boss = false) {
   const normalizedLevel = Math.max(1, Number(level) || 1);
   return boss
     ? bossTargetMaxHp(normalizedLevel)
-    : Math.round(62 + normalizedLevel * 16);
+    : Math.round(70 + normalizedLevel * 18);
 }
 
 function bossTargetMaxHp(level) {
   const normalizedLevel = Math.max(1, Number(level) || 1);
   if (normalizedLevel <= 5) return Math.round(120 + normalizedLevel * 28);
-  const highLevelExtra = Math.max(0, normalizedLevel - 10) * 70;
-  return Math.round(360 + normalizedLevel * 150 + highLevelExtra);
+  const highLevelExtra = Math.max(0, normalizedLevel - 10) * 58;
+  return Math.round(360 + normalizedLevel * 142 + highLevelExtra);
 }
 
 function isTutorialBossEnemy(enemy) {
@@ -11325,7 +11325,7 @@ function highLevelEnemyDamagePressure(enemy) {
   if (!step) return 1;
   const boss = enemy && (enemy.w > 1 || enemy.h > 1);
   return boss
-    ? 1.35 + step * 0.04
+    ? 1.18 + step * 0.025
     : 1.58 + step * 0.04;
 }
 
@@ -11333,14 +11333,14 @@ function highLevelBossHeavyStrikeBonus(enemy, target) {
   if (!enemy || !target || !(enemy.w > 1 || enemy.h > 1)) return 0;
   const step = highLevelBalanceStep(enemy.level);
   if (!step) return 0;
-  return target.maxHp * (0.045 + step * 0.004);
+  return target.maxHp * (0.032 + step * 0.0025);
 }
 
 function highLevelBossPhasePressure(enemy, target, count = 1) {
   if (!enemy || !target || !(enemy.w > 1 || enemy.h > 1)) return 0;
   const step = highLevelBalanceStep(enemy.level);
   if (!step) return 0;
-  return target.maxHp * (0.075 + step * 0.0025) * Math.max(1, count);
+  return target.maxHp * (0.055 + step * 0.0015) * Math.max(1, count);
 }
 
 function triggerHighLevelBossPhasePressure(enemy, actor, beforeHp) {
