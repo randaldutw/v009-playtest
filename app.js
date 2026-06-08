@@ -4402,7 +4402,7 @@ function v009HomeSecondaryTabs(menu, activeSecondary) {
 }
 
 function v009HomeFunctionContent(menu, secondary, summary, cockpit) {
-  const tabs = ["upgrade", "market", "commission", "codex"].includes(menu) && !(menu === "upgrade" && !workshopUnlocked()) ? v009HomeSecondaryTabs(menu, secondary) : "";
+  const tabs = ["upgrade", "market", "commission"].includes(menu) && !(menu === "upgrade" && !workshopUnlocked()) ? v009HomeSecondaryTabs(menu, secondary) : "";
   return `
     <div class="v009-function-body">
       ${tabs}
@@ -4420,8 +4420,7 @@ function v009HomeFunctionBody(menu, secondary, summary, cockpit) {
   if (menu === "market" && secondary === "buy") return v009MarketBuyPanel();
   if (menu === "market" && secondary === "exchange") return v009MarketExchangePanel();
   if (menu === "commission") return v009CommissionPanel(summary);
-  if (menu === "codex" && secondary === "factions") return v009CodexFactionPanel();
-  if (menu === "codex" && secondary === "geography") return v009CodexEntryPanel(CODEX_GEOGRAPHY_ENTRIES);
+  if (menu === "codex") return v009CodexPanel();
   return v009CodexLockedPanel();
 }
 
@@ -4762,6 +4761,34 @@ function v009CodexLockedPanel() {
   `;
 }
 
+function v009CodexPanel() {
+  const factionEntries = [
+    ...CODEX_FACTION_ENTRIES.map(v009CodexTextEntry),
+    ...Object.entries(CLASS_DATA).map(([classId, data]) => v009CodexFactionEntry(classId, data)),
+  ].join("");
+  const geographyEntries = CODEX_GEOGRAPHY_ENTRIES.map(v009CodexTextEntry).join("");
+  return `
+    <div class="v009-codex-panel stacked">
+      <section class="v009-codex-category">
+        <header class="v009-codex-category-head">
+          <b>勢力</b>
+        </header>
+        <div class="v009-codex-entry-list">
+          ${factionEntries}
+        </div>
+      </section>
+      <section class="v009-codex-category">
+        <header class="v009-codex-category-head">
+          <b>地理</b>
+        </header>
+        <div class="v009-codex-entry-list">
+          ${geographyEntries}
+        </div>
+      </section>
+    </div>
+  `;
+}
+
 function v009CodexFactionPanel() {
   const entries = Object.entries(CLASS_DATA);
   if (state.codexFactionOpen === false) {
@@ -4789,17 +4816,11 @@ function v009CodexEntryPanel(entries) {
 
 function v009CodexTextEntry(entry) {
   return `
-    <article class="v009-codex-entry">
+    <article class="v009-codex-entry text-entry">
       <header>
         <b>${escapeHtml(entry.title)}</b>
       </header>
-      <div class="v009-codex-traits text-entry">
-        ${(entry.body || []).map((paragraph) => `
-          <span>
-            <i>${escapeHtml(paragraph)}</i>
-          </span>
-        `).join("")}
-      </div>
+      ${(entry.body || []).map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("")}
     </article>
   `;
 }
@@ -10543,10 +10564,12 @@ function stageNode(level) {
   const battleLocked = state.battle && !state.battle.over;
   const autoRepeatLocked = battleLocked || !cleared;
   return `
-    <div class="stage-node unlocked ${battleLocked ? "battle-locked" : ""} ${cleared ? "cleared" : ""} ${latest ? "latest" : ""} ${kind === "boss" ? "boss" : ""}" data-stage="${level}">
-      <div class="stage-title"><b>${title}</b></div>
-      <div class="stage-level">Lv${level}</div>
-      <div class="stage-state ${cleared ? "repeat" : ""}">${battleLocked ? "戰鬥中" : cleared ? "重戰" : kind === "boss" ? "頭目" : "可挑戰"}</div>
+    <div class="stage-entry">
+      <div class="stage-node unlocked ${battleLocked ? "battle-locked" : ""} ${cleared ? "cleared" : ""} ${latest ? "latest" : ""} ${kind === "boss" ? "boss" : ""}" data-stage="${level}">
+        <div class="stage-title"><b>${title}</b></div>
+        <div class="stage-level">Lv${level}</div>
+        <div class="stage-state ${cleared ? "repeat" : ""}">${battleLocked ? "戰鬥中" : cleared ? "重戰" : kind === "boss" ? "頭目" : "可挑戰"}</div>
+      </div>
       <button class="stage-auto-repeat-button" data-auto-repeat-stage="${level}" ${autoRepeatLocked ? "disabled aria-disabled=\"true\"" : ""} title="${autoRepeatLocked ? "首次通關後開放自動連戰" : "自動連戰"}" aria-label="自動連戰">↻</button>
     </div>
   `;
@@ -10612,30 +10635,25 @@ function autoRepeatStatsPanel() {
   const stats = state.autoRepeatStats || createAutoRepeatStats(state.lastBattleLevel || 1, "mob");
   const items = Object.entries(stats.items || {})
     .filter(([, count]) => count > 0)
-    .slice(0, 4)
-    .map(([id, count]) => `<span>${escapeHtml(itemName(id))} ${count}</span>`)
-    .join("");
-  const moreItems = Math.max(0, Object.keys(stats.items || {}).length - 4);
-  const phase = state.battle && !state.battle.over ? "本場進行中，結束連戰後改為手動完成。" : "下一場將在 10 秒後開始。";
+    .slice(0, 3)
+    .map(([id, count]) => `${escapeHtml(itemName(id))} ${count}`)
+    .join("、");
+  const moreItems = Math.max(0, Object.keys(stats.items || {}).length - 3);
+  const itemText = `${items || "尚無"}${moreItems ? `、其他 ${moreItems} 種` : ""}${stats.gear ? `、裝備 ${stats.gear}` : ""}`;
+  const phase = state.battle && !state.battle.over ? "本場結束前停止會改為手動完成" : "下一場 10 秒後開始";
   return `
     <aside class="auto-repeat-float" role="status" aria-live="polite">
       <div class="auto-repeat-head">
-        <span>自動連戰</span>
+        <span>自動連戰統計</span>
         <b>${Math.round(AUTO_REPEAT_REWARD_RATE * 100)}% 收益</b>
       </div>
       <div class="auto-repeat-stats">
-        <span><b>${stats.battles}</b><i>完成場次</i></span>
-        <span><b>${stats.exp}</b><i>經驗</i></span>
-        <span><b>${stats.money}</b><i>荒幣</i></span>
-        <span><b>${stats.material}</b><i>資材</i></span>
+        <span><i>經驗</i><b>${stats.exp}</b></span>
+        <span><i>貨幣</i><b>${stats.money}</b></span>
+        <span><i>資材</i><b>${stats.material}</b></span>
+        <span class="auto-repeat-items"><i>取得道具</i><b>${itemText}</b></span>
       </div>
-      <div class="auto-repeat-loot">
-        ${stats.energy ? `<span>能源 ${stats.energy}</span>` : ""}
-        ${items || "<span>尚無道具</span>"}
-        ${moreItems ? `<span>其他 ${moreItems} 種</span>` : ""}
-        ${stats.gear ? `<span>裝備 ${stats.gear}</span>` : ""}
-      </div>
-      <p>${phase}</p>
+      <p>${stats.battles} 場完成 | ${phase}</p>
       <button data-auto-repeat-stop>結束連續狩獵</button>
     </aside>
   `;
