@@ -9507,12 +9507,11 @@ function craftGear(recipeId) {
 }
 
 function randomGearStatsForRecipe(recipe) {
-  const slotData = GEAR_SLOT_DATA[recipe?.slot] || GEAR_SLOT_DATA.hands;
-  const keys = shuffled(slotData.statPool || STAT_KEYS).slice(0, 2);
+  const keys = shuffled(STAT_KEYS).slice(0, 2);
   while (keys.length < 2) keys.push(randomOf(STAT_KEYS));
   const level = Math.max(1, Number(recipe?.level) || 1);
-  const high = Math.max(2, Math.round(2 + level * 0.38 + Math.random() * 2));
-  const low = Math.max(1, Math.round(1 + level * 0.24 + Math.random() * 1.5));
+  const high = Math.max(2, Math.round(2.5 + level * 0.38 + Math.random() * 0.8));
+  const low = Math.max(1, Math.round(1.5 + level * 0.24 + Math.random() * 0.6));
   return [
     { key: keys[0], value: high },
     { key: keys[1], value: low },
