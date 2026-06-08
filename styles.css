@@ -8978,10 +8978,10 @@ button.v009-list-row:hover {
   top: 50%;
   transform: translate(-50%, -50%);
   z-index: 42;
-  width: min(460px, calc(100vw - 32px));
+  width: min(620px, calc(100vw - 32px));
   border: 1px solid rgba(255, 209, 102, 0.62);
   border-radius: 6px;
-  padding: 9px;
+  padding: 12px;
   background:
     linear-gradient(135deg, rgba(55, 216, 255, 0.1), rgba(255, 209, 102, 0.12)),
     rgba(5, 13, 18, 0.94);
@@ -9014,9 +9014,9 @@ button.v009-list-row:hover {
 
 .auto-repeat-stats {
   display: grid;
-  grid-template-columns: 72px 72px 72px minmax(0, 1fr);
-  gap: 5px;
-  margin-bottom: 7px;
+  grid-template-columns: repeat(3, minmax(92px, 1fr));
+  gap: 7px;
+  margin-bottom: 8px;
 }
 
 .auto-repeat-stats span {
@@ -9030,15 +9030,16 @@ button.v009-list-row:hover {
 }
 
 .auto-repeat-stats .auto-repeat-items {
+  grid-column: 1 / -1;
   min-width: 0;
 }
 
 .auto-repeat-stats b {
   color: #f6ffff;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow: visible;
+  white-space: normal;
+  overflow-wrap: anywhere;
   font-size: 13px;
   font-variant-numeric: tabular-nums;
 }
