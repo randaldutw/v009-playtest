@@ -12019,7 +12019,7 @@ button.v009-list-row:hover {
   position: relative;
   min-height: 76px;
   display: grid;
-  grid-template-columns: 70px minmax(0, 1fr) 92px;
+  grid-template-columns: 70px minmax(0, 1fr) 46px;
   grid-template-rows: 1fr;
   align-items: center;
   gap: 12px;
@@ -12100,13 +12100,14 @@ button.v009-list-row:hover {
 }
 
 .v009-body-slot i {
-  justify-self: stretch;
+  justify-self: end;
   display: grid;
   place-items: center;
-  min-height: 36px;
+  width: 42px;
+  min-height: 32px;
   border: 1px solid rgba(255, 209, 102, 0.16);
   border-radius: 999px;
-  padding: 0 10px;
+  padding: 0;
   color: rgba(255, 225, 143, 0.86);
   font-size: 11px;
   font-style: normal;

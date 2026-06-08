@@ -4482,7 +4482,7 @@ function v009BodySlotCard(index) {
           <em>${escapeHtml(memberClassName(member))}</em>
           <strong>Lv${member.level}</strong>
         </span>
-        <i>${active ? "目前使用" : "點擊切換"}</i>
+        <i>${active ? "目前" : "切換"}</i>
       </button>
     `;
   }
@@ -4494,7 +4494,7 @@ function v009BodySlotCard(index) {
           <b>空白義體</b>
           <em>第 ${index + 1} 槽</em>
         </span>
-        <i>選擇門派</i>
+        <i>選擇</i>
       </button>
     `;
   }
@@ -4505,7 +4505,7 @@ function v009BodySlotCard(index) {
         <b>鎖定</b>
         <em>${itemName(BODY_FRAGMENT_ITEM_ID)} ${bodyFragmentCount()}/${BODY_SLOT_UNLOCK_FRAGMENT_COST}</em>
       </span>
-      <i>點擊查看條件</i>
+      <i>條件</i>
     </button>
   `;
 }
