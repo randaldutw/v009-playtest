@@ -703,8 +703,8 @@ const INTRO_POST_CREATOR_CLASS_LINES = {
 const EVENT_DIALOGUE_SEQUENCES = {
   intro_pre_creator: {
     lines: [
-      { speaker: "yu_xiaosui", text: "（一名少女歪著頭，有些好奇地打量著你，嘴角掛著藏不住的笑意）你看起來超級迷茫的耶，是第一次來到「翠穹聚落」嗎？" },
-      { speaker: "yu_xiaosui", text: "啊，難道你就是會長提過的那位【武林盟】派遣員？原來如此，瞧瞧這身行頭，果然很不一樣。" },
+      { speaker: "yu_xiaosui", text: "你看起來超級迷茫的耶，是第一次來到【翠穹聚落】嗎？" },
+      { speaker: "yu_xiaosui", text: "難道你就是會長提過的那位【武林盟】派遣員？原來如此，瞧瞧這身行頭，果然不一般。" },
       { speaker: "yu_xiaosui", text: "歡迎來到森羅學會的大荒據點……雖然我們也就只有這麼一個據點啦。" },
       { speaker: "yu_xiaosui", text: "我叫俞小穗，是一名魔物學者……的實習生。因為這裡人手實在太缺了，我現在還要兼職做進出登記。" },
       { speaker: "yu_xiaosui", text: "來，給我你的身分代碼！" },
@@ -720,11 +720,11 @@ const EVENT_DIALOGUE_SEQUENCES = {
   },
   intro_main_tutorial: {
     lines: [
-      { speaker: "yu_xiaosui", text: "什麼？你說你不是來打怪的？（歪頭看著你）哎呀俗話說的好，沒在大荒拔過劍就不算進過江湖，就算沒吃過魔物基因餐也該看過魔物滿街跑嘛……" },
-      { speaker: "yu_xiaosui", text: "言歸正傳，會長是有交待你是來執行武林盟密令的啦。（吐舌頭）但是呢～會長也特別吩咐，好不容易來了個超可靠的冤大頭就要好好壓榨……哎呀失禮了，喔呵呵呵～" },
-      { speaker: "yu_xiaosui", text: "雖然你有那個什麼「密令」在身，（雙手抱胸）但你有頭緒從何下手嗎？沒有對吧？而且要在這片大荒行動，沒有個落腳的訊號據點可是寸步難行喔。" },
+      { speaker: "yu_xiaosui", text: "什麼？你說你不是來打怪的？哎呀俗話說的好，沒在大荒拔過劍就不算進過江湖，就算沒吃過魔物基因餐也該看過魔物滿街跑嘛……" },
+      { speaker: "yu_xiaosui", text: "言歸正傳，會長是有交待你是來執行武林盟密令的啦。但是呢～會長也特別吩咐，好不容易來了個超可靠的冤大頭就要好好壓榨……哎呀失禮了，喔呵呵呵～" },
+      { speaker: "yu_xiaosui", text: "雖然你有那個什麼「密令」在身，但你有頭緒從何下手嗎？沒有對吧？而且要在這片大荒行動，沒有個落腳的訊號據點可是寸步難行喔。" },
       { speaker: "yu_xiaosui", text: "那我們不如互惠一下，你為森羅學會解決麻煩，我們提供你安全住所和後勤支援，聽起來超划算吧？" },
-      { speaker: "yu_xiaosui", text: "如果你的任務一時半刻完成不了，（指了指你的裝備）沒得維修整備可不得了，之後我再介紹姚大叔給你認識，他可是調校晶片的高手。" },
+      { speaker: "yu_xiaosui", text: "如果你的任務一時半刻完成不了，沒得維修整備可不得了，之後我再介紹姚大叔給你認識，他可是調校晶片的高手。" },
       { speaker: "yu_xiaosui", text: "別擔心，不麻煩的，就只是出門繞繞、順便跟魔物過幾招，然後多帶點生物樣本回來。很簡單吧！" },
       { speaker: "yu_xiaosui", text: "（在全息螢幕上傳送座標）那麼總之就從黑水砂原的巡查開始吧！祝你開工大吉囉！" },
     ],
@@ -753,7 +753,7 @@ const EVENT_DIALOGUE_SEQUENCES = {
   body_management_intro: {
     lines: [
       { speaker: "yao_hengzhou", text: "小子，來來來瞧瞧我幫你搞到什麼新玩具。" },
-      { speaker: "yu_xiaosui", text: "呀！（尖叫）怎麼有屍體，大叔你殺人了？" },
+      { speaker: "yu_xiaosui", text: "呀！怎麼有屍體，大叔你殺人了？" },
       { speaker: "yao_hengzhou", text: "呸呸呸，什麼屍體！這是我整天在這幫你們搞維修，用湊下來的邊角料組裝出來的空白義體！" },
       { speaker: "yu_xiaosui", text: "啊？邊角料？這靠譜嗎？" },
       { speaker: "yao_hengzhou", text: "不靠譜又怎了，人大荒漂，能用就是福！還嫌呢。最重要的是，靠這空白義體，你能體驗一把其他門派的打法，怎樣，有意思吧？" },
