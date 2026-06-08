@@ -1317,6 +1317,7 @@ const state = {
   battleSpeed: 1,
   autoRepeat: false,
   autoRepeatTimer: null,
+  autoRepeatNextAt: 0,
   autoRepeatSeq: 0,
   autoRepeatStats: null,
   lastBattleLevel: 1,
@@ -1333,6 +1334,7 @@ let queuedBattleRenderRaf = 0;
 let lastBattleRenderAt = 0;
 let activeInventoryGearDragId = "";
 let activeEquippedGearDrag = null;
+let activeGearDragSlotKey = "";
 let pendingItemFocusPointer = null;
 let lastInventoryGearTap = null;
 let eventDialogTypingTimer = null;
@@ -1424,6 +1426,16 @@ function bindDelegatedUiEvents() {
   }, true);
   document.addEventListener("pointercancel", () => {
     pendingItemFocusPointer = null;
+  }, true);
+  document.addEventListener("dragend", () => {
+    activeInventoryGearDragId = "";
+    activeEquippedGearDrag = null;
+    clearActiveGearDragSlot();
+  }, true);
+  document.addEventListener("drop", () => {
+    activeInventoryGearDragId = "";
+    activeEquippedGearDrag = null;
+    clearActiveGearDragSlot();
   }, true);
   document.addEventListener("dblclick", (ev) => {
     const equippedGear = ev.target.closest("[data-equipped-gear-member][data-equipped-gear-slot]");
@@ -1535,6 +1547,7 @@ function seedNewGame() {
   state.battleSpeed = 1;
   state.autoRepeat = false;
   state.autoRepeatTimer = null;
+  state.autoRepeatNextAt = 0;
   state.autoRepeatStats = null;
   state.pendingAutoRepeatTutorial = null;
   state.lastBattleLevel = 1;
@@ -6866,6 +6879,23 @@ function v009FocusedMember(cockpit) {
   return selected || partyMembers()[0] || cockpit.party[0] || null;
 }
 
+function setActiveGearDragSlot(slotKey) {
+  activeGearDragSlotKey = GEAR_SLOT_DATA[slotKey] ? slotKey : "";
+  updateGearSlotDragHighlights();
+}
+
+function clearActiveGearDragSlot() {
+  activeGearDragSlotKey = "";
+  updateGearSlotDragHighlights();
+}
+
+function updateGearSlotDragHighlights() {
+  document.querySelectorAll("[data-gear-slot]").forEach((el) => {
+    const compatible = !!activeGearDragSlotKey && el.dataset.gearSlot === activeGearDragSlotKey;
+    el.classList.toggle("drag-compatible", compatible);
+  });
+}
+
 function v009TrackedTasks(cockpit) {
   return [
     ...homeReportItems(cockpit.level),
@@ -10939,7 +10969,9 @@ function autoRepeatStatsPanel() {
     .join("、");
   const moreItems = Math.max(0, Object.keys(stats.items || {}).length - 3);
   const itemText = `${items || "尚無"}${moreItems ? `、其他 ${moreItems} 種` : ""}${stats.gear ? `、裝備 ${stats.gear}` : ""}`;
-  const phase = state.battle && !state.battle.over ? "本場結束前停止會改為手動完成" : "下一場 10 秒後開始";
+  const phase = state.battle && !state.battle.over
+    ? "本場結束前停止會改為手動完成"
+    : `下一場 ${autoRepeatCountdownSeconds()} 秒後開始`;
   return `
     <aside class="auto-repeat-float" role="status" aria-live="polite">
       <div class="auto-repeat-head">
@@ -10956,6 +10988,11 @@ function autoRepeatStatsPanel() {
       <button data-auto-repeat-stop>結束連續狩獵</button>
     </aside>
   `;
+}
+
+function autoRepeatCountdownSeconds() {
+  if (!state.autoRepeat || !state.autoRepeatNextAt) return Math.ceil(AUTO_REPEAT_INTERVAL_MS / 1000);
+  return Math.max(0, Math.ceil((state.autoRepeatNextAt - Date.now()) / 1000));
 }
 
 function startAutoRepeatBattle(level, kind = "mob") {
@@ -11001,6 +11038,7 @@ function startBattle(level, autoRepeat = false, kind = "mob", options = {}) {
   if (kind === "boss" && !canChallengeBoss(level)) return;
   if (state.autoRepeatTimer) clearTimeout(state.autoRepeatTimer);
   state.autoRepeatTimer = null;
+  state.autoRepeatNextAt = 0;
   state.autoRepeatSeq = (state.autoRepeatSeq || 0) + 1;
   state.lastBattleLevel = level;
   const repeatEnabled = !!autoRepeat && !kind.startsWith("event_");
@@ -13976,10 +14014,12 @@ function scheduleAutoRepeat(level, kind = "mob") {
   if (kind !== "boss") state.pendingBossLevel = null;
   const repeatSeq = (state.autoRepeatSeq || 0) + 1;
   state.autoRepeatSeq = repeatSeq;
+  state.autoRepeatNextAt = Date.now() + AUTO_REPEAT_INTERVAL_MS;
   state.autoRepeatTimer = setTimeout(() => {
     if (state.autoRepeatSeq !== repeatSeq) return;
     if (!state.autoRepeat) return;
     state.battle = null;
+    state.autoRepeatNextAt = 0;
     startBattle(level, true, kind);
   }, AUTO_REPEAT_INTERVAL_MS);
   render();
@@ -14019,6 +14059,7 @@ function cancelAutoRepeat() {
   if (state.battle && !state.battle.over) state.battle.autoRepeat = false;
   if (state.autoRepeatTimer) clearTimeout(state.autoRepeatTimer);
   state.autoRepeatTimer = null;
+  state.autoRepeatNextAt = 0;
   document.querySelectorAll(".auto-repeat-float").forEach((el) => el.remove());
   saveGame();
 }
@@ -15040,11 +15081,14 @@ function bindEvents() {
     });
     el.addEventListener("dragstart", (ev) => {
       activeInventoryGearDragId = el.dataset.v009GearQuickEquip || "";
+      const gear = normalizeGearInventory(state.gear).find((item) => item.id === activeInventoryGearDragId);
+      setActiveGearDragSlot(gear?.slot || "");
       ev.dataTransfer.effectAllowed = "move";
       ev.dataTransfer.setData("inventory-gear-id", activeInventoryGearDragId);
     });
     el.addEventListener("dragend", () => {
       activeInventoryGearDragId = "";
+      clearActiveGearDragSlot();
     });
   });
   document.querySelectorAll("[data-equipped-gear-slot]").forEach((el) => {
@@ -15058,12 +15102,14 @@ function bindEvents() {
         memberId: el.dataset.equippedGearMember || "",
         slotKey: el.dataset.equippedGearSlot || "",
       };
+      setActiveGearDragSlot(activeEquippedGearDrag.slotKey);
       ev.dataTransfer.effectAllowed = "move";
       ev.dataTransfer.setData("equipped-gear-member", activeEquippedGearDrag.memberId);
       ev.dataTransfer.setData("equipped-gear-slot", activeEquippedGearDrag.slotKey);
     });
     el.addEventListener("dragend", () => {
       activeEquippedGearDrag = null;
+      clearActiveGearDragSlot();
     });
   });
   document.querySelectorAll("[data-gear-inventory-drop]").forEach((el) => {
@@ -15079,6 +15125,7 @@ function bindEvents() {
       const memberId = ev.dataTransfer.getData("equipped-gear-member") || activeEquippedGearDrag?.memberId || "";
       const slotKey = ev.dataTransfer.getData("equipped-gear-slot") || activeEquippedGearDrag?.slotKey || "";
       activeEquippedGearDrag = null;
+      clearActiveGearDragSlot();
       if (!memberId || !slotKey) return;
       unequipGearToInventory(memberId, slotKey);
     });
@@ -15141,6 +15188,7 @@ function bindEvents() {
       ev.preventDefault();
       const gearId = ev.dataTransfer.getData("inventory-gear-id") || activeInventoryGearDragId;
       activeInventoryGearDragId = "";
+      clearActiveGearDragSlot();
       if (!gearId) return;
       equipGearToMemberSlot(el.dataset.gearMember, el.dataset.gearSlot, gearId);
     });
@@ -15301,6 +15349,7 @@ function bindEvents() {
       if (state.autoRepeatTimer) clearTimeout(state.autoRepeatTimer);
       state.battleTimer = null;
       state.autoRepeatTimer = null;
+      state.autoRepeatNextAt = 0;
       state.battle = null;
       state.autoRepeat = false;
       state.autoRepeatStats = null;
@@ -15881,7 +15930,7 @@ function scheduleTimedTaskRefresh() {
   const needsRefresh = ["gather", "expedition"].some((key) => {
     const task = state[key];
     return task?.active && !task.completed;
-  });
+  }) || (!!state.autoRepeat && !!state.autoRepeatNextAt);
   if (needsRefresh && ["town", "gather", "expedition"].includes(state.view)) {
     state.uiRefreshTimer = setTimeout(render, 1000);
   }

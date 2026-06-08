@@ -7533,6 +7533,16 @@ button.console-pulse-card.active {
   border-color: rgba(255, 209, 102, 0.32);
 }
 
+.equipment-slot.gear-slot.drag-compatible,
+.v009-equipment-summary .v009-equipment-slot.drag-compatible {
+  border-color: rgba(255, 209, 102, 0.92);
+  background: rgba(92, 63, 10, 0.72);
+  box-shadow:
+    0 0 0 1px rgba(255, 209, 102, 0.34),
+    0 0 18px rgba(255, 209, 102, 0.32),
+    inset 0 0 14px rgba(255, 209, 102, 0.1);
+}
+
 .v009-equipment-bonus-list {
   display: grid;
   gap: 6px;
