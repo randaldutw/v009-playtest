@@ -9312,10 +9312,24 @@ button.v009-list-row:hover {
 
 .combat-float.critical {
   color: #ffe36f;
+  font-size: 34px;
+  -webkit-text-stroke: 1px rgba(82, 38, 0, 0.82);
+  filter: drop-shadow(0 0 10px rgba(255, 209, 102, 0.9)) drop-shadow(0 0 22px rgba(255, 74, 38, 0.62));
   text-shadow:
-    0 0 8px rgba(255, 246, 150, 1),
-    0 0 26px rgba(255, 209, 102, 0.92),
-    0 4px 0 rgba(0, 0, 0, 0.95);
+    0 0 4px rgba(255, 255, 255, 1),
+    0 0 12px rgba(255, 246, 150, 1),
+    0 0 30px rgba(255, 209, 102, 0.96),
+    0 0 42px rgba(255, 76, 38, 0.72),
+    0 5px 0 rgba(0, 0, 0, 0.96);
+  animation: combatCriticalPop 0.42s ease-out both;
+}
+
+.enemy-token .combat-float.critical {
+  font-size: 44px;
+}
+
+.ally-card .combat-float.critical {
+  font-size: 36px;
 }
 
 .combat-float.bad {
@@ -9989,6 +10003,12 @@ button.v009-list-row:hover {
   0% { opacity: 0; transform: translate(-50%, 8px) scale(0.9); }
   22% { opacity: 1; transform: translate(-50%, -4px) scale(1.05); }
   100% { opacity: 0; transform: translate(-50%, -32px) scale(1); }
+}
+
+@keyframes combatCriticalPop {
+  0% { filter: brightness(2.2) drop-shadow(0 0 16px rgba(255, 255, 255, 0.98)) drop-shadow(0 0 28px rgba(255, 74, 38, 0.82)); }
+  38% { filter: brightness(1.45) drop-shadow(0 0 12px rgba(255, 209, 102, 0.96)) drop-shadow(0 0 24px rgba(255, 74, 38, 0.7)); }
+  100% { filter: brightness(1) drop-shadow(0 0 10px rgba(255, 209, 102, 0.9)) drop-shadow(0 0 22px rgba(255, 74, 38, 0.62)); }
 }
 
 .combat-sense-panel {

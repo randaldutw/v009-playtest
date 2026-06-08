@@ -13606,12 +13606,15 @@ function triggerReloadFx(unit) {
 
 function triggerFloat(unit, text, kind = "damage") {
   if (!unit) return;
+  const displayText = kind === "critical" && !String(text).includes("!")
+    ? `${text}!`
+    : text;
   const maxTtl = state.battleSpeed === 2 ? 28 : 40;
   const index = Array.isArray(unit.floatStack) ? unit.floatStack.length : 0;
   const side = index % 2 === 0 ? -1 : 1;
   const spread = 10 + Math.random() * 34;
   const item = {
-    text,
+    text: displayText,
     kind,
     ttl: maxTtl,
     maxTtl,
