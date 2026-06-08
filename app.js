@@ -145,6 +145,7 @@ const MERIDIAN_CHIP_SLOTS = [
 ];
 const EQUIPMENT_CHIP_SLOTS = MERIDIAN_CHIP_SLOTS;
 const MAX_LEVEL = 60;
+const BLACKWATER_MAX_LEVEL = 30;
 const XP_CURVE_TARGET_DAYS = 3;
 const V009_BASE_STAT_TOTAL = 30;
 const V009_RECRUIT_COST = 120;
@@ -879,7 +880,7 @@ const CLASS_DATA = {
   tianshu: {
     name: "天樞派",
     officialName: "天樞派",
-    role: "解析劍陣 / 後期爆發",
+    role: "解析劍陣 | 後期爆發",
     main: ["precision", "output"],
     secondary: ["supply", "reaction"],
     surnames: ["沈", "陸", "溫", "周", "羅", "葉", "何"],
@@ -895,7 +896,7 @@ const CLASS_DATA = {
   tang: {
     name: "唐家生化",
     officialName: "唐氏醫療與毒物生物化學研究聯合",
-    role: "醫毒暗器 / 持續爆發",
+    role: "醫毒暗器 | 持續爆發",
     main: ["precision", "supply"],
     secondary: ["reaction", "output"],
     surnames: ["唐"],
@@ -911,7 +912,7 @@ const CLASS_DATA = {
   chanlin: {
     name: "禪林寺",
     officialName: "禪林寺",
-    role: "反坦拳法 / 穩定續戰",
+    role: "反坦拳法 | 穩定續戰",
     main: ["armor", "supply"],
     secondary: ["output", "reaction"],
     surnames: ["慧", "法", "明", "淨", "覺", "常", "定"],
@@ -927,7 +928,7 @@ const CLASS_DATA = {
   leishi: {
     name: "雷氏火器",
     officialName: "雷氏火器",
-    role: "彈藥火器 / 全彈爆發",
+    role: "彈藥火器 | 全彈爆發",
     main: ["output", "precision"],
     secondary: ["armor", "reaction"],
     surnames: ["雷"],
@@ -943,7 +944,7 @@ const CLASS_DATA = {
   xinhuo: {
     name: "薪火幫",
     officialName: "薪火幫",
-    role: "怒氣拳法 / 近戰爆發",
+    role: "怒氣拳法 | 近戰爆發",
     main: ["armor", "output"],
     secondary: ["supply", "reaction"],
     surnames: ["馬", "梁", "鄭", "熊", "宋", "關", "石"],
@@ -959,7 +960,7 @@ const CLASS_DATA = {
   wangchuan: {
     name: "忘川渡",
     officialName: "忘川渡",
-    role: "生死印暗殺 / 低血高閃",
+    role: "生死印暗殺 | 低血高閃",
     main: ["reaction", "precision"],
     secondary: ["output", "supply"],
     surnames: ["白", "林", "方", "夜", "段", "顧", "岑"],
@@ -975,7 +976,7 @@ const CLASS_DATA = {
   emei: {
     name: "峨眉派",
     officialName: "峨眉派",
-    role: "流光足劍 / 閃避追擊",
+    role: "流光足劍 | 閃避追擊",
     main: ["reaction", "precision"],
     secondary: ["output", "supply"],
     surnames: ["沈", "蘇", "柳", "阮", "程", "許", "辛"],
@@ -991,7 +992,7 @@ const CLASS_DATA = {
   furnace: {
     name: "華山軍工",
     officialName: "華山軍工",
-    role: "紫氣劍放 / 連擊點爆發",
+    role: "紫氣劍放 | 連擊點爆發",
     main: ["output", "armor"],
     secondary: ["supply", "precision"],
     surnames: ["姚", "任", "韓", "祝", "段", "高", "鐵"],
@@ -1659,7 +1660,7 @@ function migrateSave(save) {
     material: safeNumber(save.material, 120, 0),
     energy: safeNumber(save.energy, 60, 0),
     refreshCounter: safeNumber(save.refreshCounter, 0, 0),
-    maxClearedLevel: Math.min(MAX_LEVEL, safeNumber(save.maxClearedLevel, 0, 0)),
+    maxClearedLevel: Math.min(BLACKWATER_MAX_LEVEL, safeNumber(save.maxClearedLevel, 0, 0)),
     selectedMemberId,
     itemSort: ["order", "type", "value"].includes(save.itemSort) ? save.itemSort : "order",
     itemFilter: ["all", "gear", "chip", "material", "quest"].includes(save.itemFilter) ? save.itemFilter : "all",
@@ -1674,10 +1675,10 @@ function migrateSave(save) {
     gear: normalizeGearInventory(save.gear),
     gearWishlist: normalizeGearWishlist(save.gearWishlist),
     focusedGearRecipeId: GEAR_CRAFT_RECIPES.some((recipe) => recipe.id === save.focusedGearRecipeId) ? save.focusedGearRecipeId : "",
-    bodySystemUnlocked: !!save.bodySystemUnlocked || Math.min(MAX_LEVEL, safeNumber(save.maxClearedLevel, 0, 0)) >= 10,
-    bodySlotUnlocks: normalizeBodySlotUnlocks(save.bodySlotUnlocks, Math.min(MAX_LEVEL, safeNumber(save.maxClearedLevel, 0, 0))),
+    bodySystemUnlocked: !!save.bodySystemUnlocked || Math.min(BLACKWATER_MAX_LEVEL, safeNumber(save.maxClearedLevel, 0, 0)) >= 10,
+    bodySlotUnlocks: normalizeBodySlotUnlocks(save.bodySlotUnlocks, Math.min(BLACKWATER_MAX_LEVEL, safeNumber(save.maxClearedLevel, 0, 0))),
     bodyUpgradeMode: ["switch", "meridian"].includes(save.bodyUpgradeMode) ? save.bodyUpgradeMode : "meridian",
-    blueprints: normalizeBlueprints(save.blueprints, Math.min(MAX_LEVEL, safeNumber(save.maxClearedLevel, 0, 0))),
+    blueprints: normalizeBlueprints(save.blueprints, Math.min(BLACKWATER_MAX_LEVEL, safeNumber(save.maxClearedLevel, 0, 0))),
     marketMode: save.marketMode === "sell" ? "sell" : "buy",
     marketStock: normalizeMarketStock(save.marketStock, Math.max(1, safeNumber(save.maxClearedLevel, 0, 0) + 1)),
     marketStockLevel: safeNumber(save.marketStockLevel, 0, 0),
@@ -1690,7 +1691,7 @@ function migrateSave(save) {
     tutorials: normalizeTutorials(save.tutorials),
     commissions: normalizeCommissions(save.commissions),
     battleSpeed: save.battleSpeed === 2 ? 2 : 1,
-    lastBattleLevel: Math.min(MAX_LEVEL, Math.max(1, safeNumber(save.lastBattleLevel, 1, 1))),
+    lastBattleLevel: Math.min(BLACKWATER_MAX_LEVEL, Math.max(1, safeNumber(save.lastBattleLevel, 1, 1))),
     idleProgress: Math.min(IDLE_BOSS_PROGRESS_REQUIRED, safeNumber(save.idleProgress, 0, 0)),
     battleLogArchive: Array.isArray(save.battleLogArchive) ? save.battleLogArchive.slice(0, 200) : [],
   };
@@ -1754,6 +1755,7 @@ function normalizeMemberList(list, candidate) {
 function normalizeMember(member, candidate = false) {
   if (!member || typeof member !== "object" || !CLASS_DATA[member.classId]) return null;
   const gender = normalizeGender(member.gender);
+  const level = Math.min(MAX_LEVEL, safeNumber(member.level, 1, 1));
   const normalized = {
     ...member,
     id: typeof member.id === "string" && member.id ? member.id : cryptoRandomId(),
@@ -1762,8 +1764,8 @@ function normalizeMember(member, candidate = false) {
     classId: member.classId,
     rarity: "white",
     tier: safeNumber(member.tier, 1, 1),
-    level: safeNumber(member.level, 1, 1),
-    stats: normalizeStats(member.stats),
+    level,
+    stats: fixedStatsForClassLevel(member.classId, level),
     equippedActive: normalizeEquippedActives(member),
     equippedPassive: normalizeEquippedPassive(member),
     front: true,
@@ -2461,8 +2463,7 @@ function resetSavedGame() {
 
 function createCharacter(classId, rarityId = null, usedNames = null, options = {}) {
   const cls = CLASS_DATA[classId];
-  const total = V009_BASE_STAT_TOTAL;
-  const stats = normalizeStats(options.stats || allocateStats(total, cls));
+  const stats = fixedStatsForClassLevel(classId, 1);
   const gender = normalizeGender(options.gender);
   const name = sanitizeCreatorName(options.name) || randomName(cls, usedNames, gender);
   const character = {
@@ -2517,6 +2518,66 @@ function allocateStats(total, cls) {
     remaining -= 1;
   }
   return stats;
+}
+
+function statRoleBucketsForClass(classId) {
+  const cls = CLASS_DATA[classId] || CLASS_DATA.xinhuo;
+  const main = (cls.main || []).filter((key) => STAT_KEYS.includes(key)).slice(0, 2);
+  const secondary = (cls.secondary || []).filter((key) => STAT_KEYS.includes(key) && !main.includes(key)).slice(0, 2);
+  for (const key of STAT_KEYS) {
+    if (main.length < 2 && !main.includes(key)) main.push(key);
+    if (main.length >= 2 && secondary.length < 2 && !main.includes(key) && !secondary.includes(key)) secondary.push(key);
+  }
+  const rest = STAT_KEYS.filter((key) => !main.includes(key) && !secondary.includes(key));
+  return { main, secondary, rest };
+}
+
+function fixedBaseStatsForClass(classId) {
+  const { main, secondary, rest } = statRoleBucketsForClass(classId);
+  const stats = Object.fromEntries(STAT_KEYS.map((key) => [key, 4]));
+  main.forEach((key) => { stats[key] = 8; });
+  secondary.forEach((key) => { stats[key] = 5; });
+  rest.forEach((key) => { stats[key] = 4; });
+  return stats;
+}
+
+function fixedGrowthForLevel(classId, level) {
+  const current = Math.min(MAX_LEVEL, Math.max(2, safeNumber(level, 2, 2)));
+  const { main, secondary, rest } = statRoleBucketsForClass(classId);
+  const support = [secondary[0], secondary[1], rest[0]].filter(Boolean);
+  const stats = Object.fromEntries(STAT_KEYS.map((key) => [key, 0]));
+  const add = (key) => {
+    if (STAT_KEYS.includes(key)) stats[key] += 1;
+  };
+  main.forEach(add);
+  const cycle = (current - 2) % 4;
+  if (cycle === 0 || cycle === 3) {
+    add(secondary[0]);
+    add(secondary[1]);
+  } else if (cycle === 1) {
+    add(secondary[0]);
+    add(rest[0]);
+  } else {
+    add(secondary[1]);
+    add(rest[0]);
+  }
+  const points = v009LevelGrowthPoints(current);
+  if (points >= 5) add(main[(current - 2) % main.length]);
+  if (points >= 6) add(main[(current - 1) % main.length]);
+  for (let total = STAT_KEYS.reduce((sum, key) => sum + stats[key], 0); total < points; total += 1) {
+    add(support[(current + total) % support.length] || main[total % main.length]);
+  }
+  return stats;
+}
+
+function fixedStatsForClassLevel(classId, level) {
+  const current = Math.min(MAX_LEVEL, Math.max(1, safeNumber(level, 1, 1)));
+  const stats = fixedBaseStatsForClass(classId);
+  for (let next = 2; next <= current; next += 1) {
+    const growth = fixedGrowthForLevel(classId, next);
+    STAT_KEYS.forEach((key) => { stats[key] += growth[key] || 0; });
+  }
+  return normalizeStats(stats);
 }
 
 function randomName(cls, usedNames = null, gender = normalizeGender()) {
@@ -2780,7 +2841,7 @@ function normalizeCreatorDraft(draft) {
     gender,
     portraitIndex,
     name: hasName ? sanitizeCreatorName(draft?.name) : randomName(CLASS_DATA[classId], usedNameParts(), gender),
-    stats: normalizeStats(draft?.stats || creatorStatsForClass(classId)),
+    stats: creatorStatsForClass(classId),
   };
 }
 
@@ -2790,7 +2851,7 @@ function creatorDraft() {
 }
 
 function creatorStatsForClass(classId) {
-  return allocateStats(V009_BASE_STAT_TOTAL, CLASS_DATA[classId] || CLASS_DATA.xinhuo);
+  return fixedStatsForClassLevel(classId, 1);
 }
 
 function creatorPortraitPool(classId, gender) {
@@ -4016,11 +4077,11 @@ function v009HomePrimaryMenu(activeMenu) {
 
 function v009HomeMenuConfig() {
   return [
-    { id: "map", name: "地圖", hint: "八大區 / 關卡" },
-    { id: "upgrade", name: "工坊", hint: "鍛造 / 義體" },
-    { id: "market", name: "商店", hint: "購買 / 互換" },
+    { id: "map", name: "地圖", hint: "八大區 | 關卡" },
+    { id: "upgrade", name: "工坊", hint: "鍛造 | 義體" },
+    { id: "market", name: "商店", hint: "購買 | 互換" },
     { id: "commission", name: "委託", hint: "任務揭榜" },
-    { id: "codex", name: "事典", hint: "勢力 / 條目" },
+    { id: "codex", name: "事典", hint: "勢力 | 條目" },
   ];
 }
 
@@ -4324,7 +4385,7 @@ function v009RegionPanel() {
 }
 
 function v009StagePanel(cockpit) {
-  const opened = Array.from({ length: MAX_LEVEL }, (_, i) => stageNode(MAX_LEVEL - i)).filter(Boolean);
+  const opened = Array.from({ length: BLACKWATER_MAX_LEVEL }, (_, i) => stageNode(BLACKWATER_MAX_LEVEL - i)).filter(Boolean);
   return `
     <div class="v009-stage-head">
       <b>黑水砂原 Lv${cockpit.level}</b>
@@ -4410,7 +4471,7 @@ function gearCraftAbilityRows(recipe) {
     ? `隨機 ${combatCount} 條，各 +${recipe.combatValue}%`
     : `隨機 ${combatCount} 條`;
   const rows = [
-    { label: "部位", value: `${gearSlotLabel(recipe.slot)} / Lv${recipe.level}` },
+    { label: "部位", value: `${gearSlotLabel(recipe.slot)} | Lv${recipe.level}` },
     { label: "能力", value: "隨機 2 條" },
     { label: "戰鬥", value: combatText },
   ];
@@ -6693,7 +6754,7 @@ function townBattleCockpitModel(summary) {
     targetLabel: activeBattle?.kind === "boss" ? bossName(level) : "清理敵群",
     modeLabel: "手動出戰",
     nextMilestone: `Lv${level}`,
-    clearText: `${state.maxClearedLevel}/${MAX_LEVEL}`,
+    clearText: `${state.maxClearedLevel}/${BLACKWATER_MAX_LEVEL}`,
     actionLabel: activeBattle ? "戰鬥中" : "開始",
     statusLabel: activeBattle ? (activeBattle.kind === "boss" ? "頭目戰中" : "戰鬥中") : "待命",
     loopPurpose: "點選一關打一關。",
@@ -6734,7 +6795,7 @@ function ensureHomeAutoBattle() {
 }
 
 function currentIdleLevel() {
-  return Math.min(MAX_LEVEL, Math.max(1, state.maxClearedLevel + 1));
+  return Math.min(BLACKWATER_MAX_LEVEL, Math.max(1, state.maxClearedLevel + 1));
 }
 
 function idleProgress() {
@@ -6742,7 +6803,7 @@ function idleProgress() {
 }
 
 function canChallengeBoss(level) {
-  level = Math.min(MAX_LEVEL, Math.max(1, Number(level) || currentIdleLevel()));
+  level = Math.min(BLACKWATER_MAX_LEVEL, Math.max(1, Number(level) || currentIdleLevel()));
   return level <= state.maxClearedLevel || level === currentIdleLevel();
 }
 
@@ -7444,7 +7505,7 @@ function townConsoleSummary() {
     : commission.accepted
       ? `${commission.progress}/${COMMISSION_DATA.sand_patrol.target}`
       : "未接";
-  const nextStage = Math.min(state.maxClearedLevel + 1, 20);
+  const nextStage = Math.min(state.maxClearedLevel + 1, BLACKWATER_MAX_LEVEL);
   const pulses = consolePulseItems({ commission, nextStage });
   return {
     partyCount: party.length,
@@ -8180,7 +8241,7 @@ function activeBattleDerivedBonuses(member) {
   const soulSealBonus = activeSoulSealCritRateBonusForUi(ally, target);
   const critRate = critRateBonus + soulSealBonus;
   const critRateNotes = [
-    critRateBonus ? `技能/狀態 +${critRateBonus}%` : "",
+    critRateBonus ? `技能|狀態 +${critRateBonus}%` : "",
     soulSealBonus ? "斷魂印 +5%" : "",
   ].filter(Boolean);
   const critDamageBonus = activeSpiritSealCritDamageBonusForUi(target);
@@ -8191,7 +8252,7 @@ function activeBattleDerivedBonuses(member) {
   const hitRate = Math.max(0, ally.accuracyBonus || 0);
   const evadeRate = Math.max(0, ally.evadeRateBonus || 0);
   const evadeNotes = [];
-  if (ally.evadeRateBonus) evadeNotes.push(`技能/狀態 +${Math.max(0, ally.evadeRateBonus || 0)}%`);
+  if (ally.evadeRateBonus) evadeNotes.push(`技能|狀態 +${Math.max(0, ally.evadeRateBonus || 0)}%`);
   if ((ally.evade || 0) > 0 || ally.flowActive) {
     const activeChance = Math.min(82,
       (ally.flowActive ? 72 : 45)
@@ -8212,7 +8273,7 @@ function activeBattleDerivedBonuses(member) {
     speedPct: 0,
     speedNote: "",
     hitRate,
-    hitRateNote: hitRate ? `技能/狀態 +${hitRate}%` : "",
+    hitRateNote: hitRate ? `技能|狀態 +${hitRate}%` : "",
     evadeRate,
     evadeRateNote: evadeNotes.join("，"),
     damageReduce: defense.value,
@@ -8241,7 +8302,7 @@ function activeBattleDamageReductionForUi(ally) {
   const gearReduce = Math.min(60, Math.max(0, ally.combatBonuses?.damageReduce || 0));
   if (gearReduce) {
     multiplier *= 1 - gearReduce / 100;
-    notes.push(`裝備/晶片 -${gearReduce}%`);
+    notes.push(`裝備|晶片 -${gearReduce}%`);
   }
   if (ally.classId === "chanlin") {
     const mind = ally.resource || 0;
@@ -8497,7 +8558,7 @@ function chipAbilitySummary(chip) {
   if (typeof chip === "object") {
     const abilities = (chip.abilityStats || [])
       .map((entry) => `${STAT_LABELS[entry.key]}+${entry.value}`)
-      .join(" / ");
+      .join(" | ");
     const combat = chip.combat ? `${CHIP_COMBAT_STAT_DATA[chip.combat.key]?.name || "戰鬥屬性"}+${chip.combat.value}${CHIP_COMBAT_STAT_DATA[chip.combat.key]?.unit || ""}` : "";
     return [abilities, combat].filter(Boolean).join("｜");
   }
@@ -8898,22 +8959,22 @@ function skillResourceText(skillData) {
 
 function skillStatText(skillData) {
   const special = {
-    tianshu_array: "精準/出力/解析",
-    chanlin_vajra_reflect: "耐久/供能",
+    tianshu_array: "精準|出力|解析",
+    chanlin_vajra_reflect: "耐久|供能",
     chanlin_stone_heart: "耐久",
-    lei_aim: "精準/出力",
-    lei_quick_reload: "反應/出力",
-    xinhuo_life_first: "耐久/供能",
+    lei_aim: "精準|出力",
+    lei_quick_reload: "反應|出力",
+    xinhuo_life_first: "耐久|供能",
     wang_step: "反應",
-    emei_turning: "反應/供能/流光",
-    emei_chase_shadow: "反應/精準/流光",
-    furnace_east: "出力/供能/紫氣",
+    emei_turning: "反應|供能|流光",
+    emei_chase_shadow: "反應|精準|流光",
+    furnace_east: "出力|供能|紫氣",
   };
   if (special[skillData.id]) return special[skillData.id];
   const classId = classIdForSkill(skillData.id);
   const cls = CLASS_DATA[classId] || null;
   const keys = [...(cls?.main || []), ...(cls?.secondary || [])].slice(0, 3);
-  return keys.length ? keys.map((key) => STAT_LABELS[key] || key).join("/") : "依門派主屬性";
+  return keys.length ? keys.map((key) => STAT_LABELS[key] || key).join("|") : "依門派主屬性";
 }
 
 function skillClassResourceLabel(skillData) {
@@ -8959,7 +9020,7 @@ function equipSlotInteractive(member, index) {
   }
   const skillId = member.equippedActive[index] || "";
   const filled = Boolean(skillId);
-  const title = filled ? `${skillName(skillId)} / 拖曳調整順序 / 右鍵移除` : "拖曳主動技能到這裡";
+  const title = filled ? `${skillName(skillId)} | 拖曳調整順序 | 右鍵移除` : "拖曳主動技能到這裡";
   return `
     <div class="equip-slot ${filled ? "filled" : ""}" data-equip-member="${member.id}" data-equip-slot="${index}" data-equip-skill="${skillId}" draggable="${filled ? "true" : "false"}" title="${title}">
       <span class="slot-index">${index + 1}</span>
@@ -9398,8 +9459,8 @@ function gearSlotLabel(slotKey) {
 
 function gearAbilitySummary(gear) {
   if (!gear) return "";
-  const stats = (gear.stats || []).map((entry) => `${STAT_LABELS[entry.key]}+${entry.value}`).join(" / ");
-  const combat = gearCombatEntries(gear).map((entry) => `${combatBonusLabel(entry.key)}+${entry.value}${combatBonusUnit(entry.key)}`).join(" / ");
+  const stats = (gear.stats || []).map((entry) => `${STAT_LABELS[entry.key]}+${entry.value}`).join(" | ");
+  const combat = gearCombatEntries(gear).map((entry) => `${combatBonusLabel(entry.key)}+${entry.value}${combatBonusUnit(entry.key)}`).join(" | ");
   const set = gear.setId && GEAR_SET_DATA[gear.setId] ? GEAR_SET_DATA[gear.setId].name : "";
   return [stats, combat, set].filter(Boolean).join("｜");
 }
@@ -9426,7 +9487,7 @@ function chipSetId(chip) {
 function chipSetSummary(chip) {
   const set = CHIP_SET_DATA[chipSetId(chip)];
   if (!set) return "套裝資料待接入";
-  return `${set.name}：${set.effects.map((effect) => `${effect.pieces}件 ${effect.text}`).join(" / ")}`;
+  return `${set.name}：${set.effects.map((effect) => `${effect.pieces}件 ${effect.text}`).join(" | ")}`;
 }
 
 function equippedChips(member) {
@@ -9792,7 +9853,7 @@ function upgradeActionButton(member, levels, label, canPay = null) {
   const targetLevels = levels === "max" ? maxAffordableUpgradeLevels(member) : Math.min(Number(levels), Math.max(0, MAX_LEVEL - member.level));
   const cost = upgradeCostForLevels(member, targetLevels);
   const enabled = canPay == null ? targetLevels > 0 && canPayUpgradeCost(cost) : canPay;
-  const title = targetLevels > 0 ? `荒幣 ${cost.money} / 資材 ${cost.material}` : "已達上限";
+  const title = targetLevels > 0 ? `荒幣 ${cost.money} | 資材 ${cost.material}` : "已達上限";
   return `<button class="upgrade-button" data-upgrade="${member.id}" data-upgrade-levels="${levels}" title="${title}" ${enabled ? "" : "disabled"}>${label}</button>`;
 }
 
@@ -10025,7 +10086,7 @@ function expeditionTemplate() {
     stateLabel: timedTaskTitle("expedition", task),
     detail: task.active ? `完成 ${formatRemaining(task.endsAt)}` : "派遣隊伍進行遠征。",
     actionLabel: "開始遠征",
-    rewardText: "荒幣 80 / 資材 20",
+    rewardText: "荒幣 80 | 資材 20",
     startAttr: "data-start-task=\"expedition\"",
   });
 }
@@ -10119,7 +10180,7 @@ function tianyaNewsModal() {
 }
 
 function mapTemplate() {
-  const nextLevel = Math.min(state.maxClearedLevel + 1, 20);
+  const nextLevel = Math.min(state.maxClearedLevel + 1, BLACKWATER_MAX_LEVEL);
   return `
     <section class="screen map-screen place-screen">
       <section class="large-panel region-board">
@@ -10131,9 +10192,9 @@ function mapTemplate() {
         </div>
       </section>
       <section class="large-panel blackwater-board">
-        <div class="panel-title"><span>黑水砂原</span><span class="muted">Lv1-Lv60</span></div>
+        <div class="panel-title"><span>黑水砂原</span><span class="muted">Lv1-Lv30</span></div>
         <div class="map-path expedition-path">
-          ${Array.from({ length: MAX_LEVEL }, (_, i) => stageNode(MAX_LEVEL - i)).join("")}
+          ${Array.from({ length: BLACKWATER_MAX_LEVEL }, (_, i) => stageNode(BLACKWATER_MAX_LEVEL - i)).join("")}
         </div>
       </section>
       <aside class="panel expedition-side">
@@ -10203,7 +10264,7 @@ function stageNode(level) {
   const unlocked = level <= state.maxClearedLevel + 1;
   if (!unlocked) return "";
   const cleared = level <= state.maxClearedLevel;
-  const latest = level === Math.min(state.maxClearedLevel + 1, 20);
+  const latest = level === Math.min(state.maxClearedLevel + 1, BLACKWATER_MAX_LEVEL);
   const kind = stageBattleKind(level);
   const title = battleStageName(level, kind);
   const battleLocked = state.battle && !state.battle.over;
@@ -10264,7 +10325,7 @@ function startBattle(level, autoRepeat = false, kind = "mob", options = {}) {
     alert("需要 1 名作戰角色。");
     return;
   }
-  level = Math.min(MAX_LEVEL, Math.max(1, Number(level) || currentIdleLevel()));
+  level = Math.min(BLACKWATER_MAX_LEVEL, Math.max(1, Number(level) || currentIdleLevel()));
   kind = normalizeBattleKind(kind);
   if (kind === "boss" && !canChallengeBoss(level)) return;
   if (state.autoRepeatTimer) clearTimeout(state.autoRepeatTimer);
@@ -12968,7 +13029,7 @@ function rollRandomPostBattleEvent(level) {
   return {
     id: cryptoRandomId(),
     type,
-    level: Math.min(MAX_LEVEL, Math.max(1, safeNumber(eventLevel, 1, 1))),
+    level: Math.min(BLACKWATER_MAX_LEVEL, Math.max(1, safeNumber(eventLevel, 1, 1))),
     classId,
     faction: CLASS_DATA[classId]?.name || "門派",
     name: npc?.name || "",
@@ -12995,7 +13056,7 @@ function showRandomEventPrompt(event) {
         label: "是",
         primary: true,
         action: () => showRandomEventDialogue("深入險地", "盤據在遺跡中的危險生物向你襲來！", [
-          { label: "迎戰", primary: true, action: () => startBattle(Math.min(MAX_LEVEL, (playerCombatMember()?.level || event.level) + 5), false, "event_ruins", { eventContext: { ...event, bossLevel: Math.min(MAX_LEVEL, (playerCombatMember()?.level || event.level) + 5) }, standardRewards: true }) },
+          { label: "迎戰", primary: true, action: () => startBattle(Math.min(BLACKWATER_MAX_LEVEL, (playerCombatMember()?.level || event.level) + 5), false, "event_ruins", { eventContext: { ...event, bossLevel: Math.min(BLACKWATER_MAX_LEVEL, (playerCombatMember()?.level || event.level) + 5) }, standardRewards: true }) },
         ]),
       },
       { label: "否", action: () => {} },
@@ -13119,7 +13180,7 @@ function endBattle(victory) {
     const eventOutcome = applyRandomEventOutcome(eventContext, true, reward);
     if (eventOutcome?.expResult) expResult = eventOutcome.expResult;
     if (progressBattle && battle.level === state.maxClearedLevel + 1) {
-      state.maxClearedLevel = Math.min(MAX_LEVEL, battle.level);
+      state.maxClearedLevel = Math.min(BLACKWATER_MAX_LEVEL, battle.level);
       state.idleProgress = 0;
     }
     const blueprintRewards = bossBattle ? unlockBattleBlueprints(battle.level) : [];
@@ -13407,8 +13468,8 @@ function showBossClearResult(battleLevel) {
   render();
   const modal = document.createElement("div");
   modal.className = "result-modal";
-  const nextLevel = Math.min(MAX_LEVEL, battleLevel + 1);
-  const unlockedLevel = battleLevel < MAX_LEVEL ? nextLevel : battleLevel;
+  const nextLevel = Math.min(BLACKWATER_MAX_LEVEL, battleLevel + 1);
+  const unlockedLevel = battleLevel < BLACKWATER_MAX_LEVEL ? nextLevel : battleLevel;
   modal.innerHTML = `
     <div class="result-card boss-clear-card">
       <div class="result-heading">
@@ -13417,7 +13478,7 @@ function showBossClearResult(battleLevel) {
       </div>
       <div class="boss-clear-info">
         <b>進度解放</b>
-        <p>${battleLevel < MAX_LEVEL ? `黑水砂原已可進入 Lv${nextLevel}。` : "黑水砂原最終等級已解放。"}</p>
+        <p>${battleLevel < BLACKWATER_MAX_LEVEL ? `黑水砂原已可進入 Lv${nextLevel}。` : "黑水砂原最終等級已解放。"}</p>
       </div>
       <div class="boss-clear-info">
         <b>頭目挑戰開放</b>
@@ -14943,12 +15004,7 @@ function upgradeMember(memberId, levelsRaw = "1") {
 }
 
 function growStats(member) {
-  const cls = CLASS_DATA[member.classId];
-  const growth = v009LevelGrowthPoints(member.level);
-  const add = allocateStats(growth + STAT_KEYS.length, cls);
-  for (const key of STAT_KEYS) {
-    member.stats[key] += Math.max(0, add[key] - 1);
-  }
+  member.stats = fixedStatsForClassLevel(member.classId, member.level);
 }
 
 function v009LevelGrowthPoints(level) {
