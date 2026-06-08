@@ -5283,7 +5283,7 @@ function v009ImpactNeedle(x, y, color, mirror = false, angleOverride = null) {
   const tailY = y - Math.sin(angle) * 36;
   v009AddStageFxForm({ type: "needleStuck", x, y, life: 620, maxLife: 620, color, angle, shake: 1 });
   v009AddStageFxForm({ type: "needleTailPulse", x: tailX, y: tailY, life: 360, maxLife: 360, color });
-  v009AddStageFxBurst(tailX, tailY, color, 18, 4.8, 3.4, 440, Math.PI * 1.0, angle + Math.PI);
+  v009AddStageFxBurst(tailX, tailY, color, 18, 4.8, 3.4, 440, Math.PI * 1.0, angle);
   v009AddStageFxBurst(tailX, tailY, V009_STAGE_FX_COLORS.white, 6, 2.8, 2.2, 220);
 }
 
