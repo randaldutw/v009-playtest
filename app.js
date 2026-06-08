@@ -964,7 +964,7 @@ const CLASS_DATA = {
     skills: [
       skill("chanlin_luohan", "羅漢拳", 1, "攻擊造成係數 3 傷害，獲得少量不動心。", { coefficient: 3 }),
       skill("chanlin_tiger", "伏虎掌", 3, "攻擊造成係數 4 傷害，獲得少量不動心。", { coefficient: 4 }),
-      skill("chanlin_vajra_reflect", "金剛反", 6, "不動心達到 50 後進入金剛反勢，消耗 50 不動心，下一次受擊會把力道反震回去。", { timing: "trigger", triggerCondition: "resource_at_50", resourceCost: 50 }),
+      skill("chanlin_vajra_reflect", "金剛反", 6, "不動心達到 100 後進入金剛反勢，消耗 100 不動心，下一次受擊會把力道反震回去。", { timing: "trigger", triggerCondition: "resource_at_100", resourceCost: 100 }),
       skill("chanlin_immovable", "不動禪", 10, "進入反擊架式，無效下一次受到的攻擊並造成係數 4 傷害，獲得中量不動心。", { coefficient: 4 }),
       skill("chanlin_stone_heart", "石心立", 15, "觸發技；開局施展，為自己加上等同生命上限 30% 的護盾，優先吸收傷害。", { timing: "trigger", triggerCondition: "battle_start", oncePerBattle: true }),
       skill("chanlin_mingwang", "明王拳", 20, "羅漢拳上位技能；攻擊造成係數 5 傷害，獲得少量不動心。", { coefficient: 5 }),
@@ -1056,7 +1056,7 @@ const CLASS_DATA = {
 const CLASS_RESOURCE_DATA = {
   tianshu: { label: "解析", max: 100, start: 0, combat: true },
   tang: { label: "冷卻", max: 60, start: 18, combat: false },
-  chanlin: { label: "不動心", max: 50, start: 0, combat: true },
+  chanlin: { label: "不動心", max: 100, start: 0, combat: true },
   leishi: { label: "彈藥", max: 4, start: 4, combat: true },
   xinhuo: { label: "怒氣", max: 100, start: 0, combat: true },
   wangchuan: { label: "生死印", max: 3, start: 0, combat: true },
@@ -1129,7 +1129,7 @@ const SKILL_PRESENTATION_TEXT = {
   tang_king: "毒蜂針的上位針法，毒力更深，停留更久。不同種類的毒將分開計算。",
   chanlin_luohan: "沉穩出拳，邊打邊定心，逐步累積不動心。",
   chanlin_tiger: "掌勢沉重，適合正面壓制敵人並穩住心神。",
-  chanlin_vajra_reflect: "不動心達到 50 後進入金剛反勢，消耗 50 不動心，下一次受擊會把力道反震回去。",
+  chanlin_vajra_reflect: "不動心達到 100 後進入金剛反勢，消耗 100 不動心，下一次受擊會把力道反震回去。",
   chanlin_immovable: "入禪定身，化去下一次傷害，並以反擊逼退敵人。",
   chanlin_stone_heart: "開戰先立石心，厚實護盾會先替本體承傷。",
   chanlin_mingwang: "羅漢拳的上位拳法，拳勢更重，仍能穩定累積不動心。",
@@ -2224,6 +2224,32 @@ function itemName(id) {
 
 function itemValue(id) {
   return ITEM_VALUES[id] || 1;
+}
+
+function craftCostMoneyValue(cost) {
+  if (!cost) return 0;
+  if (cost.resource) return (RESOURCE_EXCHANGE_VALUES[cost.resource] || 0) * safeNumber(cost.count, 0, 0);
+  return itemValue(cost.id) * safeNumber(cost.count, 0, 0);
+}
+
+function gearRecipeFor(gear) {
+  const recipeId = craftedGearRecipeIdFor(gear);
+  return GEAR_CRAFT_RECIPES.find((recipe) => recipe.id === recipeId) || null;
+}
+
+function gearSellValue(gear) {
+  const recipe = gearRecipeFor(gear);
+  if (recipe) {
+    const craftValue = recipe.costs.reduce((sum, cost) => sum + craftCostMoneyValue(cost), 0);
+    return Math.max(1, Math.round(craftValue * 0.5));
+  }
+  return Math.max(20, Math.round(safeNumber(gear?.level, 1, 1) * 45));
+}
+
+function chipSellValue(chip) {
+  const tier = safeNumber(chip?.tier, 1, 1);
+  const level = safeNumber(chip?.level, 1, 1);
+  return Math.max(20, Math.round(tier * 80 + level * 18));
 }
 
 function itemTypeLabel(id) {
@@ -7050,6 +7076,7 @@ function v009InventoryItemPopout(entry) {
       </div>
       ${v009InventoryDetailBody(detail)}
       ${detail.note ? `<i>${escapeHtml(detail.note)}</i>` : ""}
+      ${v009InventoryPopoutActions(entry)}
     </aside>
   `;
 }
@@ -7072,8 +7099,21 @@ function v009EquippedGearTag(gear, member = null) {
       </div>
       ${v009InventoryDetailBody(detail)}
       ${detail.note ? `<i>${escapeHtml(detail.note)}</i>` : ""}
+      ${v009InventoryPopoutActions(entry)}
     </aside>
   `;
+}
+
+function v009InventoryPopoutActions(entry) {
+  const sellValue = focusedEntrySellValue(entry);
+  const sellButton = sellValue > 0
+    ? `<button class="sell" data-v009-sell-focused>販售 <b>${sellValue}</b></button>`
+    : "";
+  const dismantleButton = entry.category === "gear" && entry.gear
+    ? `<button class="dismantle" data-v009-dismantle-focused>拆解</button>`
+    : "";
+  if (!sellButton && !dismantleButton) return "";
+  return `<div class="v009-item-popout-actions">${sellButton}${dismantleButton}</div>`;
 }
 
 function v009InventoryDetailMember() {
@@ -9332,7 +9372,7 @@ function skillResourceText(skillData) {
     tang_king: "刷新或套用生物毒。",
     chanlin_luohan: "取得不動心 +10。",
     chanlin_tiger: "取得不動心 +10。",
-    chanlin_vajra_reflect: "不動心達 50 觸發；消耗不動心 50。",
+    chanlin_vajra_reflect: "不動心達 100 觸發；消耗不動心 100。",
     chanlin_immovable: "取得不動心 +24。",
     chanlin_stone_heart: "開戰觸發；每場一次。",
     chanlin_mingwang: "取得不動心 +10。",
@@ -9412,6 +9452,7 @@ function triggerConditionText(condition) {
   return {
     battle_start: "開戰",
     resource_at_50: "特殊資源達 50",
+    resource_at_100: "特殊資源達 100",
     new_poison_type: "新增毒種類",
     ammo_empty: "彈藥耗盡",
     ally_hp_below_30: "生命低於 30%",
@@ -11652,6 +11693,10 @@ function insertConditionMet(ally, skillData, battle) {
     if (skillData.id === "chanlin_vajra_reflect" && ally.vajraReflectReady) return false;
     return (ally.resource || 0) >= 50;
   }
+  if (condition === "resource_at_100") {
+    if (skillData.id === "chanlin_vajra_reflect" && ally.vajraReflectReady) return false;
+    return (ally.resource || 0) >= 100;
+  }
   if (condition === "ally_hp_below_30") return (ally.hp || 0) / Math.max(1, ally.maxHp || 1) <= 0.3;
   if (condition === "enemy_hp_below_15") return livingEnemies().some((enemy) => enemy.hp > 0 && enemy.hp / Math.max(1, enemy.maxHp || 1) <= 0.15);
   if (condition === "ammo_empty") return ally.classId === "leishi" && (ally.resource || 0) <= 0;
@@ -11808,6 +11853,7 @@ function skillConditionMet(ally, skillData) {
   if (condition === "resource_at_20") return resource >= 20;
   if (condition === "resource_at_25") return resource >= 25;
   if (condition === "resource_at_50") return resource >= 50;
+  if (condition === "resource_at_100") return resource >= 100;
   return true;
 }
 
@@ -12151,7 +12197,7 @@ function chanlinStrike(ally, label, scale, resourceGain) {
 }
 
 function chanlinVajraReflect(ally) {
-  if (!spendClassResource(ally, 50)) return;
+  if (!spendClassResource(ally, 100)) return;
   ally.front = true;
   ally.vajraReflectReady = true;
   triggerFloat(ally, "金剛反", "shield");
@@ -14967,6 +15013,20 @@ function bindEvents() {
   document.querySelectorAll("[data-sell-item]").forEach((el) => {
     el.addEventListener("click", () => sellInventoryItem(el.dataset.sellItem));
   });
+  document.querySelectorAll("[data-v009-sell-focused]").forEach((el) => {
+    el.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      sellFocusedInventoryEntry();
+    });
+  });
+  document.querySelectorAll("[data-v009-dismantle-focused]").forEach((el) => {
+    el.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      dismantleFocusedGear();
+    });
+  });
   document.querySelectorAll("[data-craft-chip]").forEach((el) => {
     el.addEventListener("click", () => craftChip(el.dataset.craftChip));
   });
@@ -15186,6 +15246,113 @@ function sellInventoryItem(id) {
   state.money += itemValue(id);
   if (state.inventory[id] <= 0) delete state.inventory[id];
   state.inventoryOrder = normalizeInventoryOrder(state.inventoryOrder, state.inventory);
+  saveGame();
+  render();
+}
+
+function focusedInventoryEntryForAction() {
+  return v009FocusedInventoryEntry(v009SideInventoryEntries());
+}
+
+function focusedEntrySellValue(entry) {
+  if (!entry) return 0;
+  if (entry.category === "gear" && entry.gear) return gearSellValue(entry.gear);
+  if (entry.category === "chip" && entry.chip) return chipSellValue(entry.chip);
+  if (entry.category === "quest") return 0;
+  return ITEM_DATA[entry.id] ? itemValue(entry.id) : 0;
+}
+
+function sellFocusedInventoryEntry() {
+  const entry = focusedInventoryEntryForAction();
+  const value = focusedEntrySellValue(entry);
+  if (!entry || value <= 0) return;
+  if (entry.category === "gear") {
+    const removed = removeGearById(entry.id);
+    if (!removed) return;
+  } else if (entry.category === "chip") {
+    state.chips = normalizeChipInventory(state.chips);
+    const index = state.chips.findIndex((chip) => chip.id === entry.id);
+    if (index < 0) return;
+    state.chips.splice(index, 1);
+  } else {
+    state.inventory = normalizeInventory(state.inventory);
+    if (!ITEM_DATA[entry.id] || !state.inventory[entry.id]) return;
+    state.inventory[entry.id] -= 1;
+    if (state.inventory[entry.id] <= 0) delete state.inventory[entry.id];
+    state.inventoryOrder = normalizeInventoryOrder(state.inventoryOrder, state.inventory);
+  }
+  state.money += value;
+  addFeed(`販售 ${entry.name}，獲得荒幣 ${value}。`, "gold");
+  clearFocusedInventoryItem(entry.id);
+  saveGame();
+  render();
+}
+
+function findGearLocationById(gearId) {
+  if (!gearId) return null;
+  state.gear = normalizeGearInventory(state.gear);
+  const inventoryIndex = state.gear.findIndex((gear) => gear.id === gearId);
+  if (inventoryIndex >= 0) return { type: "inventory", gear: state.gear[inventoryIndex], index: inventoryIndex };
+  for (const member of state.recruits || []) {
+    member.equipment = normalizeEquipment(member.equipment);
+    for (const slot of EQUIPMENT_SLOTS) {
+      const gear = member.equipment[slot.key];
+      if (gear?.id === gearId) return { type: "equipped", gear, member, slotKey: slot.key };
+    }
+  }
+  return null;
+}
+
+function removeGearById(gearId) {
+  const location = findGearLocationById(gearId);
+  if (!location) return null;
+  if (location.type === "inventory") {
+    state.gear.splice(location.index, 1);
+  } else if (location.type === "equipped") {
+    location.member.equipment[location.slotKey] = null;
+    state.selectedMemberId = location.member.id;
+  }
+  return location.gear;
+}
+
+function randomRecoveredHalfCount(count) {
+  const total = Math.max(0, Math.floor(safeNumber(count, 0, 0)));
+  let recovered = 0;
+  for (let index = 0; index < total; index += 1) {
+    if (Math.random() < 0.5) recovered += 1;
+  }
+  return recovered;
+}
+
+function recoverCraftCost(cost, count) {
+  if (!cost || count <= 0) return "";
+  if (cost.resource === "money") return "";
+  if (cost.resource) {
+    addResource(cost.resource, count);
+    return `${RESOURCE_DATA[cost.resource]?.name || cost.resource} x${count}`;
+  }
+  state.inventory = normalizeInventory(state.inventory);
+  addInventoryItems([{ id: cost.id, count }]);
+  return `${itemName(cost.id)} x${count}`;
+}
+
+function dismantleFocusedGear() {
+  const entry = focusedInventoryEntryForAction();
+  if (!entry || entry.category !== "gear" || !entry.gear) return;
+  const gear = removeGearById(entry.id);
+  if (!gear) return;
+  const recipe = gearRecipeFor(gear);
+  const recovered = [];
+  if (recipe) {
+    recipe.costs.forEach((cost) => {
+      const count = randomRecoveredHalfCount(cost.count);
+      const text = recoverCraftCost(cost, count);
+      if (text) recovered.push(text);
+    });
+  }
+  state.inventoryOrder = normalizeInventoryOrder(state.inventoryOrder, state.inventory);
+  addFeed(`拆解 ${gearDisplayName(gear)}${recovered.length ? `，回收 ${recovered.join("、")}。` : "，未回收到素材。"}`, "gold");
+  clearFocusedInventoryItem(entry.id);
   saveGame();
   render();
 }
