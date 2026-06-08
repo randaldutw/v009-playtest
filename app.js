@@ -11086,8 +11086,13 @@ function enemyMaxHp(level, boss = false) {
 
 function bossTargetMaxHp(level) {
   const normalizedLevel = Math.max(1, Number(level) || 1);
+  if (normalizedLevel <= 5) return Math.round(120 + normalizedLevel * 28);
   const highLevelExtra = Math.max(0, normalizedLevel - 10) * 70;
   return Math.round(360 + normalizedLevel * 150 + highLevelExtra);
+}
+
+function isTutorialBossEnemy(enemy) {
+  return !!enemy && (enemy.w > 1 || enemy.h > 1) && Number(enemy.level) <= 5;
 }
 
 function highLevelBalanceStep(level) {
@@ -13054,11 +13059,13 @@ function triggerDuelOpponentAttackFx(enemy, label = "", hits = 1) {
 
 function enemyDamageScale(enemy) {
   const boss = enemy && (enemy.w > 1 || enemy.h > 1);
+  if (isTutorialBossEnemy(enemy)) return 1.42;
   return (boss ? 2.42 : 3.75) * highLevelEnemyDamagePressure(enemy);
 }
 
 function enemyDamageVariance(enemy) {
   const boss = enemy && (enemy.w > 1 || enemy.h > 1);
+  if (isTutorialBossEnemy(enemy)) return 0.8;
   return (boss ? 1.5 : 5) * highLevelEnemyDamagePressure(enemy);
 }
 
@@ -13692,7 +13699,7 @@ function endBattle(victory) {
         queueBodyManagementIntroAfterBattle(battle, alreadyCleared);
       if (queuedStoryEvent) battle.storyEventQueued = true;
     }
-    const nextEvent = !battle.storyEventQueued && shouldTriggerRandomEventAfterBattle(battle, true) ? rollRandomPostBattleEvent(battle.level) : null;
+    const nextEvent = !autoBattle && !battle.storyEventQueued && shouldTriggerRandomEventAfterBattle(battle, true) ? rollRandomPostBattleEvent(battle.level) : null;
     battle.autoRepeatStopAfterResult = !!battle.storyEventQueued || !!nextEvent;
     if (autoBattle) recordAutoRepeatStats(reward, expResult);
     saveGame();
