@@ -32,7 +32,7 @@ const CLASS_BATTLE_DAMAGE_MULTIPLIER = {
   tianshu: 1.68,
   tang: 1.02,
   chanlin: 1.34,
-  leishi: 1.95,
+  leishi: 2.18,
   xinhuo: 1.24,
   wangchuan: 1.46,
   emei: 1.38,
@@ -11304,7 +11304,7 @@ function enemyMaxHp(level, boss = false) {
 function bossTargetMaxHp(level) {
   const normalizedLevel = Math.max(1, Number(level) || 1);
   if (normalizedLevel <= 5) return Math.round(120 + normalizedLevel * 28);
-  const highLevelExtra = Math.max(0, normalizedLevel - 10) * 42;
+  const highLevelExtra = Math.max(0, normalizedLevel - 10) * 22;
   return Math.round(360 + normalizedLevel * 142 + highLevelExtra);
 }
 
@@ -11321,7 +11321,7 @@ function highLevelEnemyDamagePressure(enemy) {
   if (!step) return 1;
   const boss = enemy && (enemy.w > 1 || enemy.h > 1);
   return boss
-    ? 1.12 + step * 0.018
+    ? 1.04 + step * 0.012
     : 1.58 + step * 0.04;
 }
 
@@ -11329,7 +11329,7 @@ function highLevelBossHeavyStrikeBonus(enemy, target) {
   if (!enemy || !target || !(enemy.w > 1 || enemy.h > 1)) return 0;
   const step = highLevelBalanceStep(enemy.level);
   if (!step) return 0;
-  return target.maxHp * (0.032 + step * 0.0025);
+  return target.maxHp * (0.018 + step * 0.0014);
 }
 
 function randomAmount(min, max) {
