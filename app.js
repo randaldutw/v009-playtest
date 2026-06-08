@@ -964,7 +964,7 @@ const CLASS_DATA = {
     skills: [
       skill("chanlin_luohan", "羅漢拳", 1, "攻擊造成係數 3 傷害，獲得少量不動心。", { coefficient: 3 }),
       skill("chanlin_tiger", "伏虎掌", 3, "攻擊造成係數 4 傷害，獲得少量不動心。", { coefficient: 4 }),
-      skill("chanlin_vajra_reflect", "金剛反", 6, "不動心達到 50 後進入金剛反勢，下一次受擊會把力道反震回去。", { timing: "trigger", triggerCondition: "resource_at_50", oncePerBattle: true }),
+      skill("chanlin_vajra_reflect", "金剛反", 6, "不動心達到 50 後進入金剛反勢，下一次受擊會把力道反震回去。", { timing: "trigger", triggerCondition: "resource_at_50" }),
       skill("chanlin_immovable", "不動禪", 10, "進入反擊架式，無效下一次受到的攻擊並造成係數 4 傷害，獲得中量不動心。", { coefficient: 4 }),
       skill("chanlin_stone_heart", "石心立", 15, "觸發技；開局施展，為自己加上等同生命上限 30% 的護盾，優先吸收傷害。", { timing: "trigger", triggerCondition: "battle_start", oncePerBattle: true }),
       skill("chanlin_mingwang", "明王拳", 20, "羅漢拳上位技能；攻擊造成係數 5 傷害，獲得少量不動心。", { coefficient: 5 }),
@@ -1056,7 +1056,7 @@ const CLASS_DATA = {
 const CLASS_RESOURCE_DATA = {
   tianshu: { label: "解析", max: 100, start: 0, combat: true },
   tang: { label: "冷卻", max: 60, start: 18, combat: false },
-  chanlin: { label: "不動心", max: 100, start: 0, combat: true },
+  chanlin: { label: "不動心", max: 50, start: 0, combat: true },
   leishi: { label: "彈藥", max: 4, start: 4, combat: true },
   xinhuo: { label: "怒氣", max: 100, start: 0, combat: true },
   wangchuan: { label: "生死印", max: 3, start: 0, combat: true },
@@ -8609,14 +8609,6 @@ function activeBattleDamageReductionForUi(ally) {
     multiplier *= 1 - gearReduce / 100;
     notes.push(`裝備|晶片 -${gearReduce}%`);
   }
-  if (ally.classId === "chanlin") {
-    const mind = ally.resource || 0;
-    const chanlinReduce = mind >= 100 ? 30 : mind >= 50 ? 15 : 0;
-    if (chanlinReduce) {
-      multiplier *= 1 - chanlinReduce / 100;
-      notes.push(`不動心 -${chanlinReduce}%`);
-    }
-  }
   if ((ally.guard || 0) > 0) {
     const guardMultiplier = Math.max(0.35, 0.68 - Math.max(0, ally.combatBonuses?.guardBoost || 0) / 200);
     const guardReduce = Math.round((1 - guardMultiplier) * 100);
@@ -9221,7 +9213,7 @@ function skillResourceText(skillData) {
     tang_king: "刷新或套用生物毒。",
     chanlin_luohan: "取得不動心 +10。",
     chanlin_tiger: "取得不動心 +10。",
-    chanlin_vajra_reflect: "不動心達 50 觸發；不消耗不動心；每場一次。",
+    chanlin_vajra_reflect: "不動心達 50 觸發；不消耗不動心。",
     chanlin_immovable: "取得不動心 +24。",
     chanlin_stone_heart: "開戰觸發；每場一次。",
     chanlin_mingwang: "取得不動心 +10。",
@@ -11461,7 +11453,10 @@ function insertConditionMet(ally, skillData, battle) {
   const condition = skillData.triggerCondition || "";
   if (!condition) return false;
   if (condition === "battle_start") return true;
-  if (condition === "resource_at_50") return (ally.resource || 0) >= 50;
+  if (condition === "resource_at_50") {
+    if (skillData.id === "chanlin_vajra_reflect" && ally.vajraReflectReady) return false;
+    return (ally.resource || 0) >= 50;
+  }
   if (condition === "ally_hp_below_30") return (ally.hp || 0) / Math.max(1, ally.maxHp || 1) <= 0.3;
   if (condition === "enemy_hp_below_15") return livingEnemies().some((enemy) => enemy.hp > 0 && enemy.hp / Math.max(1, enemy.maxHp || 1) <= 0.15);
   if (condition === "ammo_empty") return ally.classId === "leishi" && (ally.resource || 0) <= 0;
@@ -13007,10 +13002,6 @@ function chooseEnemyTarget() {
 
 function applyDamage(ally, amount, sourceName, moveLabel = "攻擊", options = {}) {
   amount *= 1 - Math.min(0.6, Math.max(0, ally.combatBonuses?.damageReduce || 0) / 100);
-  if (ally.classId === "chanlin") {
-    const mind = ally.resource || 0;
-    amount *= mind >= 100 ? 0.7 : mind >= 50 ? 0.85 : 1;
-  }
   if (ally.negateNextHit) {
     ally.negateNextHit = false;
     triggerFloat(ally, "無效", "shield");
