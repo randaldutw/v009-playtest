@@ -8622,7 +8622,8 @@ function derivedCombatStats(member, stats) {
   const critDamage = 50 + Math.max(0, bonuses.critDamage || 0) + battleBonuses.critDamage;
   const hitRate = Math.min(99, Math.max(60, 76 + stats.precision * 2 + Math.max(0, bonuses.hitRate || 0) + battleBonuses.hitRate));
   const reflectRate = Math.max(0, bonuses.reflectRate || bonuses.counterDamage || 0);
-  const evadeRate = Math.max(0, bonuses.evadeRate || 0) + battleBonuses.evadeRate;
+  const passiveEvadeRate = Math.max(0, bonuses.evadeRate || 0) + battleBonuses.evadeRate;
+  const evadeRate = Number.isFinite(battleBonuses.evadeRateOverride) ? battleBonuses.evadeRateOverride : passiveEvadeRate;
   const damageReduce = Math.min(90, battleBonuses.damageReduce || Math.max(0, bonuses.damageReduce || 0));
   const resourceText = battleBonuses.resourceRegenFlat
     ? `+${battleBonuses.resourceRegenFlat}/回合`
@@ -8650,6 +8651,7 @@ function activeBattleDerivedBonuses(member) {
     hitRate: 0,
     hitRateNote: "",
     evadeRate: 0,
+    evadeRateOverride: null,
     evadeRateNote: "",
     damageReduce: 0,
     damageReduceNote: "",
@@ -8711,6 +8713,7 @@ function activeBattleDerivedBonuses(member) {
 
   const hitRate = Math.max(0, ally.accuracyBonus || 0);
   const evadeRate = activeEvadeRateBonus(ally);
+  let evadeRateOverride = null;
   const evadeNotes = [];
   if (ally.wangBianStepActive) evadeNotes.push("彼岸步伐 +30%");
   else if (ally.evadeRateBonus) evadeNotes.push(`技能|狀態 +${Math.max(0, ally.evadeRateBonus || 0)}%`);
@@ -8721,7 +8724,8 @@ function activeBattleDerivedBonuses(member) {
       + Math.max(0, ally.combatBonuses?.evadeRate || 0)
       + activeEvadeRateBonus(ally)
     );
-    evadeNotes.push(`目前觸發率 ${Math.round(activeChance)}%`);
+    evadeRateOverride = Math.round(activeChance);
+    evadeNotes.push(`目前觸發率 ${evadeRateOverride}%`);
   }
 
   const defense = activeBattleDamageReductionForUi(ally);
@@ -8737,6 +8741,7 @@ function activeBattleDerivedBonuses(member) {
     hitRate,
     hitRateNote: hitRate ? `技能|狀態 +${hitRate}%` : "",
     evadeRate,
+    evadeRateOverride,
     evadeRateNote: evadeNotes.join("，"),
     damageReduce: defense.value,
     damageReduceNote: defense.note,
