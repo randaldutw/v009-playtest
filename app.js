@@ -1345,6 +1345,7 @@ function init() {
   bindDelegatedUiEvents();
   applyViewportScale();
   window.addEventListener("resize", applyViewportScale);
+  window.addEventListener("beforeunload", () => saveGame());
   if (loadGame()) {
     render();
     return;
@@ -1617,6 +1618,7 @@ function saveGame() {
       codexGeographyOpen: state.codexGeographyOpen !== false,
       commissions: state.commissions,
       battleSpeed: state.battleSpeed,
+      autoRepeatSession: autoRepeatSaveState(),
       lastBattleLevel: state.lastBattleLevel,
       idleProgress: state.idleProgress,
       battleLogArchive: state.battleLogArchive,
@@ -1693,7 +1695,12 @@ function loadGame() {
     ensureBodyManagementState();
     ensureDefaultCommissions();
     state.candidates = [];
+    restoreOfflineAutoRepeat(save.autoRepeatSession);
     saveGame();
+    if (state.autoRepeat) {
+      const repeat = state.autoRepeatStats || {};
+      setTimeout(() => scheduleAutoRepeat(repeat.level || state.lastBattleLevel, repeat.kind || "mob"), 0);
+    }
     return true;
   } catch (error) {
     console.warn("Load failed", error);
@@ -1754,9 +1761,44 @@ function migrateSave(save) {
     codexGeographyOpen: save.codexGeographyOpen !== false,
     commissions: normalizeCommissions(save.commissions),
     battleSpeed: save.battleSpeed === 2 ? 2 : 1,
+    autoRepeatSession: normalizeAutoRepeatSession(save.autoRepeatSession),
     lastBattleLevel: Math.min(BLACKWATER_MAX_LEVEL, Math.max(1, safeNumber(save.lastBattleLevel, 1, 1))),
     idleProgress: Math.min(IDLE_BOSS_PROGRESS_REQUIRED, safeNumber(save.idleProgress, 0, 0)),
     battleLogArchive: Array.isArray(save.battleLogArchive) ? save.battleLogArchive.slice(0, 200) : [],
+  };
+}
+
+function normalizeAutoRepeatSession(session) {
+  if (!session || typeof session !== "object" || !session.active) return null;
+  const level = Math.min(BLACKWATER_MAX_LEVEL, Math.max(1, safeNumber(session.level, 1, 1)));
+  const kind = normalizeBattleKind(session.kind || "mob");
+  if (kind.startsWith("event_")) return null;
+  const stats = normalizeAutoRepeatStats(session.stats, level, kind);
+  return {
+    active: true,
+    level,
+    kind,
+    lastAt: safeNumber(session.lastAt, Date.now(), 0),
+    stats,
+  };
+}
+
+function normalizeAutoRepeatStats(stats, level, kind) {
+  const source = stats && typeof stats === "object" ? stats : {};
+  const items = {};
+  Object.entries(source.items || {}).forEach(([id, count]) => {
+    if (ITEM_DATA[id]) items[id] = safeNumber(count, 0, 0);
+  });
+  return {
+    level: Math.min(BLACKWATER_MAX_LEVEL, Math.max(1, safeNumber(source.level, level, 1))),
+    kind: normalizeBattleKind(source.kind || kind),
+    battles: safeNumber(source.battles, 0, 0),
+    exp: safeNumber(source.exp, 0, 0),
+    money: safeNumber(source.money, 0, 0),
+    material: safeNumber(source.material, 0, 0),
+    energy: safeNumber(source.energy, 0, 0),
+    items,
+    gear: safeNumber(source.gear, 0, 0),
   };
 }
 
@@ -10706,6 +10748,77 @@ function createAutoRepeatStats(level, kind) {
     energy: 0,
     items: {},
     gear: 0,
+  };
+}
+
+function autoRepeatSaveState() {
+  if (!state.autoRepeat) return null;
+  const stats = state.autoRepeatStats || createAutoRepeatStats(state.lastBattleLevel || 1, state.battle?.kind || "mob");
+  return {
+    active: true,
+    level: Math.min(BLACKWATER_MAX_LEVEL, Math.max(1, safeNumber(stats.level || state.battle?.level || state.lastBattleLevel, 1, 1))),
+    kind: normalizeBattleKind(stats.kind || state.battle?.kind || "mob"),
+    lastAt: Date.now(),
+    stats: normalizeAutoRepeatStats(stats, stats.level || state.lastBattleLevel || 1, stats.kind || "mob"),
+  };
+}
+
+function restoreOfflineAutoRepeat(session) {
+  if (!session?.active) return;
+  if (session.level > state.maxClearedLevel) return;
+  if (session.kind === "boss" && !canChallengeBoss(session.level)) return;
+  state.autoRepeat = true;
+  state.autoRepeatStats = normalizeAutoRepeatStats(session.stats, session.level, session.kind);
+  const completed = offlineAutoRepeatCompletedBattles(session);
+  if (completed > 0) {
+    applyOfflineAutoRepeatRewards(session.level, session.kind, completed);
+  }
+}
+
+function offlineAutoRepeatCompletedBattles(session) {
+  const elapsed = Math.max(0, Date.now() - safeNumber(session.lastAt, Date.now(), 0));
+  return Math.floor(elapsed / offlineAutoRepeatCycleMs(session.kind));
+}
+
+function offlineAutoRepeatCycleMs(kind) {
+  return (kind === "boss" ? 80000 : 44000) + AUTO_REPEAT_INTERVAL_MS;
+}
+
+function applyOfflineAutoRepeatRewards(level, kind, count) {
+  const member = playerCombatMember();
+  if (!member || count <= 0) return;
+  for (let index = 0; index < count; index += 1) {
+    const battle = createOfflineAutoRepeatBattle(level, kind, member);
+    const reward = applyAutoRepeatRewardDiscount(calculateBattleDrops(battle));
+    const expResult = grantBattleExperience(battle, AUTO_REPEAT_REWARD_RATE);
+    state.money += reward.money;
+    state.material += reward.material;
+    addInventoryItems(reward.items);
+    addGearItems(reward.gear);
+    recordAutoRepeatStats(reward, expResult);
+  }
+}
+
+function createOfflineAutoRepeatBattle(level, kind, member) {
+  return {
+    level,
+    kind,
+    autoRepeat: true,
+    standardRewards: true,
+    eventContext: null,
+    allies: [cloneCombatant(member)],
+    enemies: createEnemies(level, kind),
+    feed: [],
+    stats: {
+      interrupts: 0,
+      shields: 0,
+      marks: 0,
+      poison: 0,
+      kills: 0,
+      playerTurns: 0,
+      playerDamageTotal: 0,
+      maxSingleDamage: 0,
+    },
   };
 }
 
