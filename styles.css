@@ -8976,8 +8976,8 @@ button.v009-list-row:hover {
 .auto-repeat-float {
   position: fixed;
   left: 50%;
-  top: 86px;
-  transform: translateX(-50%);
+  top: 50%;
+  transform: translate(-50%, -50%);
   z-index: 42;
   width: min(460px, calc(100vw - 32px));
   border: 1px solid rgba(255, 209, 102, 0.62);
