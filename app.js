@@ -79,6 +79,9 @@ const V009_ATTACK_FX_CONFIG = {
   "crescent-whitegold": { family: "crescent", tone: "whitegold" },
 };
 
+const AUTO_REPEAT_REWARD_RATE = 0.6;
+const AUTO_REPEAT_INTERVAL_MS = 10000;
+
 const ROLE_LABELS = {
   tank: "防護",
   damage: "輸出",
@@ -1304,10 +1307,12 @@ const state = {
     firstMapRouteStep: "",
     wolfWorkshopIntro: false,
     bodyManagementIntro: false,
+    autoRepeatIntro: false,
   },
   pendingSkillOrderTutorial: null,
   pendingWolfWorkshopTutorial: null,
   pendingBodyManagementTutorial: null,
+  pendingAutoRepeatTutorial: null,
   battle: null,
   battleTimer: null,
   uiRefreshTimer: null,
@@ -1315,6 +1320,7 @@ const state = {
   autoRepeat: false,
   autoRepeatTimer: null,
   autoRepeatSeq: 0,
+  autoRepeatStats: null,
   lastBattleLevel: 1,
   idleProgress: 0,
   pendingBossLevel: null,
@@ -1503,6 +1509,9 @@ function seedNewGame() {
   state.uiRefreshTimer = null;
   state.battleSpeed = 1;
   state.autoRepeat = false;
+  state.autoRepeatTimer = null;
+  state.autoRepeatStats = null;
+  state.pendingAutoRepeatTutorial = null;
   state.lastBattleLevel = 1;
   state.idleProgress = 0;
   state.pendingBossLevel = null;
@@ -1667,6 +1676,8 @@ function loadGame() {
     state.battleSpeed = save.battleSpeed;
     state.autoRepeat = false;
     state.autoRepeatTimer = null;
+    state.autoRepeatStats = null;
+    state.pendingAutoRepeatTutorial = null;
     state.lastBattleLevel = save.lastBattleLevel;
     state.idleProgress = save.idleProgress;
     state.pendingBossLevel = null;
@@ -1778,6 +1789,7 @@ function normalizeTutorials(tutorials) {
     firstMapRouteStep: ["map", "blackwater", "battle", "done"].includes(tutorials?.firstMapRouteStep) ? tutorials.firstMapRouteStep : "",
     wolfWorkshopIntro: !!tutorials?.wolfWorkshopIntro,
     bodyManagementIntro: !!tutorials?.bodyManagementIntro,
+    autoRepeatIntro: !!tutorials?.autoRepeatIntro,
   };
 }
 
@@ -3143,6 +3155,7 @@ function render() {
   if (needsCharacterCreation()) view.innerHTML += characterCreatorOverlay();
   if (state.bodySelection) view.innerHTML += bodySelectionOverlay();
   if (state.eventDialog) view.innerHTML += eventDialogueOverlay();
+  if (state.autoRepeat) view.innerHTML += autoRepeatStatsPanel();
   bindEvents();
   if (!state.battle || state.battle.over) saveGame();
   scheduleEventDialogueTyping();
@@ -3474,6 +3487,9 @@ function skipCurrentTutorialSequence() {
   } else if (state.pendingSkillOrderTutorial) {
     state.pendingSkillOrderTutorial = null;
     state.tutorials.firstSkillUnlock = true;
+  } else if (state.pendingAutoRepeatTutorial) {
+    state.pendingAutoRepeatTutorial = null;
+    state.tutorials.autoRepeatIntro = true;
   } else if (state.tutorials.firstMapRouteStep && state.tutorials.firstMapRouteStep !== "done") {
     state.tutorials.firstMapRouteStep = "done";
     state.tutorials.firstTownPlaces = true;
@@ -7233,7 +7249,12 @@ function homeSpecialBattles(cockpit) {
       <div class="home-special-list">
         ${
           cockpit.bossLevels.length
-            ? cockpit.bossLevels.map((level) => `<button data-boss-stage="${level}"><b>Lv${level} ${bossName(level)}</b><span>重戰取材</span></button>`).join("")
+            ? cockpit.bossLevels.map((level) => `
+              <div class="home-battle-entry boss-auto-entry">
+                <button data-boss-stage="${level}"><b>Lv${level} ${bossName(level)}</b><span>重戰取材</span></button>
+                <button class="stage-auto-repeat-button home-auto-repeat" data-auto-repeat-boss="${level}" title="自動連戰" aria-label="自動連戰">↻</button>
+              </div>
+            `).join("")
             : `<button class="empty" disabled><b>尚未討伐頭目</b><span>擊破本級頭目後開放</span></button>`
         }
       </div>
@@ -7367,10 +7388,13 @@ function bossChallengeOverlay() {
     <div class="boss-challenge-list">
       ${levels.length
         ? levels.map((level) => `
-          <button class="boss-challenge-row" data-boss-stage="${level}">
-            <b>Lv${level} ${bossName(level)}</b>
-            <span>重複挑戰</span>
-          </button>
+          <div class="boss-challenge-entry">
+            <button class="boss-challenge-row" data-boss-stage="${level}">
+              <b>Lv${level} ${bossName(level)}</b>
+              <span>重複挑戰</span>
+            </button>
+            <button class="stage-auto-repeat-button" data-auto-repeat-boss="${level}" title="自動連戰" aria-label="自動連戰">↻</button>
+          </div>
         `).join("")
         : `<div class="subui-empty">尚未擊破任何頭目</div>`}
     </div>
@@ -7705,11 +7729,15 @@ function homeTeamDiagnosis(cockpit) {
 
 function homeGoalLedger(summary, cockpit) {
   const battleLocked = state.battle && !state.battle.over;
+  const autoRepeatLocked = battleLocked || cockpit.level > state.maxClearedLevel;
   return `
     <section class="home-bottom-card">
       <div class="console-section-title compact"><span>目標</span></div>
       <div class="home-goal-list">
-        <button data-stage="${cockpit.level}" ${battleLocked ? "disabled aria-disabled=\"true\"" : ""}><b>${battleLocked ? "戰鬥中" : `推進 Lv${cockpit.level}`}</b><span>${cockpit.stageName}</span></button>
+        <div class="home-battle-entry">
+          <button data-stage="${cockpit.level}" ${battleLocked ? "disabled aria-disabled=\"true\"" : ""}><b>${battleLocked ? "戰鬥中" : `推進 Lv${cockpit.level}`}</b><span>${cockpit.stageName}</span></button>
+          <button class="stage-auto-repeat-button home-auto-repeat" data-auto-repeat-stage="${cockpit.level}" ${autoRepeatLocked ? "disabled aria-disabled=\"true\"" : ""} title="${autoRepeatLocked ? "首次通關後開放自動連戰" : "自動連戰"}" aria-label="自動連戰">↻</button>
+        </div>
         <button data-view="notice"><b>委託</b><span>${summary.commissionState}</span></button>
         <button data-view="workshop"><b>可強化</b><span>${summary.upgradeReady} 名</span></button>
       </div>
@@ -10513,11 +10541,13 @@ function stageNode(level) {
   const kind = stageBattleKind(level);
   const title = battleStageName(level, kind);
   const battleLocked = state.battle && !state.battle.over;
+  const autoRepeatLocked = battleLocked || !cleared;
   return `
     <div class="stage-node unlocked ${battleLocked ? "battle-locked" : ""} ${cleared ? "cleared" : ""} ${latest ? "latest" : ""} ${kind === "boss" ? "boss" : ""}" data-stage="${level}">
       <div class="stage-title"><b>${title}</b></div>
       <div class="stage-level">Lv${level}</div>
       <div class="stage-state ${cleared ? "repeat" : ""}">${battleLocked ? "戰鬥中" : cleared ? "重戰" : kind === "boss" ? "頭目" : "可挑戰"}</div>
+      <button class="stage-auto-repeat-button" data-auto-repeat-stage="${level}" ${autoRepeatLocked ? "disabled aria-disabled=\"true\"" : ""} title="${autoRepeatLocked ? "首次通關後開放自動連戰" : "自動連戰"}" aria-label="自動連戰">↻</button>
     </div>
   `;
 }
@@ -10564,6 +10594,85 @@ function normalizeBattleKind(kind) {
   return ["boss", "mob", "event_rescue", "event_duel", "event_ruins"].includes(kind) ? kind : "mob";
 }
 
+function createAutoRepeatStats(level, kind) {
+  return {
+    level,
+    kind,
+    battles: 0,
+    exp: 0,
+    money: 0,
+    material: 0,
+    energy: 0,
+    items: {},
+    gear: 0,
+  };
+}
+
+function autoRepeatStatsPanel() {
+  const stats = state.autoRepeatStats || createAutoRepeatStats(state.lastBattleLevel || 1, "mob");
+  const items = Object.entries(stats.items || {})
+    .filter(([, count]) => count > 0)
+    .slice(0, 4)
+    .map(([id, count]) => `<span>${escapeHtml(itemName(id))} ${count}</span>`)
+    .join("");
+  const moreItems = Math.max(0, Object.keys(stats.items || {}).length - 4);
+  const phase = state.battle && !state.battle.over ? "本場進行中，結束連戰後改為手動完成。" : "下一場將在 10 秒後開始。";
+  return `
+    <aside class="auto-repeat-float" role="status" aria-live="polite">
+      <div class="auto-repeat-head">
+        <span>自動連戰</span>
+        <b>${Math.round(AUTO_REPEAT_REWARD_RATE * 100)}% 收益</b>
+      </div>
+      <div class="auto-repeat-stats">
+        <span><b>${stats.battles}</b><i>完成場次</i></span>
+        <span><b>${stats.exp}</b><i>經驗</i></span>
+        <span><b>${stats.money}</b><i>荒幣</i></span>
+        <span><b>${stats.material}</b><i>資材</i></span>
+      </div>
+      <div class="auto-repeat-loot">
+        ${stats.energy ? `<span>能源 ${stats.energy}</span>` : ""}
+        ${items || "<span>尚無道具</span>"}
+        ${moreItems ? `<span>其他 ${moreItems} 種</span>` : ""}
+        ${stats.gear ? `<span>裝備 ${stats.gear}</span>` : ""}
+      </div>
+      <p>${phase}</p>
+      <button data-auto-repeat-stop>結束連續狩獵</button>
+    </aside>
+  `;
+}
+
+function startAutoRepeatBattle(level, kind = "mob") {
+  kind = normalizeBattleKind(kind);
+  if (kind.startsWith("event_")) return;
+  if (level > state.maxClearedLevel) return;
+  if (kind === "boss" && !canChallengeBoss(level)) return;
+  state.autoRepeat = true;
+  state.autoRepeatStats = createAutoRepeatStats(level, kind);
+  startBattle(level, true, kind);
+}
+
+function requestAutoRepeatStart(level, kind, targetEl) {
+  if (state.battle && !state.battle.over) return;
+  kind = normalizeBattleKind(kind);
+  if (kind.startsWith("event_")) return;
+  if (level > state.maxClearedLevel) return;
+  if (!state.tutorials.autoRepeatIntro) {
+    state.pendingAutoRepeatTutorial = { level, kind };
+    showAnyClickTutorial({
+      target: targetEl,
+      body: "點擊這裡將會自動進行重複狩獵，但收益與手動操作相比將會打折",
+      onAnyClick: () => {
+        state.tutorials.autoRepeatIntro = true;
+        state.pendingAutoRepeatTutorial = null;
+        saveGame();
+        startAutoRepeatBattle(level, kind);
+      },
+    });
+    return;
+  }
+  startAutoRepeatBattle(level, kind);
+}
+
 function startBattle(level, autoRepeat = false, kind = "mob", options = {}) {
   const player = playerCombatMember();
   if (!player) {
@@ -10577,13 +10686,17 @@ function startBattle(level, autoRepeat = false, kind = "mob", options = {}) {
   state.autoRepeatTimer = null;
   state.autoRepeatSeq = (state.autoRepeatSeq || 0) + 1;
   state.lastBattleLevel = level;
-  state.autoRepeat = false;
+  const repeatEnabled = !!autoRepeat && !kind.startsWith("event_");
+  state.autoRepeat = repeatEnabled;
+  if (repeatEnabled && !state.autoRepeatStats) state.autoRepeatStats = createAutoRepeatStats(level, kind);
+  if (!repeatEnabled) state.autoRepeatStats = null;
   if (kind === "boss" || kind === "mob" || kind.startsWith("event_")) state.pendingBossLevel = null;
   state.view = "town";
   const title = battleStageName(level, kind);
   state.battle = {
     level,
     kind,
+    autoRepeat: repeatEnabled,
     title,
     eventContext: options.eventContext || null,
     standardRewards: options.standardRewards !== false,
@@ -10937,7 +11050,6 @@ function battleTemplate() {
   const battle = state.battle;
   return `
     <section class="screen battle speed-${state.battleSpeed}">
-      ${state.autoRepeat ? `<div class="auto-repeat-float">自動中</div>` : ""}
       <section class="panel combat-side">
         <div class="battle-title">
           <span>黑水砂原 Lv${battle.level}</span>
@@ -13449,13 +13561,15 @@ function endBattle(victory) {
   const eventContext = battle.eventContext || null;
   const progressBattle = !eventContext;
   const bossBattle = progressBattle && battle.kind === "boss";
+  const autoBattle = !!battle.autoRepeat && !!state.autoRepeat && progressBattle;
   battle.over = true;
   clearInterval(state.battleTimer);
   state.battleTimer = null;
   refreshTownTalkers();
   if (victory) {
     const reward = battle.standardRewards ? calculateBattleDrops(battle) : emptyReward();
-    let expResult = battle.standardRewards ? grantBattleExperience(battle) : null;
+    if (autoBattle) applyAutoRepeatRewardDiscount(reward);
+    let expResult = battle.standardRewards ? grantBattleExperience(battle, autoBattle ? AUTO_REPEAT_REWARD_RATE : 1) : null;
     const completedCommissions = progressBattle ? resolveBattleCommissions() : [];
     state.money += reward.money;
     state.material += reward.material;
@@ -13483,6 +13597,8 @@ function endBattle(victory) {
       if (queuedStoryEvent) battle.storyEventQueued = true;
     }
     const nextEvent = !battle.storyEventQueued && shouldTriggerRandomEventAfterBattle(battle, true) ? rollRandomPostBattleEvent(battle.level) : null;
+    battle.autoRepeatStopAfterResult = !!battle.storyEventQueued || !!nextEvent;
+    if (autoBattle) recordAutoRepeatStats(reward, expResult);
     saveGame();
     showResult(true, reward, completedCommissions, blueprintRewards, expResult);
     if (eventOutcome?.message) setTimeout(() => showRandomEventDialogue("事件結果", eventOutcome.message, [{ label: "確認", primary: true, action: () => {} }]), 160);
@@ -13495,6 +13611,7 @@ function endBattle(victory) {
     state.money += reward.money;
     state.material += reward.material;
     state.autoRepeat = false;
+    state.autoRepeatStats = null;
     if (bossBattle && battle.level === currentIdleLevel()) state.idleProgress = 0;
     if (progressBattle) rotateTianyaNews({ victory: false, level: battle.level, alreadyCleared });
     state.v009DefeatFlashUntil = Date.now() + 900;
@@ -13522,9 +13639,10 @@ function scheduleAutoRepeat(level, kind = "mob") {
   state.autoRepeatSeq = repeatSeq;
   state.autoRepeatTimer = setTimeout(() => {
     if (state.autoRepeatSeq !== repeatSeq) return;
+    if (!state.autoRepeat) return;
     state.battle = null;
-    startBattle(level, kind !== "boss", kind);
-  }, state.battleSpeed === 2 ? 420 : 760);
+    startBattle(level, true, kind);
+  }, AUTO_REPEAT_INTERVAL_MS);
   render();
 }
 
@@ -13559,6 +13677,7 @@ function battleClearRating(battle) {
 function cancelAutoRepeat() {
   if (!state.autoRepeat) return;
   state.autoRepeat = false;
+  if (state.battle && !state.battle.over) state.battle.autoRepeat = false;
   if (state.autoRepeatTimer) clearTimeout(state.autoRepeatTimer);
   state.autoRepeatTimer = null;
   document.querySelectorAll(".auto-repeat-float").forEach((el) => el.remove());
@@ -13617,6 +13736,38 @@ function mergeRewardItems(target, items) {
     const existing = target.find((entry) => entry.id === item.id);
     if (existing) existing.count += item.count;
     else target.push({ id: item.id, count: item.count });
+  }
+}
+
+function discountedAutoRepeatAmount(amount) {
+  const scaled = Math.max(0, Number(amount) || 0) * AUTO_REPEAT_REWARD_RATE;
+  const whole = Math.floor(scaled);
+  return whole + (Math.random() < scaled - whole ? 1 : 0);
+}
+
+function applyAutoRepeatRewardDiscount(reward) {
+  if (!reward) return reward;
+  reward.money = discountedAutoRepeatAmount(reward.money);
+  reward.material = discountedAutoRepeatAmount(reward.material);
+  reward.energy = discountedAutoRepeatAmount(reward.energy);
+  reward.items = (reward.items || [])
+    .map((item) => ({ ...item, count: discountedAutoRepeatAmount(item.count) }))
+    .filter((item) => item.count > 0);
+  reward.gear = (reward.gear || []).filter(() => Math.random() < AUTO_REPEAT_REWARD_RATE);
+  return reward;
+}
+
+function recordAutoRepeatStats(reward, expResult) {
+  if (!state.autoRepeatStats) return;
+  const stats = state.autoRepeatStats;
+  stats.battles += 1;
+  stats.exp += Math.max(0, Math.floor(expResult?.gained || 0));
+  stats.money += Math.max(0, Math.floor(reward?.money || 0));
+  stats.material += Math.max(0, Math.floor(reward?.material || 0));
+  stats.energy += Math.max(0, Math.floor(reward?.energy || 0));
+  stats.gear += Math.max(0, (reward?.gear || []).length);
+  for (const item of reward?.items || []) {
+    stats.items[item.id] = (stats.items[item.id] || 0) + Math.max(0, Math.floor(item.count || 0));
   }
 }
 
@@ -13680,11 +13831,11 @@ function grantMemberExperience(member, gained) {
   return experienceProgressResult(member, gained, levelUps, unlockedSkills);
 }
 
-function grantBattleExperience(battle) {
+function grantBattleExperience(battle, multiplier = 1) {
   const actor = battle?.allies?.[0];
   const member = actor ? getMember(actor.sourceId) : playerCombatMember();
   if (!member) return null;
-  return grantMemberExperience(member, battleExperienceAmount(member, battle));
+  return grantMemberExperience(member, Math.max(0, Math.round(battleExperienceAmount(member, battle) * multiplier)));
 }
 
 function commissionExperienceAmount(data, member = playerCombatMember()) {
@@ -13698,7 +13849,13 @@ function grantCommissionExperience(data) {
 }
 
 function showResult(victory, reward, completedCommissions = [], blueprintRewards = [], expResult = null) {
-  const clearRating = victory ? battleClearRating(state.battle) : null;
+  const battle = state.battle;
+  const clearRating = victory ? battleClearRating(battle) : null;
+  const continueAutoRepeat = !!victory
+    && !!state.autoRepeat
+    && !!battle?.autoRepeat
+    && !battle.autoRepeatStopAfterResult
+    && !battle?.eventContext;
   const lines = [];
   if (victory) {
     lines.push({ text: `戰鬥勝利${clearRating?.label ? `：${clearRating.label}` : ""}`, kind: "gold" });
@@ -13743,9 +13900,11 @@ function showResult(victory, reward, completedCommissions = [], blueprintRewards
   state.view = "town";
   state.homePrimaryMenu = "map";
   state.homeSecondaryMenu = "stages";
-  state.autoRepeat = false;
+  state.autoRepeat = continueAutoRepeat;
+  if (!continueAutoRepeat) state.autoRepeatStats = null;
   saveGame();
   render();
+  if (continueAutoRepeat) scheduleAutoRepeat(battle.level, battle.kind);
 }
 
 function showBossClearResult(battleLevel) {
@@ -13778,6 +13937,7 @@ function showBossClearResult(battleLevel) {
     modal.remove();
     state.battle = null;
     state.autoRepeat = false;
+    state.autoRepeatStats = null;
     state.view = "town";
     state.homePrimaryMenu = "map";
     state.homeSecondaryMenu = "stages";
@@ -14698,6 +14858,26 @@ function bindEvents() {
       startBattle(level, false, stageBattleKind(level));
     });
   });
+  document.querySelectorAll("[data-auto-repeat-stage]").forEach((el) => {
+    if (el.dataset.autoRepeatStage) el.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (state.battle && !state.battle.over) return;
+      const level = Number(el.dataset.autoRepeatStage);
+      requestAutoRepeatStart(level, stageBattleKind(level), el);
+    });
+  });
+  document.querySelectorAll("[data-auto-repeat-boss]").forEach((el) => {
+    if (el.dataset.autoRepeatBoss) el.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (state.battle && !state.battle.over) return;
+      const level = Number(el.dataset.autoRepeatBoss);
+      if (!canChallengeBoss(level)) return;
+      state.overlayView = null;
+      requestAutoRepeatStart(level, "boss", el);
+    });
+  });
   document.querySelectorAll("[data-boss-stage]").forEach((el) => {
     if (el.dataset.bossStage) el.addEventListener("click", () => {
       const level = Number(el.dataset.bossStage);
@@ -14707,17 +14887,12 @@ function bindEvents() {
       startBattle(level, false, "boss");
     });
   });
-  if (state.autoRepeat && state.view === "battle") {
-    const battleScreen = document.querySelector(".battle");
-    if (battleScreen) {
-      battleScreen.addEventListener("pointerdown", (ev) => {
-        ev.preventDefault();
-        ev.stopPropagation();
-        cancelAutoRepeat();
-        render();
-      }, { once: true, capture: true });
-    }
-  }
+  document.querySelector("[data-auto-repeat-stop]")?.addEventListener("click", (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    cancelAutoRepeat();
+    render();
+  });
   document.querySelectorAll("[data-retreat]").forEach((el) => {
     el.addEventListener("click", () => {
       if (state.battleTimer) clearInterval(state.battleTimer);
@@ -14726,6 +14901,7 @@ function bindEvents() {
       state.autoRepeatTimer = null;
       state.battle = null;
       state.autoRepeat = false;
+      state.autoRepeatStats = null;
       state.view = "town";
       saveGame();
       render();
