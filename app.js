@@ -1424,6 +1424,27 @@ function bindDelegatedUiEvents() {
   document.addEventListener("pointercancel", () => {
     pendingItemFocusPointer = null;
   }, true);
+  document.addEventListener("dblclick", (ev) => {
+    const equippedGear = ev.target.closest("[data-equipped-gear-member][data-equipped-gear-slot]");
+    if (equippedGear) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      pendingItemFocusPointer = null;
+      clearFocusedInventoryItem();
+      unequipGearToInventory(equippedGear.dataset.equippedGearMember || "", equippedGear.dataset.equippedGearSlot || "");
+      return;
+    }
+    const skillSlot = ev.target.closest("[data-v009-skill-slot]");
+    if (skillSlot?.dataset.v009SkillId) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      removeEquippedTypedSkillAtSlot(
+        skillSlot.dataset.v009SkillMember,
+        skillSlot.dataset.v009SkillSlotType,
+        skillSlot.dataset.v009SkillSlot
+      );
+    }
+  }, true);
 }
 
 function isInventoryGearDoubleTap(gearId, ev) {
@@ -14785,6 +14806,12 @@ function bindEvents() {
     });
   });
   document.querySelectorAll("[data-equip-slot]").forEach((el) => {
+    el.addEventListener("dblclick", (ev) => {
+      if (!el.dataset.equipSkill) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      removeEquippedActiveAtSlot(el.dataset.equipMember, el.dataset.equipSlot);
+    });
     el.addEventListener("dragstart", (ev) => {
       if (!el.dataset.equipSkill) return;
       ev.dataTransfer.effectAllowed = "move";
@@ -15100,6 +15127,23 @@ function bindEvents() {
       state.v009SkillDrawerOpen = true;
       render();
     });
+    el.addEventListener("dragover", (ev) => {
+      const sourceSlot = ev.dataTransfer.getData("v009-skill-source-slot");
+      const memberId = ev.dataTransfer.getData("v009-skill-member");
+      if (sourceSlot === "" || !memberId || ev.target.closest("[data-v009-skill-slot]")) return;
+      ev.preventDefault();
+      ev.dataTransfer.dropEffect = "move";
+    });
+    el.addEventListener("drop", (ev) => {
+      if (ev.target.closest("[data-v009-skill-slot]")) return;
+      const sourceSlot = ev.dataTransfer.getData("v009-skill-source-slot");
+      const memberId = ev.dataTransfer.getData("v009-skill-member");
+      const skillType = ev.dataTransfer.getData("v009-skill-type");
+      if (sourceSlot === "" || !memberId || !skillType) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      removeEquippedTypedSkillAtSlot(memberId, skillType, sourceSlot);
+    });
   });
   document.querySelectorAll("[data-v009-skill-close]").forEach((el) => {
     el.addEventListener("click", (ev) => {
@@ -15136,6 +15180,12 @@ function bindEvents() {
       ev.dataTransfer.setData("v009-skill-id", el.dataset.v009SkillId);
       ev.dataTransfer.setData("v009-skill-type", el.dataset.v009SkillSlotType);
       ev.dataTransfer.setData("v009-skill-source-slot", el.dataset.v009SkillSlot);
+    });
+    el.addEventListener("dblclick", (ev) => {
+      if (!el.dataset.v009SkillId) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      removeEquippedTypedSkillAtSlot(el.dataset.v009SkillMember, el.dataset.v009SkillSlotType, el.dataset.v009SkillSlot);
     });
     el.addEventListener("dragover", (ev) => {
       ev.preventDefault();
