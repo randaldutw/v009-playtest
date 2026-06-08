@@ -12009,36 +12009,39 @@ button.v009-list-row:hover {
 .v009-body-slot-grid {
   min-height: 0;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  grid-auto-rows: minmax(168px, 1fr);
-  gap: 14px;
-  overflow: hidden;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: minmax(76px, auto);
+  gap: 8px;
+  overflow: auto;
 }
 
 .v009-body-slot {
   position: relative;
-  min-height: 168px;
+  min-height: 76px;
   display: grid;
-  grid-template-rows: minmax(82px, 1fr) auto auto;
-  place-items: stretch;
-  gap: 10px;
-  padding: 14px 14px 12px;
-  border-radius: 8px;
+  grid-template-columns: 70px minmax(0, 1fr) 92px;
+  grid-template-rows: 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  border-radius: 7px;
   border: 1px solid rgba(125, 231, 238, 0.18);
   color: #eaffff;
-  text-align: center;
+  text-align: left;
   background:
-    radial-gradient(circle at 50% 18%, rgba(55, 216, 255, 0.08), transparent 48%),
+    radial-gradient(ellipse at 8% 50%, rgba(55, 216, 255, 0.12), transparent 42%),
     linear-gradient(180deg, rgba(8, 22, 25, 0.92), rgba(3, 10, 13, 0.96));
 }
 
 .v009-body-slot-portrait {
   position: relative;
-  min-height: 78px;
+  width: 62px;
+  height: 58px;
+  min-height: 58px;
   display: grid;
   place-items: center;
   border: 1px solid rgba(125, 231, 238, 0.12);
-  border-radius: 7px;
+  border-radius: 6px;
   background:
     radial-gradient(ellipse at 50% 80%, rgba(255, 209, 102, 0.18), transparent 45%),
     radial-gradient(ellipse at 50% 38%, rgba(55, 216, 255, 0.16), transparent 62%),
@@ -12047,8 +12050,8 @@ button.v009-list-row:hover {
 }
 
 .v009-body-slot-portrait img {
-  width: min(96px, 82%);
-  height: 92px;
+  width: 58px;
+  height: 58px;
   object-fit: contain;
   object-position: center bottom;
   image-rendering: pixelated;
@@ -12058,14 +12061,17 @@ button.v009-list-row:hover {
 .v009-body-slot-info {
   min-width: 0;
   display: grid;
-  gap: 4px;
-  align-content: start;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 3px 10px;
+  align-content: center;
+  align-items: baseline;
 }
 
 .v009-body-slot b {
+  grid-column: 1 / -1;
   max-width: 100%;
   color: #f6ffff;
-  font-size: 15px;
+  font-size: 16px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -12082,22 +12088,25 @@ button.v009-list-row:hover {
 
 .v009-body-slot em {
   color: rgba(214, 242, 244, 0.82);
-  font-size: 12px;
+  font-size: 13px;
   font-style: normal;
   font-weight: 800;
 }
 
 .v009-body-slot strong {
   color: #ffe59a;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 950;
 }
 
 .v009-body-slot i {
-  align-self: end;
-  display: block;
-  border-top: 1px solid rgba(125, 231, 238, 0.1);
-  padding-top: 8px;
+  justify-self: stretch;
+  display: grid;
+  place-items: center;
+  min-height: 36px;
+  border: 1px solid rgba(255, 209, 102, 0.16);
+  border-radius: 999px;
+  padding: 0 10px;
   color: rgba(255, 225, 143, 0.86);
   font-size: 11px;
   font-style: normal;
@@ -12121,7 +12130,7 @@ button.v009-list-row:hover {
   display: grid;
   place-items: center;
   color: #7de7ee;
-  font-size: 46px;
+  font-size: 34px;
   font-weight: 900;
 }
 
@@ -12130,8 +12139,8 @@ button.v009-list-row:hover {
 }
 
 .v009-body-slot .locked-mark .lock-icon {
-  width: 42px;
-  height: 42px;
+  width: 34px;
+  height: 34px;
 }
 
 .v009-body-slot.locked {
