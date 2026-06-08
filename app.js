@@ -970,8 +970,9 @@ const CLASS_DATA = {
       skill("wang_body", "破體錐", 1, "攻擊造成係數 3 傷害，獲得破體印；破體印增加 5% 傷害。", { coefficient: 3, sealKey: "body" }),
       skill("wang_soul", "斷魂釘", 3, "攻擊造成係數 4 傷害，獲得斷魂印；斷魂印增加 5% 爆擊率。", { coefficient: 4, sealKey: "soul" }),
       skill("wang_life_death", "生死印", 6, "消耗當下所有印：一印追命造成傷害並追加持續傷害，二印銷魂造成傷害並提高閃避，三印渡川造成高額傷害。", { coefficient: 3 }),
-      skill("wang_spirit", "裂魄刺", 10, "觸發技；成功閃避後施展，攻擊造成係數 5 傷害並獲得裂魄印。", { timing: "trigger", triggerCondition: "after_evade", coefficient: 5, sealKey: "spirit" }),
-      skill("wang_step", "彼岸步伐", 15, "觸發技；開場施展，提升閃避率 20%。", { timing: "trigger", triggerCondition: "battle_start", oncePerBattle: true }),
+      skill("wang_spirit", "裂魄刺", 10, "觸發技；成功閃避後施展，攻擊造成係數 2 傷害並獲得裂魄印。", { timing: "trigger", triggerCondition: "after_evade", coefficient: 2, sealKey: "spirit" }),
+      skill("wang_step", "彼岸步伐", 10, "觸發技；開戰施展，持續提高 30% 閃避率，閃避成功後施展裂魄刺。", { timing: "trigger", triggerCondition: "battle_start", oncePerBattle: true }),
+      skill("wang_yellow_spring", "黃泉引渡", 15, "觸發技；敵人生命低於 15% 時施展，攻擊造成係數 6 傷害。", { timing: "trigger", triggerCondition: "enemy_hp_below_15", coefficient: 6 }),
       skill("wang_body_plus", "破體無形", 20, "破體錐上位技能；攻擊造成係數 5 傷害，獲得破體印。", { coefficient: 5, sealKey: "body" }),
     ],
   },
@@ -1105,7 +1106,8 @@ const SKILL_PRESENTATION_TEXT = {
   wang_soul: "釘入斷魂印，讓目標更容易被打出致命破綻。",
   wang_life_death: "收回身上的印記，依印數發動一印追命、二印銷魂或三印渡川。",
   wang_spirit: "閃過攻擊後貼身反刺，順手補上裂魄印。",
-  wang_step: "開戰先踏彼岸步伐，讓自身更難被敵人命中。",
+  wang_step: "開戰先踏彼岸步伐，之後每次閃過攻擊都能順勢反刺。",
+  wang_yellow_spring: "敵人露出死相時補上最後一擊，引渡入黃泉。",
   wang_body_plus: "破體錐的上位刺法，破體更深，傷害也更高。",
   emei_meteor: "以流光連踏三段切入，把一輪攻勢拆成三次命中。",
   emei_shadow: "收束身形後斬碎敵影，用一次乾淨命中打出重傷。",
@@ -6425,6 +6427,7 @@ function v009CombatStatusTags(unit, side = "ally") {
   if (guard > 0) tags.push({ tone: "buff", text: `護身 ${guard}` });
   if (guard < 0) tags.push({ tone: "debuff", text: `失衡 ${Math.abs(guard)}` });
   if (evade > 0) tags.push({ tone: "buff", text: `迴避 ${evade}` });
+  if (unit.wangBianStepActive) tags.push({ tone: "buff", text: "彼岸 1" });
   if (unit.wangSoulEvadeTurns > 0) tags.push({ tone: "buff", text: `銷魂 ${Math.ceil(unit.wangSoulEvadeTurns)}` });
   if (unit.vajraReflectReady) tags.push({ tone: "buff", text: "金剛反 1" });
   if (unit.charged) tags.push({ tone: "buff", text: "蓄勢 1" });
@@ -8394,9 +8397,10 @@ function activeBattleDerivedBonuses(member) {
   const hitRate = Math.max(0, ally.accuracyBonus || 0);
   const evadeRate = activeEvadeRateBonus(ally);
   const evadeNotes = [];
-  if (ally.evadeRateBonus) evadeNotes.push(`技能|狀態 +${Math.max(0, ally.evadeRateBonus || 0)}%`);
+  if (ally.wangBianStepActive) evadeNotes.push("彼岸步伐 +30%");
+  else if (ally.evadeRateBonus) evadeNotes.push(`技能|狀態 +${Math.max(0, ally.evadeRateBonus || 0)}%`);
   if (ally.wangSoulEvadeTurns > 0) evadeNotes.push("二印銷魂 50%");
-  if ((ally.evade || 0) > 0 || ally.flowActive || ally.wangSoulEvadeTurns > 0) {
+  if ((ally.evade || 0) > 0 || ally.flowActive || ally.wangSoulEvadeTurns > 0 || ally.wangBianStepActive) {
     const activeChance = Math.min(82,
       (ally.flowActive ? 72 : 45)
       + Math.max(0, ally.combatBonuses?.evadeRate || 0)
@@ -8967,7 +8971,7 @@ function skillMetricRows(detail) {
 function skillDetailHtml(text) {
   let html = escapeHtml(String(text || ""));
   html = html.replace(/([+-]?\d+(?:\.\d+)?%?)/g, '<b class="skill-num">$1</b>');
-  ["出力", "反應", "供能", "耐久", "精準", "解析", "不動心", "彈藥", "怒氣", "生死印", "流光勢", "流光", "紫氣"].forEach((word) => {
+  ["出力", "反應", "供能", "耐久", "精準", "解析", "不動心", "彈藥", "怒氣", "生死印", "裂魄刺", "流光勢", "流光", "紫氣"].forEach((word) => {
     html = html.split(word).join(`<b class="skill-attr">${word}</b>`);
   });
   return html;
@@ -9024,7 +9028,9 @@ function skillPowerText(skillData) {
     xinhuo_life_first: "生命低於 30% 時回復最大生命 20%。",
     xinhuo_star_combo: "連擊 3 下，每下約造成 167% 傷害。",
     wang_life_death: "一印追命：造成 300% 傷害，並造成每回合 300% 傷害，持續 10 回合；二印銷魂：造成 400% 傷害，閃避機率提高到 50%，持續 2 回合；三印渡川：造成 800% 傷害。",
-    wang_step: "開戰閃避率 +20%。",
+    wang_spirit: "造成 200% 傷害，並追加裂魄印。",
+    wang_step: "開戰觸發；持續生效；閃避率 +30%。",
+    wang_yellow_spring: "敵人生命低於 15% 時觸發，造成 600% 傷害。",
     emei_meteor: "攻擊 3 下，每下造成 100% 傷害。",
     emei_shadow: "攻擊 1 下，造成 400% 傷害。",
     emei_fall_star: "攻擊 1 下，造成 300% 傷害。",
@@ -9081,7 +9087,8 @@ function skillResourceText(skillData) {
     wang_soul: "取得斷魂印；斷魂印使爆擊率 +5%。",
     wang_life_death: "消耗目標身上所有印；沒有印時改用破體錐。",
     wang_spirit: "成功閃避後觸發；取得裂魄印；裂魄印使爆擊傷害 +10%。",
-    wang_step: "開戰觸發；每場一次。",
+    wang_step: "每場一次；裂魄刺：閃避成功後施展，造成 200% 傷害並追加裂魄印。",
+    wang_yellow_spring: "敵人生命低於 15% 時觸發。",
     wang_body_plus: "取得破體印；破體印使目標受傷 +5%。",
     emei_meteor: "消耗流光 40。",
     emei_shadow: "消耗流光 40。",
@@ -9113,6 +9120,7 @@ function skillStatText(skillData) {
     lei_quick_reload: "反應|出力",
     xinhuo_life_first: "耐久|供能",
     wang_step: "反應",
+    wang_yellow_spring: "反應|精準",
     emei_turning: "反應|供能|流光",
     emei_chase_shadow: "反應|精準|流光",
     furnace_east: "出力|供能|紫氣",
@@ -9142,6 +9150,7 @@ function triggerConditionText(condition) {
     new_poison_type: "新增毒種類",
     ammo_empty: "彈藥耗盡",
     ally_hp_below_30: "生命低於 30%",
+    enemy_hp_below_15: "敵人生命低於 15%",
     after_evade: "成功閃避後",
     resource_gain_chance_20: "獲得特殊資源時 20% 機率",
   }[condition] || condition || "條件達成時";
@@ -10773,8 +10782,14 @@ function enemyDrops(type, level, boss) {
 function enemyMaxHp(level, boss = false) {
   const normalizedLevel = Math.max(1, Number(level) || 1);
   return boss
-    ? Math.round(158 + normalizedLevel * 30)
+    ? bossTargetMaxHp(normalizedLevel)
     : Math.round(62 + normalizedLevel * 16);
+}
+
+function bossTargetMaxHp(level) {
+  const normalizedLevel = Math.max(1, Number(level) || 1);
+  const highLevelExtra = Math.max(0, normalizedLevel - 10) * 70;
+  return Math.round(360 + normalizedLevel * 150 + highLevelExtra);
 }
 
 function highLevelBalanceStep(level) {
@@ -10940,6 +10955,7 @@ function allyStatusTags(ally) {
   if (guard > 0) tags.push(combatStatusTagHtml({ tone: "shield", text: `護身 ${guard}` }));
   if (guard < 0) tags.push(combatStatusTagHtml({ tone: "heat", text: `失衡 ${Math.abs(guard)}` }));
   if (evade > 0) tags.push(combatStatusTagHtml({ tone: "shield", text: `迴避 ${evade}` }));
+  if (ally.wangBianStepActive) tags.push(combatStatusTagHtml({ tone: "shield", text: "彼岸 1" }));
   if (ally.wangSoulEvadeTurns > 0) tags.push(combatStatusTagHtml({ tone: "shield", text: `銷魂 ${Math.ceil(ally.wangSoulEvadeTurns)}` }));
   if (ally.flowActive) tags.push(combatStatusTagHtml({ tone: "shield", text: `流光勢 ${Math.max(1, Math.ceil(ally.flowTurns || evade || 1))}` }));
   if (ally.charged) tags.push(combatStatusTagHtml({ tone: "shield", text: "蓄勢 1" }));
@@ -11213,6 +11229,7 @@ function insertConditionMet(ally, skillData, battle) {
   if (condition === "battle_start") return true;
   if (condition === "resource_at_50") return (ally.resource || 0) >= 50;
   if (condition === "ally_hp_below_30") return (ally.hp || 0) / Math.max(1, ally.maxHp || 1) <= 0.3;
+  if (condition === "enemy_hp_below_15") return livingEnemies().some((enemy) => enemy.hp > 0 && enemy.hp / Math.max(1, enemy.maxHp || 1) <= 0.15);
   if (condition === "ammo_empty") return ally.classId === "leishi" && (ally.resource || 0) <= 0;
   if (condition === "new_poison_type") return (battle.poisonEventSeq || 0) > (ally.lastPoisonTriggerSeq || 0);
   if (condition === "after_evade") return !!ally.evadedSinceLastTrigger;
@@ -11372,7 +11389,7 @@ function skillConditionMet(ally, skillData) {
 
 function shouldPreferSkill(ally, skillId) {
   if (ally.classId === "leishi" && ally.resource <= 0 && skillId === "lei_reload_now") return true;
-  if (ally.classId === "wangchuan" && ally.hp / ally.maxHp < 0.42 && skillId === "wang_execute") return true;
+  if (ally.classId === "wangchuan" && skillId === "wang_yellow_spring" && livingEnemies().some((enemy) => enemy.hp > 0 && enemy.hp / Math.max(1, enemy.maxHp || 1) <= 0.15)) return true;
   return false;
 }
 
@@ -11617,6 +11634,7 @@ function useSkill(ally, id) {
     case "wang_life_death": return wangLifeDeathSeal(ally);
     case "wang_spirit": return wangEvadeStab(ally);
     case "wang_step": return wangBianStep(ally);
+    case "wang_yellow_spring": return wangYellowSpring(ally);
     case "wang_body_plus": return wangSealStrike(ally, "body", "破體無形", coefficientScale(5));
     case "emei_meteor": return emeiMultiStrike(ally, "流星踏", 3, 3, 40);
     case "emei_shadow": return emeiSpendStrike(ally, "碎影腳", 4, 40);
@@ -11828,14 +11846,22 @@ function wangLifeDeathSeal(ally) {
 
 function wangEvadeStab(ally) {
   ally.evadedSinceLastTrigger = false;
-  wangSealStrike(ally, "spirit", "裂魄刺", coefficientScale(5));
+  wangSealStrike(ally, "spirit", "裂魄刺", coefficientScale(2));
 }
 
 function wangBianStep(ally) {
-  ally.evadeRateBonus = Math.max(ally.evadeRateBonus || 0, 20);
-  ally.evade = Math.max(ally.evade || 0, 3);
+  ally.wangBianStepActive = true;
+  ally.evadeRateBonus = Math.max(ally.evadeRateBonus || 0, 30);
   triggerFloat(ally, "彼岸步伐", "shield");
-  addFeed(`${ally.name} 踏入彼岸步伐，閃避率提高。`, "good");
+  addFeed(`${ally.name} 踏入彼岸步伐，閃避率持續提高。`, "good");
+}
+
+function wangYellowSpring(ally) {
+  const enemy = livingEnemies()
+    .filter((target) => target.hp > 0 && target.hp / Math.max(1, target.maxHp || 1) <= 0.15)
+    .sort((a, b) => a.hp - b.hp)[0] || chooseEnemy();
+  if (!enemy) return;
+  dealDamage(enemy, computeDamage(ally, enemy, coefficientScale(6)), ally, "黃泉引渡");
 }
 
 function furnaceZiqiStrike(ally, label, coefficient, gain) {
@@ -12587,11 +12613,18 @@ function enemyAct(enemy) {
   triggerCastFx(enemy, enemyAttackMotion(enemy));
   const fxKind = triggerEnemyAttackFx(enemy, target, moveLabel, 1);
   const impactDelay = v009AttackImpactDelayMs(fxKind);
+  const canEvade = (target.evade || 0) > 0 || target.flowActive || target.wangSoulEvadeTurns > 0 || target.wangBianStepActive;
   const evadeChance = Math.min(0.82, (target.flowActive ? 0.72 : 0.45) + (Math.max(0, target.combatBonuses?.evadeRate || 0) + activeEvadeRateBonus(target)) / 100);
-  if (((target.evade || 0) > 0 || target.wangSoulEvadeTurns > 0) && Math.random() < evadeChance) {
+  if (canEvade && Math.random() < evadeChance) {
     if ((target.evade || 0) > 0) target.evade -= 1;
     target.evadedSinceLastTrigger = true;
     addFeed(`${target.name} 避開了 ${enemy.name} 的攻擊。`, "good");
+    if (target.wangBianStepActive) {
+      const spiritSkill = findSkill("wang_spirit");
+      if (spiritSkill) showTriggerSkillBanner(state.battle, target, spiritSkill);
+      triggerCastFx(target, skillAttackMotion("wang_spirit", target));
+      wangEvadeStab(target);
+    }
     triggerEmeiCompensate();
     return;
   }
