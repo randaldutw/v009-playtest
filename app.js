@@ -4472,14 +4472,15 @@ function v009BodySlotCard(index) {
   const member = bodySlotMember(index);
   const unlocked = bodySlotUnlocked(index);
   const active = activeBodySlotIndex() === index;
+  const fragmentCount = bodyFragmentCount();
   if (member) {
     const portrait = v009ProjectAssetUrl(member.portraitPath || randomPortraitPath(member.classId, member.gender));
     return `
       <button class="v009-body-slot filled ${active ? "active" : ""} ${member.bodyOriginal ? "original" : ""}" data-body-slot="${index}">
         <span class="v009-body-slot-portrait"><img src="${escapeHtml(portrait)}" alt=""></span>
         <span class="v009-body-slot-info">
-          <b>${escapeHtml(memberClassName(member))}</b>
-          <strong>Lv${member.level}</strong>
+          <b>${escapeHtml(CLASS_DATA[member.classId]?.name || "")}</b>
+          <em>Lv${member.level} ${member.bodyOriginal ? "初始義體" : "模擬義體"}</em>
         </span>
         <i>${active ? "目前" : "切換"}</i>
       </button>
@@ -4490,21 +4491,22 @@ function v009BodySlotCard(index) {
       <button class="v009-body-slot blank" data-body-slot="${index}">
         <span class="v009-body-slot-portrait empty-mark">+</span>
         <span class="v009-body-slot-info">
-          <b>空白義體</b>
-          <em>第 ${index + 1} 槽</em>
+          <b>--</b>
+          <em>Lv 0 空白義體</em>
         </span>
         <i>選擇</i>
       </button>
     `;
   }
+  const canUnlock = fragmentCount >= BODY_SLOT_UNLOCK_FRAGMENT_COST;
   return `
-    <button class="v009-body-slot locked" data-body-slot="${index}">
+    <button class="v009-body-slot locked ${canUnlock ? "can-unlock" : ""}" data-body-slot="${index}">
       <span class="v009-body-slot-portrait locked-mark">${lockIcon()}</span>
       <span class="v009-body-slot-info">
-        <b>鎖定</b>
-        <em>${itemName(BODY_FRAGMENT_ITEM_ID)} ${bodyFragmentCount()}/${BODY_SLOT_UNLOCK_FRAGMENT_COST}</em>
+        <b>--</b>
+        <em>Lv 0 空白義體</em>
       </span>
-      <i>條件</i>
+      <i>解鎖</i>
     </button>
   `;
 }
