@@ -146,7 +146,7 @@ const MERIDIAN_CHIP_SLOTS = [
   { key: "du_changqiang", channel: "督脈", label: "長強", empty: "空槽" },
 ];
 const EQUIPMENT_CHIP_SLOTS = MERIDIAN_CHIP_SLOTS;
-const MAX_LEVEL = 60;
+const MAX_LEVEL = 20;
 const BLACKWATER_MAX_LEVEL = 30;
 const XP_CURVE_TARGET_DAYS = 3;
 const V009_BASE_STAT_TOTAL = 30;
@@ -5186,9 +5186,14 @@ function emitV009StageCanvasFxOne(config, side, sequence = null) {
   }
 
   if (config.family === "needle") {
+    const fireStart = {
+      x: mid.x - Math.cos(angle) * 42,
+      y: mid.y - Math.sin(angle) * 42,
+    };
+    const fireAngle = Math.atan2(target.y - fireStart.y, target.x - fireStart.x);
     v009AddStageFxForm({ type: "throwArc", x: source.x, y: source.y, angle, life: 360, maxLife: 360, color, mirror });
-    v009AddStageFxForm({ type: "needleFire", x1: mid.x - Math.cos(angle) * 42, y1: mid.y - Math.sin(angle) * 42, x2: target.x, y2: target.y, life: 560, maxLife: 560, color });
-    setTimeout(() => v009ImpactNeedle(target.x, target.y, color, mirror), 400);
+    v009AddStageFxForm({ type: "needleFire", x1: fireStart.x, y1: fireStart.y, x2: target.x, y2: target.y, life: 560, maxLife: 560, color });
+    setTimeout(() => v009ImpactNeedle(target.x, target.y, color, mirror, fireAngle), 400);
     return;
   }
 
@@ -5272,13 +5277,13 @@ function v009ImpactSlash(x, y, color, mirror = false) {
   v009AddStageFxRing(x, y, color, 12, 420, 5);
 }
 
-function v009ImpactNeedle(x, y, color, mirror = false) {
-  const angle = mirror ? 0.08 : Math.PI + 0.08;
+function v009ImpactNeedle(x, y, color, mirror = false, angleOverride = null) {
+  const angle = Number.isFinite(angleOverride) ? angleOverride : (mirror ? 0.08 : Math.PI + 0.08);
   const tailX = x - Math.cos(angle) * 36;
   const tailY = y - Math.sin(angle) * 36;
   v009AddStageFxForm({ type: "needleStuck", x, y, life: 620, maxLife: 620, color, angle, shake: 1 });
   v009AddStageFxForm({ type: "needleTailPulse", x: tailX, y: tailY, life: 360, maxLife: 360, color });
-  v009AddStageFxBurst(tailX, tailY, color, 18, 4.8, 3.4, 440, Math.PI * 1.0, mirror ? 0 : Math.PI);
+  v009AddStageFxBurst(tailX, tailY, color, 18, 4.8, 3.4, 440, Math.PI * 1.0, angle + Math.PI);
   v009AddStageFxBurst(tailX, tailY, V009_STAGE_FX_COLORS.white, 6, 2.8, 2.2, 220);
 }
 
@@ -14996,7 +15001,7 @@ function formatRemaining(endsAt) {
 
 function upgradeMember(memberId, levelsRaw = "1") {
   const member = getMember(memberId);
-  if (!member || member.level >= 20) return;
+  if (!member || member.level >= MAX_LEVEL) return;
   const requestedLevels = levelsRaw === "max"
     ? maxAffordableUpgradeLevels(member)
     : Math.min(safeNumber(levelsRaw, 1, 1), MAX_LEVEL - member.level);
@@ -15006,7 +15011,7 @@ function upgradeMember(memberId, levelsRaw = "1") {
   const startLevel = member.level;
   for (let i = 0; i < levels; i += 1) {
     const cost = upgradeCost(member);
-    if (state.money < cost.money || state.material < cost.material || member.level >= 20) break;
+    if (state.money < cost.money || state.material < cost.material || member.level >= MAX_LEVEL) break;
     state.money -= cost.money;
     state.material -= cost.material;
     member.level += 1;
