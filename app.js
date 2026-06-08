@@ -3967,7 +3967,7 @@ function bodySelectionOverlay() {
               return `
                 <button class="${draft.classId === classId ? "active" : ""} ${disabled ? "locked" : ""}" ${disabled ? "disabled aria-disabled=\"true\"" : `data-body-select-class="${classId}"`}>
                   <b>${data.name}</b>
-                  ${disabled ? `<i>已安裝</i>` : ""}
+                  ${disabled ? `<i>已擁有</i>` : ""}
                 </button>
               `;
             }).join("")}
@@ -4159,12 +4159,26 @@ function installedBodyClassIds() {
     .map((member) => member.classId));
 }
 
+function selectableBodyClassIds() {
+  const installed = installedBodyClassIds();
+  return Object.keys(CLASS_DATA).filter((classId) => !installed.has(classId));
+}
+
+function bodyClassSelectable(classId) {
+  return !!CLASS_DATA[classId] && !installedBodyClassIds().has(classId);
+}
+
 function normalizeBodySelection(selection) {
   if (!selection || typeof selection !== "object") return null;
   const slotIndex = Math.max(1, Math.min(BODY_SLOT_COUNT - 1, safeNumber(selection.slotIndex, 1, 1)));
+  const fallbackClassId = firstSelectableBodyClassId();
+  const draftSource = selection.draft && bodyClassSelectable(selection.draft.classId)
+    ? selection.draft
+    : { ...selection.draft, classId: fallbackClassId };
+  if (!fallbackClassId) return null;
   return {
     slotIndex,
-    draft: normalizeCreatorDraft(selection.draft || defaultCreatorDraft()),
+    draft: normalizeCreatorDraft(draftSource || defaultCreatorDraft()),
   };
 }
 
@@ -4181,12 +4195,12 @@ function bodySelectionDraft() {
 }
 
 function firstSelectableBodyClassId() {
-  const installed = installedBodyClassIds();
-  return Object.keys(CLASS_DATA).find((classId) => !installed.has(classId)) || Object.keys(CLASS_DATA)[0];
+  return selectableBodyClassIds()[0] || "";
 }
 
 function updateBodySelectionDraft(patch = {}) {
   if (!state.bodySelection) return;
+  if (patch.classId && !bodyClassSelectable(patch.classId)) return;
   const draft = bodySelectionDraft();
   const next = { ...draft, ...patch };
   if (patch.classId && patch.classId !== draft.classId) {
@@ -4203,6 +4217,10 @@ function updateBodySelectionDraft(patch = {}) {
 function openBodySelection(slotIndex) {
   if (!bodySlotUnlocked(slotIndex) || bodySlotMember(slotIndex)) return;
   const classId = firstSelectableBodyClassId();
+  if (!classId) {
+    alert("所有門派都已經有義體紀錄。");
+    return;
+  }
   state.bodySelection = {
     slotIndex,
     draft: normalizeCreatorDraft({
