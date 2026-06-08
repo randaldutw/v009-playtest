@@ -68,6 +68,7 @@ const V009_ATTACK_FX_CONFIG = {
   "self-crit-red": { family: "selfCrit", tone: "red", scale: 2 },
   "needle-green": { family: "needle", tone: "green" },
   "needle-darkgreen": { family: "needle", tone: "darkgreen" },
+  "needle-darkgreen-triple": { family: "needleTriple", tone: "darkgreen" },
   "needle-darkred": { family: "needle", tone: "darkred" },
   "gun-orange": { family: "gun", tone: "orange" },
   "gun-darkred": { family: "gun", tone: "darkred" },
@@ -5104,7 +5105,7 @@ function v009AddStageFxForm(form) {
   v009StartStageFxLoop();
 }
 
-function v009AddStageFxBurst(x, y, color, count, power, size, life, spread = Math.PI * 2, dir = -Math.PI / 2) {
+function v009AddStageFxBurst(x, y, color, count, power, size, life, spread = Math.PI * 2, dir = -Math.PI / 2, opacity = 1) {
   const fx = V009_STAGE_FX_RUNTIME;
   const safeX = v009StageFxNumber(x, NaN);
   const safeY = v009StageFxNumber(y, NaN);
@@ -5116,6 +5117,7 @@ function v009AddStageFxBurst(x, y, color, count, power, size, life, spread = Mat
   const safeSpread = v009StageFxPositive(spread, Math.PI * 2);
   const safeDir = v009StageFxNumber(dir, -Math.PI / 2);
   const safeColor = v009StageFxColor(color);
+  const safeOpacity = Math.max(0, Math.min(1, v009StageFxNumber(opacity, 1)));
   for (let i = 0; i < safeCount; i += 1) {
     const angle = safeDir - safeSpread / 2 + Math.random() * safeSpread;
     const p = safePower * (0.55 + Math.random() * 0.85);
@@ -5129,6 +5131,7 @@ function v009AddStageFxBurst(x, y, color, count, power, size, life, spread = Mat
       life: safeLife,
       maxLife: safeLife,
       drag: 0.92 + Math.random() * 0.04,
+      opacity: safeOpacity,
     });
   }
   v009StartStageFxLoop();
@@ -5286,6 +5289,28 @@ function emitV009StageCanvasFxOne(config, side, sequence = null) {
     return;
   }
 
+  if (config.family === "needleTriple") {
+    [
+      { dy: -18, opacity: 0.42 },
+      { dy: 0, opacity: 1 },
+      { dy: 18, opacity: 0.56 },
+    ].forEach((layer) => {
+      const layerSource = { x: source.x, y: source.y + layer.dy * 0.35 };
+      const layerMid = { x: mid.x, y: mid.y + layer.dy * 0.72 };
+      const layerTarget = { x: target.x, y: target.y + layer.dy };
+      const layerAngle = Math.atan2(layerTarget.y - layerSource.y, layerTarget.x - layerSource.x);
+      const fireStart = {
+        x: layerMid.x - Math.cos(layerAngle) * 42,
+        y: layerMid.y - Math.sin(layerAngle) * 42,
+      };
+      const fireAngle = Math.atan2(layerTarget.y - fireStart.y, layerTarget.x - fireStart.x);
+      v009AddStageFxForm({ type: "throwArc", x: layerSource.x, y: layerSource.y, angle: layerAngle, life: 360, maxLife: 360, color, mirror, opacity: layer.opacity });
+      v009AddStageFxForm({ type: "needleFire", x1: fireStart.x, y1: fireStart.y, x2: layerTarget.x, y2: layerTarget.y, life: 560, maxLife: 560, color, opacity: layer.opacity });
+      setTimeout(() => v009ImpactNeedle(layerTarget.x, layerTarget.y, color, mirror, fireAngle, { opacity: layer.opacity }), 400);
+    });
+    return;
+  }
+
   if (config.family === "gun") {
     v009AddStageFxForm({ type: "gunFire", x1: source.x, y1: source.y, x2: target.x, y2: target.y, life: 360, maxLife: 360, color, mirror });
     setTimeout(() => v009ImpactCrit(target.x, target.y, color), 185);
@@ -5366,14 +5391,16 @@ function v009ImpactSlash(x, y, color, mirror = false) {
   v009AddStageFxRing(x, y, color, 12, 420, 5);
 }
 
-function v009ImpactNeedle(x, y, color, mirror = false, angleOverride = null) {
+function v009ImpactNeedle(x, y, color, mirror = false, angleOverride = null, options = {}) {
   const angle = Number.isFinite(angleOverride) ? angleOverride : (mirror ? 0.08 : Math.PI + 0.08);
+  const opacity = Math.max(0, Math.min(1, v009StageFxNumber(options.opacity, 1)));
+  const burstScale = Math.max(0.35, opacity);
   const tipX = x + Math.cos(angle) * 30;
   const tipY = y + Math.sin(angle) * 30;
-  v009AddStageFxForm({ type: "needleStuck", x, y, life: 620, maxLife: 620, color, angle, shake: 1 });
-  v009AddStageFxForm({ type: "needleTailPulse", x: tipX, y: tipY, life: 360, maxLife: 360, color });
-  v009AddStageFxBurst(tipX, tipY, color, 18, 4.8, 3.4, 440, Math.PI * 1.0, angle);
-  v009AddStageFxBurst(tipX, tipY, V009_STAGE_FX_COLORS.white, 6, 2.8, 2.2, 220);
+  v009AddStageFxForm({ type: "needleStuck", x, y, life: 620, maxLife: 620, color, angle, shake: 1, opacity });
+  v009AddStageFxForm({ type: "needleTailPulse", x: tipX, y: tipY, life: 360, maxLife: 360, color, opacity });
+  v009AddStageFxBurst(tipX, tipY, color, Math.max(5, Math.round(18 * opacity)), 4.8 * burstScale, 3.4 * burstScale, 440, Math.PI * 1.0, angle, opacity);
+  v009AddStageFxBurst(tipX, tipY, V009_STAGE_FX_COLORS.white, Math.max(2, Math.round(6 * opacity)), 2.8 * burstScale, 2.2 * burstScale, 220, Math.PI * 2, -Math.PI / 2, opacity);
 }
 
 function v009DrawStageFxForm(ctx, f, t, dt) {
@@ -5426,7 +5453,7 @@ function v009TickStageFxCanvas(now) {
         fx.sparks.splice(i, 1);
         continue;
       }
-      const a = Math.max(0, Math.min(1, s.life / Math.max(1, s.maxLife)));
+      const a = Math.max(0, Math.min(1, s.life / Math.max(1, s.maxLife))) * Math.max(0, Math.min(1, v009StageFxNumber(s.opacity, 1)));
       ctx.globalAlpha = a;
       v009DrawGlowDot(ctx, s.x, s.y, s.color, s.size * (2.2 - a * 0.3), a);
     }
@@ -5770,7 +5797,8 @@ function v009DrawMuzzlePetal(ctx, color, x, y, length, height, alpha, rotate = 0
 
 function v009DrawThrowArcForm(ctx, f, t) {
   const p = 1 - t;
-  const alpha = Math.sin(p * Math.PI);
+  const opacity = Math.max(0, Math.min(1, v009StageFxNumber(f.opacity, 1)));
+  const alpha = Math.sin(p * Math.PI) * opacity;
   const length = 92;
   const endY = 30;
   ctx.save();
@@ -5912,7 +5940,8 @@ function v009DrawNeedleFireForm(ctx, f, t) {
   const angle = Math.atan2(f.y2 - f.y1, f.x2 - f.x1);
   const x = f.x1 + (f.x2 - f.x1) * p;
   const y = f.y1 + (f.y2 - f.y1) * p;
-  const alpha = Math.sin((1 - t) * Math.PI);
+  const opacity = Math.max(0, Math.min(1, v009StageFxNumber(f.opacity, 1)));
+  const alpha = Math.sin((1 - t) * Math.PI) * opacity;
   v009DrawSlashLine(ctx, (f.x1 + x) / 2, (f.y1 + y) / 2, angle, f.color, Math.max(80, Math.hypot(x - f.x1, y - f.y1)), 3, alpha * 0.86);
   ctx.save();
   ctx.translate(x, y);
@@ -6247,7 +6276,8 @@ function v009DrawSlashMarkForm(ctx, f, t) {
 }
 
 function v009DrawNeedleStuckForm(ctx, f, t) {
-  const alpha = Math.sin((1 - t) * Math.PI);
+  const opacity = Math.max(0, Math.min(1, v009StageFxNumber(f.opacity, 1)));
+  const alpha = Math.sin((1 - t) * Math.PI) * opacity;
   const jitter = v009StableImpactJitter(f, 2.5);
   ctx.save();
   ctx.translate(f.x + jitter.x, f.y + jitter.y);
@@ -6285,7 +6315,8 @@ function v009StableImpactJitter(f, amount) {
 
 function v009DrawNeedleTailPulseForm(ctx, f, t) {
   const p = 1 - t;
-  const alpha = Math.sin(p * Math.PI);
+  const opacity = Math.max(0, Math.min(1, v009StageFxNumber(f.opacity, 1)));
+  const alpha = Math.sin(p * Math.PI) * opacity;
   ctx.save();
   ctx.translate(f.x, f.y);
   ctx.globalAlpha = alpha;
@@ -12744,9 +12775,9 @@ function duelSkillHits(skillId) {
 }
 
 function triggerDuelOpponentAttackFx(enemy, label = "", hits = 1) {
-  const kind = enemy.classId === "wangchuan" && isWangLifeDeathSealFxLabel(label)
-    ? "life-death-seal-impact"
-    : V009_PLAYER_ATTACK_FX_BY_CLASS[enemy.classId] || "punch-gold";
+  let kind = V009_PLAYER_ATTACK_FX_BY_CLASS[enemy.classId] || "punch-gold";
+  if (enemy.classId === "wangchuan" && isWangLifeDeathSealFxLabel(label)) kind = "life-death-seal-impact";
+  if (enemy.classId === "wangchuan" && isWangYellowSpringFxLabel(label)) kind = "needle-darkgreen-triple";
   triggerCombatStageAttackFx(kind, "enemy", label, hits);
   return kind;
 }
@@ -12930,15 +12961,19 @@ function triggerCastFx(unit, motion = "ranged") {
 
 function triggerPlayerAttackFx(actor, target, label = "", hits = 1) {
   if (!actor || !target) return "";
-  const kind = actor.classId === "wangchuan" && isWangLifeDeathSealFxLabel(label)
-    ? "life-death-seal-impact"
-    : V009_PLAYER_ATTACK_FX_BY_CLASS[actor.classId] || "punch-gold";
+  let kind = V009_PLAYER_ATTACK_FX_BY_CLASS[actor.classId] || "punch-gold";
+  if (actor.classId === "wangchuan" && isWangLifeDeathSealFxLabel(label)) kind = "life-death-seal-impact";
+  if (actor.classId === "wangchuan" && isWangYellowSpringFxLabel(label)) kind = "needle-darkgreen-triple";
   triggerCombatStageAttackFx(kind, "player", label, hits);
   return kind;
 }
 
 function isWangLifeDeathSealFxLabel(label) {
   return ["一印追命", "二印銷魂", "三印渡川"].includes(String(label || ""));
+}
+
+function isWangYellowSpringFxLabel(label) {
+  return String(label || "") === "黃泉引渡";
 }
 
 function triggerEnemyAttackFx(enemy, target, label = "", hits = 1) {
@@ -12957,6 +12992,7 @@ function v009AttackImpactDelayMs(kind) {
     directSword: 333,
     slash: 155,
     needle: 400,
+    needleTriple: 400,
     gun: 185,
     beam: 350,
     lifeDeathSeal: 260,
