@@ -4956,6 +4956,7 @@ const V009_STAGE_FX_RUNTIME = {
   rings: [],
   raf: 0,
   last: 0,
+  lastErrorAt: 0,
   canvas: null,
   ctx: null,
 };
@@ -4977,6 +4978,59 @@ function v009StageFxCanvas() {
     V009_STAGE_FX_RUNTIME.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
   return canvas;
+}
+
+function v009StageFxNumber(value, fallback = 0) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : fallback;
+}
+
+function v009StageFxPositive(value, fallback = 1) {
+  const numeric = v009StageFxNumber(value, fallback);
+  return numeric > 0 ? numeric : fallback;
+}
+
+function v009StageFxColor(color, fallback = V009_STAGE_FX_COLORS.white) {
+  return typeof color === "string" && color ? color : fallback;
+}
+
+function v009NormalizeStageFxForm(form) {
+  if (!form || typeof form !== "object" || typeof form.type !== "string") return null;
+  const life = v009StageFxPositive(form.life, 1);
+  const maxLife = Math.max(life, v009StageFxPositive(form.maxLife ?? life, life));
+  return {
+    ...form,
+    life,
+    maxLife,
+    color: v009StageFxColor(form.color),
+  };
+}
+
+function v009ReportStageFxError(error, label = "runtime") {
+  const fx = V009_STAGE_FX_RUNTIME;
+  const now = Date.now();
+  if (now - fx.lastErrorAt < 1200) return;
+  fx.lastErrorAt = now;
+  console.warn(`[v009 fx] skipped broken ${label} effect`, error);
+}
+
+function v009RoundRectPath(ctx, x, y, width, height, radius) {
+  if (typeof ctx.roundRect === "function") {
+    ctx.roundRect(x, y, width, height, radius);
+    return;
+  }
+  const r = Math.max(0, Math.min(radius || 0, Math.abs(width) * 0.5, Math.abs(height) * 0.5));
+  const right = x + width;
+  const bottom = y + height;
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(right - r, y);
+  ctx.quadraticCurveTo(right, y, right, y + r);
+  ctx.lineTo(right, bottom - r);
+  ctx.quadraticCurveTo(right, bottom, right - r, bottom);
+  ctx.lineTo(x + r, bottom);
+  ctx.quadraticCurveTo(x, bottom, x, bottom - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
 }
 
 function v009StageFxPoint(canvas, side, role) {
@@ -5042,24 +5096,36 @@ function v009OffsetPoint(point, offset) {
 }
 
 function v009AddStageFxForm(form) {
-  V009_STAGE_FX_RUNTIME.forms.push(form);
+  const normalized = v009NormalizeStageFxForm(form);
+  if (!normalized) return;
+  V009_STAGE_FX_RUNTIME.forms.push(normalized);
   v009StartStageFxLoop();
 }
 
 function v009AddStageFxBurst(x, y, color, count, power, size, life, spread = Math.PI * 2, dir = -Math.PI / 2) {
   const fx = V009_STAGE_FX_RUNTIME;
-  for (let i = 0; i < count; i += 1) {
-    const angle = dir - spread / 2 + Math.random() * spread;
-    const p = power * (0.55 + Math.random() * 0.85);
+  const safeX = v009StageFxNumber(x, NaN);
+  const safeY = v009StageFxNumber(y, NaN);
+  if (!Number.isFinite(safeX) || !Number.isFinite(safeY)) return;
+  const safeCount = Math.max(0, Math.min(120, Math.floor(v009StageFxNumber(count, 0))));
+  const safePower = v009StageFxPositive(power, 1);
+  const safeSize = v009StageFxPositive(size, 1);
+  const safeLife = v009StageFxPositive(life, 1);
+  const safeSpread = v009StageFxPositive(spread, Math.PI * 2);
+  const safeDir = v009StageFxNumber(dir, -Math.PI / 2);
+  const safeColor = v009StageFxColor(color);
+  for (let i = 0; i < safeCount; i += 1) {
+    const angle = safeDir - safeSpread / 2 + Math.random() * safeSpread;
+    const p = safePower * (0.55 + Math.random() * 0.85);
     fx.sparks.push({
-      x,
-      y,
+      x: safeX,
+      y: safeY,
       vx: Math.cos(angle) * p,
       vy: Math.sin(angle) * p,
-      color,
-      size: size * (0.65 + Math.random() * 0.8),
-      life,
-      maxLife: life,
+      color: safeColor,
+      size: safeSize * (0.65 + Math.random() * 0.8),
+      life: safeLife,
+      maxLife: safeLife,
       drag: 0.92 + Math.random() * 0.04,
     });
   }
@@ -5068,18 +5134,27 @@ function v009AddStageFxBurst(x, y, color, count, power, size, life, spread = Mat
 
 function v009AddStageFxLineBurst(x, y, color, count, length, spread, dir, life) {
   const fx = V009_STAGE_FX_RUNTIME;
-  for (let i = 0; i < count; i += 1) {
-    const angle = dir - spread / 2 + Math.random() * spread;
+  const safeX = v009StageFxNumber(x, NaN);
+  const safeY = v009StageFxNumber(y, NaN);
+  if (!Number.isFinite(safeX) || !Number.isFinite(safeY)) return;
+  const safeCount = Math.max(0, Math.min(120, Math.floor(v009StageFxNumber(count, 0))));
+  const safeLength = v009StageFxPositive(length, 1);
+  const safeSpread = v009StageFxPositive(spread, Math.PI * 2);
+  const safeDir = v009StageFxNumber(dir, -Math.PI / 2);
+  const safeLife = v009StageFxPositive(life, 1);
+  const safeColor = v009StageFxColor(color);
+  for (let i = 0; i < safeCount; i += 1) {
+    const angle = safeDir - safeSpread / 2 + Math.random() * safeSpread;
     const p = 5.4 + Math.random() * 7.2;
     fx.sparks.push({
-      x,
-      y,
+      x: safeX,
+      y: safeY,
       vx: Math.cos(angle) * p,
       vy: Math.sin(angle) * p,
-      color,
-      size: 3.4 + Math.random() * length,
-      life,
-      maxLife: life,
+      color: safeColor,
+      size: 3.4 + Math.random() * safeLength,
+      life: safeLife,
+      maxLife: safeLife,
       drag: 0.9 + Math.random() * 0.04,
     });
   }
@@ -5091,7 +5166,19 @@ function v009PersistentBattleFxActive() {
 }
 
 function v009AddStageFxRing(x, y, color, radius, life, width) {
-  V009_STAGE_FX_RUNTIME.rings.push({ x, y, color, radius, life, maxLife: life, width });
+  const safeX = v009StageFxNumber(x, NaN);
+  const safeY = v009StageFxNumber(y, NaN);
+  if (!Number.isFinite(safeX) || !Number.isFinite(safeY)) return;
+  const safeLife = v009StageFxPositive(life, 1);
+  V009_STAGE_FX_RUNTIME.rings.push({
+    x: safeX,
+    y: safeY,
+    color: v009StageFxColor(color),
+    radius: v009StageFxPositive(radius, 1),
+    life: safeLife,
+    maxLife: safeLife,
+    width: v009StageFxPositive(width, 1),
+  });
   v009StartStageFxLoop();
 }
 
@@ -5287,6 +5374,26 @@ function v009ImpactNeedle(x, y, color, mirror = false, angleOverride = null) {
   v009AddStageFxBurst(tipX, tipY, V009_STAGE_FX_COLORS.white, 6, 2.8, 2.2, 220);
 }
 
+function v009DrawStageFxForm(ctx, f, t, dt) {
+  if (f.type === "punch") v009DrawPunchForm(ctx, f, t);
+  if (f.type === "hoverPunch") v009DrawHoverPunchForm(ctx, f, t);
+  if (f.type === "vajraPunchRelease") v009DrawVajraPunchReleaseForm(ctx, f, t);
+  if (f.type === "gunFire") v009DrawGunFireForm(ctx, f, t);
+  if (f.type === "throwArc") v009DrawThrowArcForm(ctx, f, t);
+  if (f.type === "crescentKick") v009DrawCrescentKickForm(ctx, f, t, dt);
+  if (f.type === "needleFire") v009DrawNeedleFireForm(ctx, f, t);
+  if (f.type === "energyBall") v009DrawEnergyBallForm(ctx, f, t, dt);
+  if (f.type === "energyBeam") v009DrawEnergyBeamForm(ctx, f, t);
+  if (f.type === "bite") v009DrawBiteForm(ctx, f, t);
+  if (f.type === "directSword") v009DrawDirectSwordForm(ctx, f, t, dt);
+  if (f.type === "swordArc") v009DrawSwordArcForm(ctx, f, t, dt);
+  if (f.type === "slashSwing") v009DrawSlashSwingForm(ctx, f, t);
+  if (f.type === "slashMark") v009DrawSlashMarkForm(ctx, f, t);
+  if (f.type === "needleStuck") v009DrawNeedleStuckForm(ctx, f, t);
+  if (f.type === "needleTailPulse") v009DrawNeedleTailPulseForm(ctx, f, t);
+  if (f.type === "punchImpact") v009DrawPunchImpactForm(ctx, f, t);
+}
+
 function v009TickStageFxCanvas(now) {
   const fx = V009_STAGE_FX_RUNTIME;
   const canvas = v009StageFxCanvas();
@@ -5295,76 +5402,85 @@ function v009TickStageFxCanvas(now) {
     return;
   }
   const ctx = fx.ctx;
-  const dt = Math.min(34, now - (fx.last || now));
+  const dt = Math.max(0, Math.min(34, now - (fx.last || now)));
   fx.last = now;
   ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
   ctx.save();
-  ctx.globalCompositeOperation = "lighter";
+  try {
+    ctx.globalCompositeOperation = "lighter";
 
-  for (let i = fx.sparks.length - 1; i >= 0; i -= 1) {
-    const s = fx.sparks[i];
-    s.life -= dt;
-    if (s.life <= 0) {
-      fx.sparks.splice(i, 1);
-      continue;
+    for (let i = fx.sparks.length - 1; i >= 0; i -= 1) {
+      const s = fx.sparks[i];
+      s.life -= dt;
+      if (s.life <= 0) {
+        fx.sparks.splice(i, 1);
+        continue;
+      }
+      s.vx *= s.drag;
+      s.vy *= s.drag;
+      s.x += s.vx * dt / 16.67;
+      s.y += s.vy * dt / 16.67;
+      if (!Number.isFinite(s.x) || !Number.isFinite(s.y) || !Number.isFinite(s.life) || !Number.isFinite(s.maxLife)) {
+        fx.sparks.splice(i, 1);
+        continue;
+      }
+      const a = Math.max(0, Math.min(1, s.life / Math.max(1, s.maxLife)));
+      ctx.globalAlpha = a;
+      v009DrawGlowDot(ctx, s.x, s.y, s.color, s.size * (2.2 - a * 0.3), a);
     }
-    s.vx *= s.drag;
-    s.vy *= s.drag;
-    s.x += s.vx * dt / 16.67;
-    s.y += s.vy * dt / 16.67;
-    const a = s.life / s.maxLife;
-    ctx.globalAlpha = a;
-    v009DrawGlowDot(ctx, s.x, s.y, s.color, s.size * (2.2 - a * 0.3), a);
-  }
 
-  for (let i = fx.rings.length - 1; i >= 0; i -= 1) {
-    const r = fx.rings[i];
-    r.life -= dt;
-    if (r.life <= 0) {
-      fx.rings.splice(i, 1);
-      continue;
+    for (let i = fx.rings.length - 1; i >= 0; i -= 1) {
+      const r = fx.rings[i];
+      r.life -= dt;
+      if (r.life <= 0) {
+        fx.rings.splice(i, 1);
+        continue;
+      }
+      if (!Number.isFinite(r.x) || !Number.isFinite(r.y) || !Number.isFinite(r.life) || !Number.isFinite(r.maxLife)) {
+        fx.rings.splice(i, 1);
+        continue;
+      }
+      const p = Math.max(0, Math.min(1, 1 - r.life / Math.max(1, r.maxLife)));
+      ctx.globalAlpha = (1 - p) * 0.88;
+      ctx.strokeStyle = r.color;
+      ctx.shadowColor = r.color;
+      ctx.shadowBlur = 18;
+      ctx.lineWidth = Math.max(0.5, r.width * (1 - p * 0.38));
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, Math.max(0.5, r.radius + p * 56), 0, Math.PI * 2);
+      ctx.stroke();
     }
-    const p = 1 - r.life / r.maxLife;
-    ctx.globalAlpha = (1 - p) * 0.88;
-    ctx.strokeStyle = r.color;
-    ctx.shadowColor = r.color;
-    ctx.shadowBlur = 18;
-    ctx.lineWidth = r.width * (1 - p * 0.38);
-    ctx.beginPath();
-    ctx.arc(r.x, r.y, r.radius + p * 56, 0, Math.PI * 2);
-    ctx.stroke();
-  }
 
-  for (let i = fx.forms.length - 1; i >= 0; i -= 1) {
-    const f = fx.forms[i];
-    f.life -= dt;
-    if (f.life <= 0) {
-      fx.forms.splice(i, 1);
-      continue;
+    for (let i = fx.forms.length - 1; i >= 0; i -= 1) {
+      const f = fx.forms[i];
+      f.life -= dt;
+      if (f.life <= 0) {
+        fx.forms.splice(i, 1);
+        continue;
+      }
+      if (!Number.isFinite(f.life) || !Number.isFinite(f.maxLife)) {
+        fx.forms.splice(i, 1);
+        continue;
+      }
+      const t = Math.max(0, Math.min(1, f.life / Math.max(1, f.maxLife)));
+      try {
+        v009DrawStageFxForm(ctx, f, t, dt);
+      } catch (error) {
+        fx.forms.splice(i, 1);
+        v009ReportStageFxError(error, f.type);
+      }
     }
-    const t = f.life / f.maxLife;
-    if (f.type === "punch") v009DrawPunchForm(ctx, f, t);
-    if (f.type === "hoverPunch") v009DrawHoverPunchForm(ctx, f, t);
-    if (f.type === "vajraPunchRelease") v009DrawVajraPunchReleaseForm(ctx, f, t);
-    if (f.type === "gunFire") v009DrawGunFireForm(ctx, f, t);
-    if (f.type === "throwArc") v009DrawThrowArcForm(ctx, f, t);
-    if (f.type === "crescentKick") v009DrawCrescentKickForm(ctx, f, t, dt);
-    if (f.type === "needleFire") v009DrawNeedleFireForm(ctx, f, t);
-    if (f.type === "energyBall") v009DrawEnergyBallForm(ctx, f, t, dt);
-    if (f.type === "energyBeam") v009DrawEnergyBeamForm(ctx, f, t);
-    if (f.type === "bite") v009DrawBiteForm(ctx, f, t);
-    if (f.type === "directSword") v009DrawDirectSwordForm(ctx, f, t, dt);
-    if (f.type === "swordArc") v009DrawSwordArcForm(ctx, f, t, dt);
-    if (f.type === "slashSwing") v009DrawSlashSwingForm(ctx, f, t);
-    if (f.type === "slashMark") v009DrawSlashMarkForm(ctx, f, t);
-    if (f.type === "needleStuck") v009DrawNeedleStuckForm(ctx, f, t);
-    if (f.type === "needleTailPulse") v009DrawNeedleTailPulseForm(ctx, f, t);
-    if (f.type === "punchImpact") v009DrawPunchImpactForm(ctx, f, t);
+
+    try {
+      v009DrawPersistentBattleFx(ctx, canvas, dt);
+    } catch (error) {
+      v009ReportStageFxError(error, "persistent");
+    }
+  } catch (error) {
+    v009ReportStageFxError(error, "runtime");
+  } finally {
+    ctx.restore();
   }
-
-  v009DrawPersistentBattleFx(ctx, canvas, dt);
-
-  ctx.restore();
   if (fx.forms.length || fx.sparks.length || fx.rings.length || v009PersistentBattleFxActive()) {
     fx.raf = requestAnimationFrame(v009TickStageFxCanvas);
   } else {
@@ -5609,7 +5725,7 @@ function v009DrawGunFireForm(ctx, f, t) {
   ctx.strokeStyle = f.color;
   ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.roundRect(-84, -11, 102, 22, 5);
+  v009RoundRectPath(ctx, -84, -11, 102, 22, 5);
   ctx.fill();
   ctx.stroke();
   ctx.beginPath();
