@@ -282,37 +282,37 @@ const CHIP_SET_DATA = {
 
 const GEAR_SLOT_DATA = {
   head: {
-    statPool: ["precision", "reaction"],
+    statPool: STAT_KEYS,
     mainStat: "precision",
     combatPool: ["critRate", "speedPct", "powerAmp"],
     nouns: ["演算元件", "狼王額甲", "戰術眼匣", "追跡處理器"],
   },
   weapon: {
-    statPool: ["output", "precision"],
+    statPool: STAT_KEYS,
     mainStat: "precision",
     combatPool: ["classBoost", "critRate", "critDamage"],
     nouns: ["脈衝劍匣", "霓虹拳套", "義脈針匣", "電磁銃機", "星圖劍柄", "流光踝刃", "梅芯劍核", "渡魂袖刃"],
   },
   hands: {
-    statPool: ["output", "precision"],
+    statPool: STAT_KEYS,
     mainStat: "output",
     combatPool: ["powerAmp", "critDamage", "critRate"],
     nouns: ["超載腕甲", "裂光指套", "神經拳骨", "量子扳機", "赤霄手環"],
   },
   torso: {
-    statPool: ["armor", "supply"],
+    statPool: STAT_KEYS,
     mainStat: "armor",
     combatPool: ["maxHpPct", "guardBoost", "damageReduce"],
     nouns: ["義骨胸甲", "龍脈護軀", "黑匣袈裟", "霓虹戰袍", "玄甲脊柱"],
   },
   legs: {
-    statPool: ["reaction", "precision"],
+    statPool: STAT_KEYS,
     mainStat: "reaction",
     combatPool: ["speedPct", "evadeRate", "critRate"],
     nouns: ["疾電腿架", "凌波義足", "影步膝輪", "雲梯踝環", "流火脛甲"],
   },
   dantian: {
-    statPool: ["supply", "armor"],
+    statPool: STAT_KEYS,
     mainStat: "supply",
     combatPool: ["resourceMax", "resourceGain", "maxHpPct"],
     nouns: ["丹田爐心", "資源電池", "玄關反應堆", "任督伺服核", "靈樞電容"],
@@ -2074,24 +2074,6 @@ function gearName(gear) {
   const classTerm = gear.classId ? CLASS_GEAR_TERMS[gear.classId] || CLASS_DATA[gear.classId]?.name || "" : "";
   const noun = randomOf(slotData.nouns);
   return [prefix, classTerm, noun, suffix].filter(Boolean).join("");
-}
-
-function generateBossGear(level, bossType, classId = "") {
-  const slot = randomOf(Object.keys(GEAR_SLOT_DATA));
-  const slotData = GEAR_SLOT_DATA[slot];
-  const gearClass = slot === "weapon" ? (classId && CLASS_DATA[classId] ? classId : randomOf(Object.keys(CLASS_DATA))) : "";
-  const gearLevel = Math.min(MAX_LEVEL, Math.max(1, level + randomAmount(-1, 2)));
-  const mainValue = Math.max(1, Math.round(2 + gearLevel * 0.38 + (slot === "weapon" ? 1 : 0)));
-  const secondaryValue = Math.max(1, Math.round(1 + gearLevel * 0.25));
-  const stats = [
-    { key: slotData.mainStat, value: mainValue },
-    { key: randomOf(slotData.statPool.filter((key) => key !== slotData.mainStat)) || slotData.statPool[0], value: secondaryValue },
-  ];
-  const combatKey = slot === "weapon" ? "classBoost" : randomOf(slotData.combatPool);
-  const combat = { key: combatKey, value: Math.max(1, Math.round(2 + gearLevel * 0.18)) };
-  const gear = { id: cryptoRandomId(), slot, level: gearLevel, classId: gearClass, stats, combat };
-  gear.name = gearName(gear);
-  return normalizeGearInstance(gear);
 }
 
 function addItemLog(id, count) {
@@ -14472,6 +14454,11 @@ function bindEvents() {
     });
   });
   document.querySelectorAll("[data-equipped-gear-slot]").forEach((el) => {
+    el.addEventListener("dblclick", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      unequipGearToInventory(el.dataset.equippedGearMember || "", el.dataset.equippedGearSlot || "");
+    });
     el.addEventListener("dragstart", (ev) => {
       activeEquippedGearDrag = {
         memberId: el.dataset.equippedGearMember || "",
