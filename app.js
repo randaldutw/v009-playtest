@@ -14373,8 +14373,17 @@ function newlyUnlockedSkills(member, oldLevel, newLevel) {
 
 function recordUnlockedSkills(member, unlockedSkills) {
   (unlockedSkills || []).forEach((skillData) => {
-    addFeed(`${member.name} 學會 ${skillData.name}。`, "skill-unlock");
+    const upgradedFrom = upgradedFromSkill(skillData);
+    addFeed(upgradedFrom
+      ? `${upgradedFrom.name} 強化為 ${skillData.name}。`
+      : `${member.name} 學會 ${skillData.name}。`, "skill-unlock");
   });
+}
+
+function upgradedFromSkill(skillData) {
+  const lowerIds = SKILL_UPGRADES[skillData?.id] || [];
+  const lowerId = lowerIds[0] || "";
+  return lowerId ? findSkill(lowerId) : null;
 }
 
 function autoEquipUnlockedSkills(member, unlockedSkills) {
