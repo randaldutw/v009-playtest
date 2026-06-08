@@ -964,7 +964,7 @@ const CLASS_DATA = {
     skills: [
       skill("chanlin_luohan", "羅漢拳", 1, "攻擊造成係數 3 傷害，獲得少量不動心。", { coefficient: 3 }),
       skill("chanlin_tiger", "伏虎掌", 3, "攻擊造成係數 4 傷害，獲得少量不動心。", { coefficient: 4 }),
-      skill("chanlin_vajra_reflect", "金剛反", 6, "不動心達到 50 後進入金剛反勢，下一次受擊會把力道反震回去。", { timing: "trigger", triggerCondition: "resource_at_50" }),
+      skill("chanlin_vajra_reflect", "金剛反", 6, "不動心達到 50 後進入金剛反勢，消耗 50 不動心，下一次受擊會把力道反震回去。", { timing: "trigger", triggerCondition: "resource_at_50", resourceCost: 50 }),
       skill("chanlin_immovable", "不動禪", 10, "進入反擊架式，無效下一次受到的攻擊並造成係數 4 傷害，獲得中量不動心。", { coefficient: 4 }),
       skill("chanlin_stone_heart", "石心立", 15, "觸發技；開局施展，為自己加上等同生命上限 30% 的護盾，優先吸收傷害。", { timing: "trigger", triggerCondition: "battle_start", oncePerBattle: true }),
       skill("chanlin_mingwang", "明王拳", 20, "羅漢拳上位技能；攻擊造成係數 5 傷害，獲得少量不動心。", { coefficient: 5 }),
@@ -1129,7 +1129,7 @@ const SKILL_PRESENTATION_TEXT = {
   tang_king: "毒蜂針的上位針法，毒力更深，停留更久。不同種類的毒將分開計算。",
   chanlin_luohan: "沉穩出拳，邊打邊定心，逐步累積不動心。",
   chanlin_tiger: "掌勢沉重，適合正面壓制敵人並穩住心神。",
-  chanlin_vajra_reflect: "不動心達到 50 後進入金剛反勢，下一次受擊會把力道反震回去。",
+  chanlin_vajra_reflect: "不動心達到 50 後進入金剛反勢，消耗 50 不動心，下一次受擊會把力道反震回去。",
   chanlin_immovable: "入禪定身，化去下一次傷害，並以反擊逼退敵人。",
   chanlin_stone_heart: "開戰先立石心，厚實護盾會先替本體承傷。",
   chanlin_mingwang: "羅漢拳的上位拳法，拳勢更重，仍能穩定累積不動心。",
@@ -9213,7 +9213,7 @@ function skillResourceText(skillData) {
     tang_king: "刷新或套用生物毒。",
     chanlin_luohan: "取得不動心 +10。",
     chanlin_tiger: "取得不動心 +10。",
-    chanlin_vajra_reflect: "不動心達 50 觸發；不消耗不動心。",
+    chanlin_vajra_reflect: "不動心達 50 觸發；消耗不動心 50。",
     chanlin_immovable: "取得不動心 +24。",
     chanlin_stone_heart: "開戰觸發；每場一次。",
     chanlin_mingwang: "取得不動心 +10。",
@@ -11956,6 +11956,7 @@ function chanlinStrike(ally, label, scale, resourceGain) {
 }
 
 function chanlinVajraReflect(ally) {
+  if (!spendClassResource(ally, 50)) return;
   ally.front = true;
   ally.vajraReflectReady = true;
   triggerFloat(ally, "金剛反", "shield");
