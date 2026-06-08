@@ -969,7 +969,7 @@ const CLASS_DATA = {
     skills: [
       skill("wang_body", "破體錐", 1, "攻擊造成係數 3 傷害，獲得破體印；破體印增加 5% 傷害。", { coefficient: 3, sealKey: "body" }),
       skill("wang_soul", "斷魂釘", 3, "攻擊造成係數 4 傷害，獲得斷魂印；斷魂印增加 5% 爆擊率。", { coefficient: 4, sealKey: "soul" }),
-      skill("wang_life_death", "生死印", 6, "消耗當下所有印：一印追命、二印銷魂、三印渡川，依印數發動不同效果。", { coefficient: 3 }),
+      skill("wang_life_death", "生死印", 6, "消耗當下所有印：一印追命造成傷害並追加持續傷害，二印銷魂造成傷害並提高閃避，三印渡川造成高額傷害。", { coefficient: 3 }),
       skill("wang_spirit", "裂魄刺", 10, "觸發技；成功閃避後施展，攻擊造成係數 5 傷害並獲得裂魄印。", { timing: "trigger", triggerCondition: "after_evade", coefficient: 5, sealKey: "spirit" }),
       skill("wang_step", "彼岸步伐", 15, "觸發技；開場施展，提升閃避率 20%。", { timing: "trigger", triggerCondition: "battle_start", oncePerBattle: true }),
       skill("wang_body_plus", "破體無形", 20, "破體錐上位技能；攻擊造成係數 5 傷害，獲得破體印。", { coefficient: 5, sealKey: "body" }),
@@ -6425,6 +6425,7 @@ function v009CombatStatusTags(unit, side = "ally") {
   if (guard > 0) tags.push({ tone: "buff", text: `護身 ${guard}` });
   if (guard < 0) tags.push({ tone: "debuff", text: `失衡 ${Math.abs(guard)}` });
   if (evade > 0) tags.push({ tone: "buff", text: `迴避 ${evade}` });
+  if (unit.wangSoulEvadeTurns > 0) tags.push({ tone: "buff", text: `銷魂 ${Math.ceil(unit.wangSoulEvadeTurns)}` });
   if (unit.vajraReflectReady) tags.push({ tone: "buff", text: "金剛反 1" });
   if (unit.charged) tags.push({ tone: "buff", text: "蓄勢 1" });
   if (unit.flowActive) tags.push({ tone: "buff", text: `流光勢 ${Math.max(1, Math.ceil(unit.flowTurns || evade || 1))}` });
@@ -8391,14 +8392,15 @@ function activeBattleDerivedBonuses(member) {
   ].filter(Boolean);
 
   const hitRate = Math.max(0, ally.accuracyBonus || 0);
-  const evadeRate = Math.max(0, ally.evadeRateBonus || 0);
+  const evadeRate = activeEvadeRateBonus(ally);
   const evadeNotes = [];
   if (ally.evadeRateBonus) evadeNotes.push(`技能|狀態 +${Math.max(0, ally.evadeRateBonus || 0)}%`);
-  if ((ally.evade || 0) > 0 || ally.flowActive) {
+  if (ally.wangSoulEvadeTurns > 0) evadeNotes.push("二印銷魂 50%");
+  if ((ally.evade || 0) > 0 || ally.flowActive || ally.wangSoulEvadeTurns > 0) {
     const activeChance = Math.min(82,
       (ally.flowActive ? 72 : 45)
       + Math.max(0, ally.combatBonuses?.evadeRate || 0)
-      + Math.max(0, ally.evadeRateBonus || 0)
+      + activeEvadeRateBonus(ally)
     );
     evadeNotes.push(`目前觸發率 ${Math.round(activeChance)}%`);
   }
@@ -8427,6 +8429,10 @@ function activeBattleDerivedBonuses(member) {
     resourceRegenFlat: ally.classId === "emei" ? 20 + Math.max(0, ally.emeiFlowRegenBonus || 0) : 0,
     resourceNote: resourceNotes.join("，"),
   };
+}
+
+function activeEvadeRateBonus(ally) {
+  return Math.max(0, ally?.evadeRateBonus || 0) + (ally?.wangSoulEvadeTurns > 0 ? 5 : 0);
 }
 
 function activeBattleTargetForUi() {
@@ -9017,7 +9023,7 @@ function skillPowerText(skillData) {
     lei_lianzhu_plus: "連射 5 下，每下造成 100% 傷害。",
     xinhuo_life_first: "生命低於 30% 時回復最大生命 20%。",
     xinhuo_star_combo: "連擊 3 下，每下約造成 167% 傷害。",
-    wang_life_death: "一印追命：造成 300% 傷害；二印銷魂：造成 400% 傷害；三印渡川：造成 800% 傷害。",
+    wang_life_death: "一印追命：造成 300% 傷害，並造成每回合 300% 傷害，持續 10 回合；二印銷魂：造成 400% 傷害，閃避機率提高到 50%，持續 2 回合；三印渡川：造成 800% 傷害。",
     wang_step: "開戰閃避率 +20%。",
     emei_meteor: "攻擊 3 下，每下造成 100% 傷害。",
     emei_shadow: "攻擊 1 下，造成 400% 傷害。",
@@ -9073,7 +9079,7 @@ function skillResourceText(skillData) {
     xinhuo_star_combo: "取得怒氣 +14。",
     wang_body: "取得破體印；破體印使目標受傷 +5%。",
     wang_soul: "取得斷魂印；斷魂印使爆擊率 +5%。",
-    wang_life_death: "消耗目標身上所有印；依消耗印數決定效果。",
+    wang_life_death: "消耗目標身上所有印；沒有印時改用破體錐。",
     wang_spirit: "成功閃避後觸發；取得裂魄印；裂魄印使爆擊傷害 +10%。",
     wang_step: "開戰觸發；每場一次。",
     wang_body_plus: "取得破體印；破體印使目標受傷 +5%。",
@@ -10934,6 +10940,7 @@ function allyStatusTags(ally) {
   if (guard > 0) tags.push(combatStatusTagHtml({ tone: "shield", text: `護身 ${guard}` }));
   if (guard < 0) tags.push(combatStatusTagHtml({ tone: "heat", text: `失衡 ${Math.abs(guard)}` }));
   if (evade > 0) tags.push(combatStatusTagHtml({ tone: "shield", text: `迴避 ${evade}` }));
+  if (ally.wangSoulEvadeTurns > 0) tags.push(combatStatusTagHtml({ tone: "shield", text: `銷魂 ${Math.ceil(ally.wangSoulEvadeTurns)}` }));
   if (ally.flowActive) tags.push(combatStatusTagHtml({ tone: "shield", text: `流光勢 ${Math.max(1, Math.ceil(ally.flowTurns || evade || 1))}` }));
   if (ally.charged) tags.push(combatStatusTagHtml({ tone: "shield", text: "蓄勢 1" }));
   if (ally.vajraReflectReady) tags.push(combatStatusTagHtml({ tone: "shield", text: "金剛反 1" }));
@@ -11303,7 +11310,15 @@ function renderV009BattleFrame() {
   return true;
 }
 
+function tickAllyTurnStartStatuses(ally) {
+  if (!ally) return;
+  if (ally.wangSoulEvadeTurns > 0) {
+    ally.wangSoulEvadeTurns = Math.max(0, ally.wangSoulEvadeTurns - 1);
+  }
+}
+
 function allyAct(ally, options = {}) {
+  tickAllyTurnStartStatuses(ally);
   if (!options.skipTurnStartResource) recoverClassResourceOnTurn(ally);
   if (state.battle?.stats) state.battle.stats.playerTurns = (state.battle.stats.playerTurns || 0) + 1;
   tickEnemyPoisons(ally);
@@ -11804,7 +11819,8 @@ function wangLifeDeathSeal(ally) {
     applyPoison(enemy, ally, "一印追命", 10, computeDamage(ally, enemy, coefficientScale(3)));
   } else if (count === 2) {
     dealDamage(enemy, computeDamage(ally, enemy, coefficientScale(4)), ally, "二印銷魂");
-    ally.evade = Math.max(ally.evade || 0, 5);
+    ally.wangSoulEvadeTurns = Math.max(ally.wangSoulEvadeTurns || 0, 2);
+    triggerFloat(ally, "銷魂 2", "shield");
   } else {
     dealDamage(enemy, computeDamage(ally, enemy, coefficientScale(8)), ally, "三印渡川");
   }
@@ -12571,9 +12587,9 @@ function enemyAct(enemy) {
   triggerCastFx(enemy, enemyAttackMotion(enemy));
   const fxKind = triggerEnemyAttackFx(enemy, target, moveLabel, 1);
   const impactDelay = v009AttackImpactDelayMs(fxKind);
-  const evadeChance = Math.min(0.82, (target.flowActive ? 0.72 : 0.45) + (Math.max(0, target.combatBonuses?.evadeRate || 0) + Math.max(0, target.evadeRateBonus || 0)) / 100);
-  if (target.evade > 0 && Math.random() < evadeChance) {
-    target.evade -= 1;
+  const evadeChance = Math.min(0.82, (target.flowActive ? 0.72 : 0.45) + (Math.max(0, target.combatBonuses?.evadeRate || 0) + activeEvadeRateBonus(target)) / 100);
+  if (((target.evade || 0) > 0 || target.wangSoulEvadeTurns > 0) && Math.random() < evadeChance) {
+    if ((target.evade || 0) > 0) target.evade -= 1;
     target.evadedSinceLastTrigger = true;
     addFeed(`${target.name} 避開了 ${enemy.name} 的攻擊。`, "good");
     triggerEmeiCompensate();
