@@ -12101,6 +12101,7 @@ function useSkill(ally, id) {
   const skillData = findSkill(id);
   triggerCastFx(ally, skillAttackMotion(id, ally));
   triggerSpeech(ally, skillData ? skillData.name : "技能");
+  queueBattleInfoRender();
   switch (id) {
     case "tianshu_three": return tianshuMultiStrike(ally, "三點參直", 3, 3, 12);
     case "tianshu_region": return tianshuStrike(ally, "尺前化區", coefficientScale(4 + skillComboBonusCoefficient(ally, "tianshu_region")), 12);
@@ -12153,6 +12154,17 @@ function useSkill(ally, id) {
     case "furnace_sky": return furnaceZiqiStrike(ally, "氣貫長空", 5, 1);
     default: return basicAttack(ally);
   }
+}
+
+function queueBattleInfoRender() {
+  const battle = state.battle;
+  if (!battle || battle.over || battle.infoRenderQueued) return;
+  battle.infoRenderQueued = true;
+  setTimeout(() => {
+    if (!state.battle || state.battle.over) return;
+    state.battle.infoRenderQueued = false;
+    render();
+  }, 0);
 }
 
 function coefficientScale(coefficient) {
