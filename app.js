@@ -11254,6 +11254,7 @@ function createEventFactionCharacter(level, classId = randomOf(Object.keys(CLASS
 function createDuelOpponentEnemy(level, eventContext = null, x = 0, y = 0) {
   const npc = eventContext?.npc || createEventFactionCharacter(level, eventContext?.classId);
   const combatant = cloneCombatant(npc);
+  const tunedMaxHp = Math.round(combatant.maxHp * 1.1);
   return {
     ...combatant,
     id: cryptoRandomId(),
@@ -11267,6 +11268,9 @@ function createDuelOpponentEnemy(level, eventContext = null, x = 0, y = 0) {
     y,
     w: 1,
     h: 1,
+    hp: tunedMaxHp,
+    maxHp: tunedMaxHp,
+    stats: Object.fromEntries(Object.entries(combatant.stats || {}).map(([key, value]) => [key, Math.max(1, Math.round(value * 1.06))])),
     front: false,
     marked: false,
     poisoned: 0,
