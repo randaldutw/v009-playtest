@@ -32,7 +32,7 @@ const CLASS_BATTLE_DAMAGE_MULTIPLIER = {
   tianshu: 1.68,
   tang: 1.02,
   chanlin: 1.34,
-  leishi: 1.85,
+  leishi: 1.95,
   xinhuo: 1.24,
   wangchuan: 1.46,
   emei: 1.38,
@@ -287,43 +287,37 @@ const GEAR_SLOT_DATA = {
   head: {
     statPool: STAT_KEYS,
     mainStat: "precision",
-    combatPool: ["critRate", "speedPct", "powerAmp"],
     nouns: ["演算元件", "狼王額甲", "戰術眼匣", "追跡處理器"],
   },
   weapon: {
     statPool: STAT_KEYS,
     mainStat: "precision",
-    combatPool: ["classBoost", "critRate", "critDamage"],
     nouns: ["脈衝劍匣", "霓虹拳套", "義脈針匣", "電磁銃機", "星圖劍柄", "流光踝刃", "梅芯劍核", "渡魂袖刃"],
   },
   hands: {
     statPool: STAT_KEYS,
     mainStat: "output",
-    combatPool: ["powerAmp", "critDamage", "critRate"],
     nouns: ["超載腕甲", "裂光指套", "神經拳骨", "量子扳機", "赤霄手環"],
   },
   torso: {
     statPool: STAT_KEYS,
     mainStat: "armor",
-    combatPool: ["maxHpPct", "guardBoost", "damageReduce"],
     nouns: ["義骨胸甲", "龍脈護軀", "黑匣袈裟", "霓虹戰袍", "玄甲脊柱"],
   },
   legs: {
     statPool: STAT_KEYS,
     mainStat: "reaction",
-    combatPool: ["speedPct", "evadeRate", "critRate"],
     nouns: ["疾電腿架", "凌波義足", "影步膝輪", "雲梯踝環", "流火脛甲"],
   },
   dantian: {
     statPool: STAT_KEYS,
     mainStat: "supply",
-    combatPool: ["resourceMax", "resourceGain", "maxHpPct"],
     nouns: ["丹田爐心", "資源電池", "玄關反應堆", "任督伺服核", "靈樞電容"],
   },
 };
 
 const GEAR_COMBAT_STAT_DATA = {
-  classBoost: { name: "門派技能強化", unit: "%", slot: "weapon" },
+  classBoost: { name: "技能傷害", unit: "%", slot: "weapon" },
   powerAmp: { name: "威力", unit: "%" },
   maxHpPct: { name: "生命", unit: "%" },
   speedPct: { name: "速度", unit: "%" },
@@ -335,6 +329,9 @@ const GEAR_COMBAT_STAT_DATA = {
   critRate: { name: "爆擊機率", unit: "%" },
   critDamage: { name: "爆擊傷害", unit: "%" },
 };
+
+const GEAR_RANDOM_COMBAT_STAT_KEYS = Object.keys(GEAR_COMBAT_STAT_DATA)
+  .filter((key) => !["resourceMax", "resourceGain"].includes(key));
 
 const GEAR_SET_DATA = {
   wolf_king: {
@@ -9841,7 +9838,7 @@ function randomGearStatsForRecipe(recipe) {
 }
 
 function randomGearCombatForRecipe(recipe) {
-  const pool = Object.keys(GEAR_COMBAT_STAT_DATA);
+  const pool = GEAR_RANDOM_COMBAT_STAT_KEYS;
   const count = Math.max(1, Math.min(pool.length, Math.floor(recipe?.combatCount || 1)));
   const value = Number.isFinite(recipe?.combatValue) ? Math.max(1, recipe.combatValue) : null;
   const level = Math.max(1, Number(recipe?.level) || 1);
@@ -11307,7 +11304,7 @@ function enemyMaxHp(level, boss = false) {
 function bossTargetMaxHp(level) {
   const normalizedLevel = Math.max(1, Number(level) || 1);
   if (normalizedLevel <= 5) return Math.round(120 + normalizedLevel * 28);
-  const highLevelExtra = Math.max(0, normalizedLevel - 10) * 58;
+  const highLevelExtra = Math.max(0, normalizedLevel - 10) * 42;
   return Math.round(360 + normalizedLevel * 142 + highLevelExtra);
 }
 
@@ -11324,7 +11321,7 @@ function highLevelEnemyDamagePressure(enemy) {
   if (!step) return 1;
   const boss = enemy && (enemy.w > 1 || enemy.h > 1);
   return boss
-    ? 1.18 + step * 0.025
+    ? 1.12 + step * 0.018
     : 1.58 + step * 0.04;
 }
 
@@ -11333,34 +11330,6 @@ function highLevelBossHeavyStrikeBonus(enemy, target) {
   const step = highLevelBalanceStep(enemy.level);
   if (!step) return 0;
   return target.maxHp * (0.032 + step * 0.0025);
-}
-
-function highLevelBossPhasePressure(enemy, target, count = 1) {
-  if (!enemy || !target || !(enemy.w > 1 || enemy.h > 1)) return 0;
-  const step = highLevelBalanceStep(enemy.level);
-  if (!step) return 0;
-  return target.maxHp * (0.055 + step * 0.0015) * Math.max(1, count);
-}
-
-function triggerHighLevelBossPhasePressure(enemy, actor, beforeHp) {
-  if (!state.battle || !enemy || !actor || actor.hp <= 0 || enemy.hp <= 0) return;
-  if (!(enemy.w > 1 || enemy.h > 1) || highLevelBalanceStep(enemy.level) <= 0) return;
-  const beforePct = beforeHp / Math.max(1, enemy.maxHp || 1);
-  const afterPct = enemy.hp / Math.max(1, enemy.maxHp || 1);
-  const thresholds = [0.7, 0.4];
-  enemy.phasePressureTriggered = enemy.phasePressureTriggered || {};
-  const crossed = thresholds.filter((threshold) => {
-    const key = String(threshold);
-    if (enemy.phasePressureTriggered[key]) return false;
-    return beforePct > threshold && afterPct <= threshold;
-  });
-  if (!crossed.length) return;
-  crossed.forEach((threshold) => {
-    enemy.phasePressureTriggered[String(threshold)] = true;
-  });
-  triggerCastFx(enemy, enemyAttackMotion(enemy));
-  const fxKind = triggerEnemyAttackFx(enemy, actor, "王級壓制", crossed.length);
-  applyDamage(actor, highLevelBossPhasePressure(enemy, actor, crossed.length), enemy.name, "王級壓制", { impactDelayMs: v009AttackImpactDelayMs(fxKind) });
 }
 
 function randomAmount(min, max) {
@@ -13110,7 +13079,6 @@ function dealDamage(enemy, amount, actor, label, options = {}) {
   const critical = options.critical ?? damageCriticalFlag(amount);
   scheduleCombatHitFeedback(enemy, `-${Math.floor(numericAmount)}`, critical ? "critical" : "damage", impactDelay);
   addFeed(`${actor.name} 以${label}命中 ${enemy.name}，造成 ${Math.floor(numericAmount)} 點傷害。`, critical ? "gold" : "");
-  triggerHighLevelBossPhasePressure(enemy, actor, before);
   if (enemy.marked) triggerTianshuCalibrate(actor);
   if (poisonCount(enemy) && hasPassive(actor, "tang_reflux")) gainResource(actor, 4, classResourceLabel(actor.classId));
   if (hasPassive(actor, "furnace_heat")) {
