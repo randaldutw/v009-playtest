@@ -132,8 +132,8 @@ const UI_DESIGN_HEIGHT = 900;
 const EQUIPMENT_SLOTS = [
   { key: "weapon", label: "武器", empty: "未裝備", focus: "門派強化" },
   { key: "head", label: "頭部", empty: "未裝備", focus: "演算" },
-  { key: "hands", label: "手部", empty: "未裝備", focus: "威力" },
   { key: "torso", label: "身體", empty: "未裝備", focus: "生命" },
+  { key: "hands", label: "手部", empty: "未裝備", focus: "威力" },
   { key: "legs", label: "腿腳", empty: "未裝備", focus: "速度" },
   { key: "dantian", label: "丹田", empty: "未裝備", focus: "資源" },
 ];
@@ -9841,8 +9841,7 @@ function randomGearStatsForRecipe(recipe) {
 }
 
 function randomGearCombatForRecipe(recipe) {
-  const slotData = GEAR_SLOT_DATA[recipe?.slot] || GEAR_SLOT_DATA.hands;
-  const pool = slotData.combatPool?.length ? slotData.combatPool : Object.keys(GEAR_COMBAT_STAT_DATA);
+  const pool = Object.keys(GEAR_COMBAT_STAT_DATA);
   const count = Math.max(1, Math.min(pool.length, Math.floor(recipe?.combatCount || 1)));
   const value = Number.isFinite(recipe?.combatValue) ? Math.max(1, recipe.combatValue) : null;
   const level = Math.max(1, Number(recipe?.level) || 1);
