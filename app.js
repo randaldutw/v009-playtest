@@ -11130,7 +11130,7 @@ function createEnemies(level, kind = "mob", options = {}) {
   if (boss) {
     const bossType = bossEnemyType(level);
     const bossPos = reserveEnemyPosition(2, 2, occupied);
-    return [makeEnemy(bossName(level), level, bossType, bossPos.x, bossPos.y, 2, 2)];
+    return [makeEnemy(bossName(level), level, bossType, bossPos.x, bossPos.y, 2, 2, { eventRuinsBoss: kind === "event_ruins" })];
   }
   const [type] = encounterTypes(level, 1);
   const pos = reserveEnemyPosition(1, 1, occupied);
@@ -11184,9 +11184,10 @@ function enemyBasicMoveLabel(enemy) {
   return { wolf: "撕咬", scorpion: "毒刺", slime: "腐蝕", raider: "劈砍", machine: "射擊" }[enemy?.type] || "攻擊";
 }
 
-function makeEnemy(name, level, type, x, y, w, h) {
+function makeEnemy(name, level, type, x, y, w, h, options = {}) {
   const boss = w > 1 || h > 1;
-  const maxHp = enemyMaxHp(level, boss);
+  const eventRuinsBoss = boss && !!options.eventRuinsBoss;
+  const maxHp = Math.round(enemyMaxHp(level, boss) * (eventRuinsBoss ? 1.12 : 1));
   const drops = enemyDrops(type, level, boss);
   return {
     id: cryptoRandomId(),
@@ -11223,6 +11224,7 @@ function makeEnemy(name, level, type, x, y, w, h) {
     floatKind: "",
     floatStack: [],
     drops,
+    eventRuinsBoss,
   };
 }
 
@@ -13307,13 +13309,13 @@ function triggerDuelOpponentAttackFx(enemy, label = "", hits = 1) {
 function enemyDamageScale(enemy) {
   const boss = enemy && (enemy.w > 1 || enemy.h > 1);
   if (isTutorialBossEnemy(enemy)) return 1.42;
-  return (boss ? 2.42 : 3.75) * highLevelEnemyDamagePressure(enemy);
+  return (boss ? 2.42 : 3.75) * highLevelEnemyDamagePressure(enemy) * (enemy?.eventRuinsBoss ? 1.08 : 1);
 }
 
 function enemyDamageVariance(enemy) {
   const boss = enemy && (enemy.w > 1 || enemy.h > 1);
   if (isTutorialBossEnemy(enemy)) return 0.8;
-  return (boss ? 1.5 : 5) * highLevelEnemyDamagePressure(enemy);
+  return (boss ? 1.5 : 5) * highLevelEnemyDamagePressure(enemy) * (enemy?.eventRuinsBoss ? 1.08 : 1);
 }
 
 function chooseEnemyTarget() {
@@ -13805,7 +13807,10 @@ function showRandomEventPrompt(event) {
         label: "是",
         primary: true,
         action: () => showRandomEventDialogue("深入險地", "盤據在遺跡中的危險生物向你襲來！", [
-          { label: "迎戰", primary: true, action: () => startBattle(Math.min(BLACKWATER_MAX_LEVEL, (playerCombatMember()?.level || event.level) + 5), false, "event_ruins", { eventContext: { ...event, bossLevel: Math.min(BLACKWATER_MAX_LEVEL, (playerCombatMember()?.level || event.level) + 5) }, standardRewards: true }) },
+          { label: "迎戰", primary: true, action: () => {
+            const bossLevel = Math.min(BLACKWATER_MAX_LEVEL, Math.max(1, playerCombatMember()?.level || event.level));
+            startBattle(bossLevel, false, "event_ruins", { eventContext: { ...event, bossLevel }, standardRewards: true });
+          } },
         ]),
       },
       { label: "否", action: () => {} },
