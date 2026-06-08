@@ -116,6 +116,8 @@ const ACTIVE_SKILL_SLOT_COUNT = 8;
 const BODY_SLOT_COUNT = 8;
 const BODY_FRAGMENT_ITEM_ID = "body_fragment";
 const BODY_SLOT_UNLOCK_FRAGMENT_COST = 50;
+const BODY_FRAGMENT_EXPECTED_BATTLES_PER_UNLOCK = 150;
+const BODY_FRAGMENT_DROP_CHANCE = BODY_SLOT_UNLOCK_FRAGMENT_COST / BODY_FRAGMENT_EXPECTED_BATTLES_PER_UNLOCK;
 const RECRUIT_CANDIDATE_COUNT = 6;
 const RECRUIT_REFRESH_COST = 120;
 const MARKET_STOCK_SLOT_COUNT = 6;
@@ -13320,7 +13322,7 @@ function calculateBattleDrops(battle) {
     sum.money += enemy.drops?.money || 0;
     sum.material += enemy.drops?.material || 0;
     mergeRewardItems(sum.items, enemy.drops?.items || []);
-    if (Math.random() <= 0.08) mergeRewardItems(sum.items, [{ id: BODY_FRAGMENT_ITEM_ID, count: 1 }]);
+    if (Math.random() <= BODY_FRAGMENT_DROP_CHANCE) mergeRewardItems(sum.items, [{ id: BODY_FRAGMENT_ITEM_ID, count: 1 }]);
     return sum;
   }, { money: 0, material: 0, energy: 0, items: [] });
   if (battle.level % 5 === 0) {
