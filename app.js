@@ -796,7 +796,7 @@ const EVENT_DIALOGUE_SEQUENCES = {
     lines: [
       { speaker: "yao_hengzhou", text: "小子，來來來瞧瞧我幫你搞到什麼新玩具。" },
       { speaker: "yu_xiaosui", text: "呀！那、那是人嗎？大叔，你不會真的做了什麼奇怪的事吧？" },
-      { speaker: "yao_hengzhou", text: "呸呸呸，什麼屍體！這是我整天在這幫你們搞維修，用湊下來的邊角料組裝出來的空白義體！" },
+      { speaker: "yao_hengzhou", text: "呸呸呸，胡說八道！這是我整天在這幫你們搞維修，用湊下來的邊角料組裝出來的空白義體！" },
       { speaker: "yu_xiaosui", text: "邊角料……組出來的？這樣真的可以用嗎？" },
       { speaker: "yao_hengzhou", text: "不靠譜又怎了，人大荒漂，能用就是福！還嫌呢。最重要的是，靠這空白義體，你能體驗一把其他門派的打法，怎樣，有意思吧？" },
       { speaker: "yao_hengzhou", condition: "playerClass:chanlin", text: "你們禪林寺這些不用義體的死腦筋，我這正好有上次喝酒時，從全真老鬼那打賭贏來的虛擬實境操控終端，遙控一下湊和著也能用。" },
