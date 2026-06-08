@@ -3586,7 +3586,7 @@ function ensureTownTalkers() {
     id: `member-${member.id}`,
     type: "member",
     name: member.name,
-    subtitle: CLASS_DATA[member.classId].name,
+    subtitle: memberClassName(member),
     classId: member.classId,
     tone: roleToneClass(member.classId),
     lines: memberTownLines(member),
@@ -4047,7 +4047,19 @@ function ensureBodyManagementState() {
   }
   state.recruits.forEach((member) => {
     if (member !== original && member.bodySlotIndex === 0) member.bodySlotIndex = -1;
+    if (original && member !== original && isSimulatedBody(member) && safeNumber(member.bodySlotIndex, -1, -1) >= 1) {
+      member.name = original.name;
+    }
   });
+}
+
+function isSimulatedBody(member) {
+  return !!member && !member.bodyOriginal && member.bodyKind === "blank";
+}
+
+function bodyOriginalName() {
+  const original = state.recruits.find((member) => member.bodyOriginal || member.bodySlotIndex === 0);
+  return original?.name || state.recruits[0]?.name || "";
 }
 
 function bodySlotMember(slotIndex) {
@@ -4155,7 +4167,7 @@ function confirmBodySelection() {
   const className = CLASS_DATA[draft.classId]?.name || "門派";
   const member = createCharacter(draft.classId, "white", usedNameParts(), {
     gender: draft.gender,
-    name: `${className}義體`.slice(0, 6),
+    name: bodyOriginalName() || `${className}義體`.slice(0, 6),
     stats: draft.stats,
     portraitPath: creatorPortraitPath(draft),
   });
@@ -4188,7 +4200,7 @@ function switchBodySlot(slotIndex, options = {}) {
   state.party = [member.id, null, null, null];
   state.selectedMemberId = member.id;
   state.townTalkers = [];
-  if (!options.silent) addFeed(`切換義體：${member.name}（${CLASS_DATA[member.classId]?.name || ""}）。`, "gold");
+  if (!options.silent) addFeed(`切換義體：${member.name}（${memberClassName(member)}）。`, "gold");
   saveGame();
   if (options.render !== false) render();
   return true;
@@ -4464,9 +4476,12 @@ function v009BodySlotCard(index) {
     const portrait = v009ProjectAssetUrl(member.portraitPath || randomPortraitPath(member.classId, member.gender));
     return `
       <button class="v009-body-slot filled ${active ? "active" : ""} ${member.bodyOriginal ? "original" : ""}" data-body-slot="${index}">
-        <img src="${escapeHtml(portrait)}" alt="">
-        <b>${escapeHtml(member.bodyOriginal ? "原本身體" : member.name)}</b>
-        <span>${escapeHtml(CLASS_DATA[member.classId]?.name || "")} Lv${member.level}</span>
+        <span class="v009-body-slot-portrait"><img src="${escapeHtml(portrait)}" alt=""></span>
+        <span class="v009-body-slot-info">
+          <b>${escapeHtml(member.bodyOriginal ? "原本身體" : member.name)}</b>
+          <em>${escapeHtml(memberClassName(member))}</em>
+          <strong>Lv${member.level}</strong>
+        </span>
         <i>${active ? "目前使用" : "點擊切換"}</i>
       </button>
     `;
@@ -4474,16 +4489,22 @@ function v009BodySlotCard(index) {
   if (unlocked) {
     return `
       <button class="v009-body-slot blank" data-body-slot="${index}">
-        <b>空白義體</b>
-        <span>第 ${index + 1} 槽</span>
+        <span class="v009-body-slot-portrait empty-mark">+</span>
+        <span class="v009-body-slot-info">
+          <b>空白義體</b>
+          <em>第 ${index + 1} 槽</em>
+        </span>
         <i>選擇門派</i>
       </button>
     `;
   }
   return `
     <button class="v009-body-slot locked" data-body-slot="${index}">
-      <b>鎖定</b>
-      <span>${itemName(BODY_FRAGMENT_ITEM_ID)} ${bodyFragmentCount()}/${BODY_SLOT_UNLOCK_FRAGMENT_COST}</span>
+      <span class="v009-body-slot-portrait locked-mark">${lockIcon()}</span>
+      <span class="v009-body-slot-info">
+        <b>鎖定</b>
+        <em>${itemName(BODY_FRAGMENT_ITEM_ID)} ${bodyFragmentCount()}/${BODY_SLOT_UNLOCK_FRAGMENT_COST}</em>
+      </span>
       <i>點擊查看條件</i>
     </button>
   `;
@@ -6287,7 +6308,7 @@ function v009CharacterDetailPanel(cockpit) {
         <div class="v009-character-profile">
           <div class="v009-character-nameplate">
             <b>${member.name}</b>
-            <span><strong>等級 ${member.level}</strong><i>${CLASS_DATA[member.classId].name}</i></span>
+            <span><strong>等級 ${member.level}</strong><i>${memberClassName(member)}</i></span>
           </div>
           <div class="v009-character-exp">
             <span>經驗 <b>${nextExp ? `${expValue} / ${nextExp}` : "MAX"}</b></span>
@@ -6813,7 +6834,7 @@ function homeAllySlot(ally, index) {
         ${ally.portrait ? `<img src="${escapeHtml(ally.portrait)}" alt="">` : `<i>${ally.name.slice(0, 1)}</i>`}
       </span>
       <span class="home-ally-main">
-        <span class="home-ally-name"><b>${ally.name}</b><i>Lv${ally.level} ${CLASS_DATA[ally.classId].name}</i></span>
+        <span class="home-ally-name"><b>${ally.name}</b><i>Lv${ally.level} ${memberClassName(ally)}</i></span>
         <span class="home-meter hp"><em>生命</em>${combatBar("hp", ally.hp, ally.maxHp)}</span>
         <span class="home-meter resource"><em>${classResourceLabel(ally.classId)}</em>${combatBar("resource", ally.resource, ally.maxResource)}</span>
         <span class="home-meter act"><em>行動</em>${combatBar("act", ally.action, 100)}</span>
@@ -7867,14 +7888,14 @@ function memberPortraitFigure(member, extraClass = "") {
 }
 
 function combatIdentity(ally) {
-  const pseudoMember = { classId: ally.classId, level: ally.level || 1 };
+  const pseudoMember = { classId: ally.classId, level: ally.level || 1, bodyKind: ally.bodyKind || "", bodyOriginal: !!ally.bodyOriginal };
   return `
     <div class="character-identity combat-character-identity name-line role-strip ${roleToneClass(ally.classId)}">
       <span class="portrait">${ally.name.slice(0, 1)}</span>
       <div class="combat-character-main">
         <span class="name-with-level"><b>${ally.name}</b>${levelBadge(pseudoMember)}</span>
         <div class="member-tags character-tags combat-character-tags">
-          ${classTag(ally.classId)}
+          ${memberClassTag(pseudoMember)}
           ${roleTag(ally.classId)}
         </div>
       </div>
@@ -7898,7 +7919,7 @@ function costTag(label, value, extraClass = "") {
 function characterSpecTags(member, options = {}) {
   const extraClass = options.extraClass || "";
   const tags = [
-    classTag(member.classId, extraClass),
+    memberClassTag(member, extraClass),
     roleTag(member.classId, extraClass),
   ];
   if (options.cost != null) tags.push(costTag("雇用", options.cost, extraClass));
@@ -8954,9 +8975,18 @@ function skillName(id) {
   return "未知技能";
 }
 
-function classTag(classId, extraClass = "") {
+function memberClassName(member) {
+  const className = CLASS_DATA[member?.classId]?.name || "";
+  return isSimulatedBody(member) ? `${className}(模擬義體)` : className;
+}
+
+function memberClassTag(member, extraClass = "") {
+  return classTag(member?.classId, extraClass, memberClassName(member));
+}
+
+function classTag(classId, extraClass = "", labelOverride = "") {
   const cls = CLASS_DATA[classId];
-  return `<span class="meta-tag class-tag ${extraClass}" title="${classDescription(classId)}">${cls.name}</span>`;
+  return `<span class="meta-tag class-tag ${extraClass}" title="${classDescription(classId)}">${escapeHtml(labelOverride || cls.name)}</span>`;
 }
 
 function roleFeatureTags(classId, extraClass = "") {
@@ -10299,6 +10329,8 @@ function cloneCombatant(member) {
     sourceId: member.id,
     name: member.name,
     classId: member.classId,
+    bodyKind: member.bodyKind || "",
+    bodyOriginal: !!member.bodyOriginal,
     level: member.level,
     portrait: portraitUrl(member),
     fullPortrait: portraitUrl(member),

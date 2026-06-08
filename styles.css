@@ -11982,8 +11982,8 @@ button.v009-list-row:hover {
   min-height: 0;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  gap: 10px;
-  padding: 0 14px 14px;
+  gap: 14px;
+  padding: 0 18px 18px;
   overflow: hidden;
 }
 
@@ -11997,7 +11997,7 @@ button.v009-list-row:hover {
 
 .v009-body-switch-head b {
   color: #ffe59a;
-  font-size: 15px;
+  font-size: 18px;
 }
 
 .v009-body-switch-head span {
@@ -12010,18 +12010,20 @@ button.v009-list-row:hover {
   min-height: 0;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-  overflow: auto;
+  grid-auto-rows: minmax(168px, 1fr);
+  gap: 14px;
+  overflow: hidden;
 }
 
 .v009-body-slot {
-  min-height: 138px;
+  position: relative;
+  min-height: 168px;
   display: grid;
-  grid-template-rows: 54px auto auto auto;
-  place-items: center;
-  gap: 4px;
-  padding: 10px 8px;
-  border-radius: 6px;
+  grid-template-rows: minmax(82px, 1fr) auto auto;
+  place-items: stretch;
+  gap: 10px;
+  padding: 14px 14px 12px;
+  border-radius: 8px;
   border: 1px solid rgba(125, 231, 238, 0.18);
   color: #eaffff;
   text-align: center;
@@ -12030,25 +12032,47 @@ button.v009-list-row:hover {
     linear-gradient(180deg, rgba(8, 22, 25, 0.92), rgba(3, 10, 13, 0.96));
 }
 
-.v009-body-slot img {
-  width: 58px;
-  height: 58px;
+.v009-body-slot-portrait {
+  position: relative;
+  min-height: 78px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(125, 231, 238, 0.12);
+  border-radius: 7px;
+  background:
+    radial-gradient(ellipse at 50% 80%, rgba(255, 209, 102, 0.18), transparent 45%),
+    radial-gradient(ellipse at 50% 38%, rgba(55, 216, 255, 0.16), transparent 62%),
+    rgba(2, 9, 11, 0.5);
+  overflow: hidden;
+}
+
+.v009-body-slot-portrait img {
+  width: min(96px, 82%);
+  height: 92px;
   object-fit: contain;
   object-position: center bottom;
   image-rendering: pixelated;
-  filter: drop-shadow(0 8px 8px rgba(0, 0, 0, 0.45));
+  filter: drop-shadow(0 12px 10px rgba(0, 0, 0, 0.52));
+}
+
+.v009-body-slot-info {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  align-content: start;
 }
 
 .v009-body-slot b {
   max-width: 100%;
   color: #f6ffff;
-  font-size: 14px;
+  font-size: 15px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.v009-body-slot span,
+.v009-body-slot em,
+.v009-body-slot strong,
 .v009-body-slot i {
   max-width: 100%;
   overflow: hidden;
@@ -12056,13 +12080,24 @@ button.v009-list-row:hover {
   white-space: nowrap;
 }
 
-.v009-body-slot span {
-  color: rgba(183, 205, 210, 0.82);
+.v009-body-slot em {
+  color: rgba(214, 242, 244, 0.82);
   font-size: 12px;
+  font-style: normal;
   font-weight: 800;
 }
 
+.v009-body-slot strong {
+  color: #ffe59a;
+  font-size: 12px;
+  font-weight: 950;
+}
+
 .v009-body-slot i {
+  align-self: end;
+  display: block;
+  border-top: 1px solid rgba(125, 231, 238, 0.1);
+  padding-top: 8px;
   color: rgba(255, 225, 143, 0.86);
   font-size: 11px;
   font-style: normal;
@@ -12078,26 +12113,28 @@ button.v009-list-row:hover {
 }
 
 .v009-body-slot.blank {
-  grid-template-rows: 1fr auto auto 1fr;
   border-style: dashed;
   border-color: rgba(55, 216, 255, 0.34);
 }
 
-.v009-body-slot.blank::before {
-  content: "+";
+.v009-body-slot .empty-mark {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
   color: #7de7ee;
-  font-size: 28px;
+  font-size: 46px;
   font-weight: 900;
-  background: rgba(55, 216, 255, 0.08);
+}
+
+.v009-body-slot .locked-mark {
+  opacity: 0.76;
+}
+
+.v009-body-slot .locked-mark .lock-icon {
+  width: 42px;
+  height: 42px;
 }
 
 .v009-body-slot.locked {
-  grid-template-rows: 1fr auto auto auto 1fr;
   opacity: 0.58;
   border-style: dashed;
   border-color: rgba(183, 205, 210, 0.16);
