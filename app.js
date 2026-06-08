@@ -4478,8 +4478,7 @@ function v009BodySlotCard(index) {
       <button class="v009-body-slot filled ${active ? "active" : ""} ${member.bodyOriginal ? "original" : ""}" data-body-slot="${index}">
         <span class="v009-body-slot-portrait"><img src="${escapeHtml(portrait)}" alt=""></span>
         <span class="v009-body-slot-info">
-          <b>${escapeHtml(member.bodyOriginal ? "原本身體" : member.name)}</b>
-          <em>${escapeHtml(memberClassName(member))}</em>
+          <b>${escapeHtml(memberClassName(member))}</b>
           <strong>Lv${member.level}</strong>
         </span>
         <i>${active ? "目前" : "切換"}</i>
