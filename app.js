@@ -7162,53 +7162,27 @@ function v009InventoryDetailBody(detail) {
 
 function v009InventoryAbilityLineHtml(line) {
   if (!line || typeof line !== "object") return `<span>${escapeHtml(line)}</span>`;
-  const delta = Number(line.delta || 0);
-  const deltaHtml = delta
-    ? `<em class="${delta > 0 ? "up" : "down"}">${delta > 0 ? "+" : ""}${escapeHtml(delta)}${escapeHtml(line.deltaUnit || "")}</em>`
-    : "";
-  return `<span>${escapeHtml(line.text)}${deltaHtml}</span>`;
+  return `<span class="${line.mainStat ? "main-stat" : ""}">${escapeHtml(line.text)}</span>`;
 }
 
-function gearAbilityLines(gear, member = null, compareGear = null) {
+function gearAbilityLines(gear, member = null) {
   if (!gear) return [];
-  const compareStats = gearCompareStatMap(compareGear);
-  const compareCombat = gearCompareCombatMap(compareGear);
+  const classId = member?.classId || playerCombatMember()?.classId || "";
+  const mainStats = new Set((CLASS_DATA[classId]?.main || []).filter((key) => STAT_KEYS.includes(key)));
   const statLines = (gear.stats || []).map((entry) => {
     const value = safeNumber(entry.value, 0, 0);
     return {
       text: `${STAT_LABELS[entry.key]} +${value}`,
-      delta: compareGear ? value - (compareStats[entry.key] || 0) : 0,
+      mainStat: mainStats.has(entry.key),
     };
   });
   const combatLines = gearCombatEntries(gear).map((entry) => {
     const value = safeNumber(entry.value, 0, 0);
     return {
       text: `${combatBonusLabel(entry.key)} +${value}${combatBonusUnit(entry.key)}`,
-      delta: compareGear ? value - (compareCombat[entry.key] || 0) : 0,
-      deltaUnit: combatBonusUnit(entry.key),
     };
   });
   return [...statLines, ...combatLines].filter(Boolean);
-}
-
-function gearCompareStatMap(gear) {
-  return (gear?.stats || []).reduce((map, entry) => {
-    map[entry.key] = (map[entry.key] || 0) + safeNumber(entry.value, 0, 0);
-    return map;
-  }, {});
-}
-
-function gearCompareCombatMap(gear) {
-  return gearCombatEntries(gear).reduce((map, entry) => {
-    map[entry.key] = (map[entry.key] || 0) + safeNumber(entry.value, 0, 0);
-    return map;
-  }, {});
-}
-
-function equippedGearInSlot(member, slotKey) {
-  const equipment = normalizeEquipment(member?.equipment);
-  const gear = equipment[slotKey];
-  return gear && typeof gear === "object" ? gear : null;
 }
 
 function gearSetProgress(gear, member = null) {
@@ -7229,11 +7203,9 @@ function v009InventoryItemDetail(entry, member = null) {
   if (entry.category === "gear" && entry.gear) {
     const gear = entry.gear;
     const className = gear.classId ? CLASS_DATA[gear.classId]?.name : "";
-    const currentGear = member && !entry.member ? equippedGearInSlot(member, gear.slot) : null;
-    const compareGear = currentGear && currentGear.id !== gear.id ? currentGear : null;
     return {
       tags: [`${gearSlotLabel(gear.slot)}`, `Lv${gear.level}`, className].filter(Boolean),
-      lines: gearAbilityLines(gear, member, compareGear),
+      lines: gearAbilityLines(gear, member),
       body: gearAbilitySummary(gear) || "未標示能力。",
       setProgress: gearSetProgress(gear, member),
       note: "雙擊或拖曳裝卸。",

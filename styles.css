@@ -7840,19 +7840,12 @@ button.v009-list-row:hover {
   line-height: 1.35;
 }
 
-.v009-item-ability-list em {
-  float: right;
-  margin-left: 8px;
-  font-style: normal;
-  font-weight: 950;
-}
-
-.v009-item-ability-list em.up {
-  color: #83ffb1;
-}
-
-.v009-item-ability-list em.down {
-  color: #ff6d7f;
+.v009-item-ability-list span.main-stat {
+  border-color: rgba(255, 209, 102, 0.46);
+  color: #fff1a8;
+  background:
+    linear-gradient(180deg, rgba(255, 209, 102, 0.16), rgba(6, 23, 27, 0.78));
+  box-shadow: inset 3px 0 0 rgba(255, 209, 102, 0.75), 0 0 10px rgba(255, 209, 102, 0.12);
 }
 
 .v009-item-set-block {
