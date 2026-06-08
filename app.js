@@ -5183,10 +5183,9 @@ const V009_STAGE_FX_RUNTIME = {
 function v009StageFxCanvas() {
   const canvas = document.querySelector(".v009-stage-fx-canvas");
   if (!canvas) return null;
-  const rect = canvas.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
-  const width = Math.max(1, Math.floor(rect.width * dpr));
-  const height = Math.max(1, Math.floor(rect.height * dpr));
+  const width = Math.max(1, Math.floor((canvas.clientWidth || 1) * dpr));
+  const height = Math.max(1, Math.floor((canvas.clientHeight || 1) * dpr));
   if (canvas.width !== width || canvas.height !== height || V009_STAGE_FX_RUNTIME.canvas !== canvas) {
     canvas.width = width;
     canvas.height = height;
@@ -5197,6 +5196,12 @@ function v009StageFxCanvas() {
     V009_STAGE_FX_RUNTIME.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
   return canvas;
+}
+
+function v009StageFxCanvasScale(canvas) {
+  const rect = canvas?.getBoundingClientRect();
+  const width = Math.max(1, canvas?.clientWidth || 1);
+  return rect?.width ? rect.width / width : 1;
 }
 
 function v009StageFxNumber(value, fallback = 0) {
@@ -5279,9 +5284,10 @@ function v009StageFxUnitCenterPoint(canvas, side) {
   const canvasRect = canvas.getBoundingClientRect();
   const unitRect = unit.getBoundingClientRect();
   if (!canvasRect.width || !canvasRect.height || !unitRect.width || !unitRect.height) return null;
+  const scale = v009StageFxCanvasScale(canvas);
   return {
-    x: unitRect.left - canvasRect.left + unitRect.width * 0.5,
-    y: unitRect.top - canvasRect.top + unitRect.height * 0.5,
+    x: (unitRect.left - canvasRect.left + unitRect.width * 0.5) / scale,
+    y: (unitRect.top - canvasRect.top + unitRect.height * 0.5) / scale,
   };
 }
 
