@@ -1279,6 +1279,7 @@ const state = {
   homePrimaryMenu: "map",
   homeSecondaryMenu: "regions",
   codexFactionOpen: true,
+  codexGeographyOpen: true,
   marketMode: "buy",
   marketStock: [],
   marketStockLevel: 0,
@@ -1611,6 +1612,8 @@ function saveGame() {
       gather: state.gather,
       expedition: state.expedition,
       tutorials: state.tutorials,
+      codexFactionOpen: state.codexFactionOpen !== false,
+      codexGeographyOpen: state.codexGeographyOpen !== false,
       commissions: state.commissions,
       battleSpeed: state.battleSpeed,
       lastBattleLevel: state.lastBattleLevel,
@@ -1669,6 +1672,8 @@ function loadGame() {
     state.gather = save.gather;
     state.expedition = save.expedition;
     state.tutorials = save.tutorials;
+    state.codexFactionOpen = save.codexFactionOpen !== false;
+    state.codexGeographyOpen = save.codexGeographyOpen !== false;
     state.selectedMemberId = save.selectedMemberId;
     state.lastUpgradeId = null;
     state.battle = null;
@@ -1744,6 +1749,8 @@ function migrateSave(save) {
     gather: normalizeTimedTask(save.gather),
     expedition: normalizeTimedTask(save.expedition),
     tutorials: normalizeTutorials(save.tutorials),
+    codexFactionOpen: save.codexFactionOpen !== false,
+    codexGeographyOpen: save.codexGeographyOpen !== false,
     commissions: normalizeCommissions(save.commissions),
     battleSpeed: save.battleSpeed === 2 ? 2 : 1,
     lastBattleLevel: Math.min(BLACKWATER_MAX_LEVEL, Math.max(1, safeNumber(save.lastBattleLevel, 1, 1))),
@@ -4767,23 +4774,31 @@ function v009CodexPanel() {
     ...Object.entries(CLASS_DATA).map(([classId, data]) => v009CodexFactionEntry(classId, data)),
   ].join("");
   const geographyEntries = CODEX_GEOGRAPHY_ENTRIES.map(v009CodexTextEntry).join("");
+  const factionOpen = state.codexFactionOpen !== false;
+  const geographyOpen = state.codexGeographyOpen !== false;
   return `
     <div class="v009-codex-panel stacked">
-      <section class="v009-codex-category">
-        <header class="v009-codex-category-head">
+      <section class="v009-codex-category ${factionOpen ? "open" : "collapsed"}">
+        <button class="v009-codex-category-head" data-codex-category-toggle="factions" aria-expanded="${factionOpen ? "true" : "false"}">
           <b>勢力</b>
-        </header>
-        <div class="v009-codex-entry-list">
-          ${factionEntries}
-        </div>
+          <span>${factionOpen ? "收起" : "展開"}</span>
+        </button>
+        ${factionOpen ? `
+          <div class="v009-codex-entry-list">
+            ${factionEntries}
+          </div>
+        ` : ""}
       </section>
-      <section class="v009-codex-category">
-        <header class="v009-codex-category-head">
+      <section class="v009-codex-category ${geographyOpen ? "open" : "collapsed"}">
+        <button class="v009-codex-category-head" data-codex-category-toggle="geography" aria-expanded="${geographyOpen ? "true" : "false"}">
           <b>地理</b>
-        </header>
-        <div class="v009-codex-entry-list">
-          ${geographyEntries}
-        </div>
+          <span>${geographyOpen ? "收起" : "展開"}</span>
+        </button>
+        ${geographyOpen ? `
+          <div class="v009-codex-entry-list">
+            ${geographyEntries}
+          </div>
+        ` : ""}
       </section>
     </div>
   `;
@@ -14213,6 +14228,17 @@ function bindEvents() {
       if (activeMenu === "codex" && targetSecondary === "factions") {
         state.codexFactionOpen = currentSecondary === targetSecondary ? state.codexFactionOpen === false : true;
       }
+      render();
+    });
+  });
+  document.querySelectorAll("[data-codex-category-toggle]").forEach((el) => {
+    el.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const category = el.dataset.codexCategoryToggle;
+      if (category === "factions") state.codexFactionOpen = state.codexFactionOpen === false;
+      if (category === "geography") state.codexGeographyOpen = state.codexGeographyOpen === false;
+      saveGame();
       render();
     });
   });
