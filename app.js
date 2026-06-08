@@ -5283,30 +5283,29 @@ function emitV009StageCanvasFxOne(config, side, sequence = null) {
       y: mid.y - Math.sin(angle) * 42,
     };
     const fireAngle = Math.atan2(target.y - fireStart.y, target.x - fireStart.x);
-    v009AddStageFxForm({ type: "throwArc", x: source.x, y: source.y, angle, life: 360, maxLife: 360, color, mirror });
-    v009AddStageFxForm({ type: "needleFire", x1: fireStart.x, y1: fireStart.y, x2: target.x, y2: target.y, life: 560, maxLife: 560, color });
-    setTimeout(() => v009ImpactNeedle(target.x, target.y, color, mirror, fireAngle), 400);
+    v009AddStageFxForm({ type: "throwArc", x: source.x, y: source.y, angle: fireAngle, life: 360, maxLife: 360, color, mirror });
+    v009AddStageFxForm({ type: "needleFire", x1: fireStart.x, y1: fireStart.y, x2: target.x, y2: target.y, life: 400, maxLife: 400, color });
+    setTimeout(() => v009ImpactNeedle(target.x, target.y, color, mirror, fireAngle, v009NeedleHitOptions(target.x, target.y, fireAngle)), 400);
     return;
   }
 
   if (config.family === "needleTriple") {
+    const baseFireStart = {
+      x: mid.x - Math.cos(angle) * 42,
+      y: mid.y - Math.sin(angle) * 42,
+    };
     [
       { dy: -18, opacity: 0.42 },
       { dy: 0, opacity: 1 },
       { dy: 18, opacity: 0.56 },
     ].forEach((layer) => {
       const layerSource = { x: source.x, y: source.y + layer.dy * 0.35 };
-      const layerMid = { x: mid.x, y: mid.y + layer.dy * 0.72 };
+      const layerFireStart = { x: baseFireStart.x, y: baseFireStart.y + layer.dy };
       const layerTarget = { x: target.x, y: target.y + layer.dy };
-      const layerAngle = Math.atan2(layerTarget.y - layerSource.y, layerTarget.x - layerSource.x);
-      const fireStart = {
-        x: layerMid.x - Math.cos(layerAngle) * 42,
-        y: layerMid.y - Math.sin(layerAngle) * 42,
-      };
-      const fireAngle = Math.atan2(layerTarget.y - fireStart.y, layerTarget.x - fireStart.x);
-      v009AddStageFxForm({ type: "throwArc", x: layerSource.x, y: layerSource.y, angle: layerAngle, life: 360, maxLife: 360, color, mirror, opacity: layer.opacity });
-      v009AddStageFxForm({ type: "needleFire", x1: fireStart.x, y1: fireStart.y, x2: layerTarget.x, y2: layerTarget.y, life: 560, maxLife: 560, color, opacity: layer.opacity });
-      setTimeout(() => v009ImpactNeedle(layerTarget.x, layerTarget.y, color, mirror, fireAngle, { opacity: layer.opacity }), 400);
+      const fireAngle = Math.atan2(layerTarget.y - layerFireStart.y, layerTarget.x - layerFireStart.x);
+      v009AddStageFxForm({ type: "throwArc", x: layerSource.x, y: layerSource.y, angle: fireAngle, life: 360, maxLife: 360, color, mirror, opacity: layer.opacity });
+      v009AddStageFxForm({ type: "needleFire", x1: layerFireStart.x, y1: layerFireStart.y, x2: layerTarget.x, y2: layerTarget.y, life: 400, maxLife: 400, color, opacity: layer.opacity });
+      setTimeout(() => v009ImpactNeedle(layerTarget.x, layerTarget.y, color, mirror, fireAngle, { ...v009NeedleHitOptions(layerTarget.x, layerTarget.y, fireAngle), opacity: layer.opacity }), 400);
     });
     return;
   }
@@ -5391,16 +5390,25 @@ function v009ImpactSlash(x, y, color, mirror = false) {
   v009AddStageFxRing(x, y, color, 12, 420, 5);
 }
 
+function v009NeedleHitOptions(x, y, angle) {
+  return {
+    hitX: x + Math.cos(angle) * 34,
+    hitY: y + Math.sin(angle) * 34,
+  };
+}
+
 function v009ImpactNeedle(x, y, color, mirror = false, angleOverride = null, options = {}) {
   const angle = Number.isFinite(angleOverride) ? angleOverride : (mirror ? 0.08 : Math.PI + 0.08);
   const opacity = Math.max(0, Math.min(1, v009StageFxNumber(options.opacity, 1)));
   const burstScale = Math.max(0.35, opacity);
-  const tipX = x + Math.cos(angle) * 30;
-  const tipY = y + Math.sin(angle) * 30;
-  v009AddStageFxForm({ type: "needleStuck", x, y, life: 620, maxLife: 620, color, angle, shake: 1, opacity });
-  v009AddStageFxForm({ type: "needleTailPulse", x: tipX, y: tipY, life: 360, maxLife: 360, color, opacity });
-  v009AddStageFxBurst(tipX, tipY, color, Math.max(5, Math.round(18 * opacity)), 4.8 * burstScale, 3.4 * burstScale, 440, Math.PI * 1.0, angle, opacity);
-  v009AddStageFxBurst(tipX, tipY, V009_STAGE_FX_COLORS.white, Math.max(2, Math.round(6 * opacity)), 2.8 * burstScale, 2.2 * burstScale, 220, Math.PI * 2, -Math.PI / 2, opacity);
+  const hitX = Number.isFinite(options.hitX) ? options.hitX : x + Math.cos(angle) * 30;
+  const hitY = Number.isFinite(options.hitY) ? options.hitY : y + Math.sin(angle) * 30;
+  const centerX = hitX - Math.cos(angle) * 30;
+  const centerY = hitY - Math.sin(angle) * 30;
+  v009AddStageFxForm({ type: "needleStuck", x: centerX, y: centerY, life: 620, maxLife: 620, color, angle, shake: 1, opacity });
+  v009AddStageFxForm({ type: "needleTailPulse", x: hitX, y: hitY, life: 360, maxLife: 360, color, opacity });
+  v009AddStageFxBurst(hitX, hitY, color, Math.max(5, Math.round(18 * opacity)), 4.8 * burstScale, 3.4 * burstScale, 440, Math.PI * 1.0, angle, opacity);
+  v009AddStageFxBurst(hitX, hitY, V009_STAGE_FX_COLORS.white, Math.max(2, Math.round(6 * opacity)), 2.8 * burstScale, 2.2 * burstScale, 220, Math.PI * 2, -Math.PI / 2, opacity);
 }
 
 function v009DrawStageFxForm(ctx, f, t, dt) {
