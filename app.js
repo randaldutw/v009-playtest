@@ -8695,11 +8695,13 @@ function activeBattleDerivedBonuses(member) {
     attackNotes.push("破體印 +5%");
   }
 
-  const critRateBonus = battleCritRateBonusPercent(ally);
+  const critRateBonus = Math.max(0, ally.critRateBonus || 0);
+  const analysisCritBonus = tianshuAnalysisCritRateBonusPercent(ally);
   const soulSealBonus = activeSoulSealCritRateBonusForUi(ally, target);
-  const critRate = critRateBonus + soulSealBonus;
+  const critRate = critRateBonus + analysisCritBonus + soulSealBonus;
   const critRateNotes = [
     critRateBonus ? `技能|狀態 +${critRateBonus}%` : "",
+    analysisCritBonus ? `解析深度 +${analysisCritBonus}%` : "",
     soulSealBonus ? "斷魂印 +5%" : "",
   ].filter(Boolean);
   const critDamageBonus = activeSpiritSealCritDamageBonusForUi(target);
@@ -8795,7 +8797,12 @@ function activeSpiritSealCritDamageBonusForUi(target = null) {
 
 function battleCritRateBonusPercent(ally) {
   if (!ally) return 0;
-  return Math.max(0, ally.critRateBonus || 0);
+  return Math.max(0, ally.critRateBonus || 0) + tianshuAnalysisCritRateBonusPercent(ally);
+}
+
+function tianshuAnalysisCritRateBonusPercent(ally) {
+  if (!ally || ally.classId !== "tianshu") return 0;
+  return Math.min(30, Math.max(0, Math.floor((ally.resource || 0) / 10) * 3));
 }
 
 function derivedStatCard(entry) {
