@@ -9818,9 +9818,19 @@ function craftGear(recipeId) {
   if (!recipe || !canCraftGear(recipe)) return;
   state.inventory = normalizeInventory(state.inventory);
   recipe.costs.forEach(payCraftCost);
-  addGearItems([gearFromRecipe(recipe)]);
+  const [craftedGear] = addGearItems([gearFromRecipe(recipe)]);
   addFeed(`鍛造完成：${recipe.name}。`, "gold");
   state.inventoryOrder = normalizeInventoryOrder(state.inventoryOrder, state.inventory);
+  if (craftedGear?.id) {
+    state.itemFilter = "gear";
+    const position = v009InventoryPopoutPosition(null);
+    state.focusedInventoryItem = {
+      category: "gear",
+      id: craftedGear.id,
+      top: position.top,
+      left: position.left,
+    };
+  }
   saveGame();
   render();
 }
