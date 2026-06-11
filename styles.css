@@ -7762,16 +7762,15 @@ button.console-pulse-card.active {
 }
 
 .v009-inventory-expand-button {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 3;
+  position: relative;
+  justify-self: end;
   width: 26px;
   height: 26px;
   display: grid;
   place-items: center;
   border: 1px solid rgba(255, 209, 102, 0.52);
   border-radius: 5px;
+  margin: -4px 0 4px;
   padding: 0;
   color: #ffe59a;
   background: rgba(31, 25, 8, 0.9);
@@ -8068,12 +8067,12 @@ button.v009-list-row:hover {
 
 .v009-item-popout-actions button {
   min-height: 28px;
-  border: 1px solid rgba(255, 209, 102, 0.45);
+  border: 1px solid rgba(125, 231, 238, 0.22);
   border-radius: 5px;
   padding: 5px 7px;
-  color: #261804;
-  background: linear-gradient(180deg, #ffe59a, #d99b2e);
-  box-shadow: 0 0 12px rgba(255, 209, 102, 0.18);
+  color: rgba(216, 242, 244, 0.76);
+  background: linear-gradient(180deg, rgba(18, 48, 54, 0.78), rgba(5, 24, 29, 0.92));
+  box-shadow: none;
   font-size: 11px;
   font-weight: 950;
   cursor: pointer;
@@ -8084,15 +8083,28 @@ button.v009-list-row:hover {
 }
 
 .v009-item-popout-actions button.dismantle {
+  order: 1;
   border-color: rgba(125, 231, 238, 0.36);
   color: #dffcff;
   background: linear-gradient(180deg, rgba(23, 80, 86, 0.96), rgba(7, 36, 42, 0.98));
 }
 
 .v009-item-popout-actions button.equip {
-  border-color: rgba(98, 255, 182, 0.44);
-  color: #eafff5;
-  background: linear-gradient(180deg, rgba(29, 116, 78, 0.96), rgba(7, 48, 34, 0.98));
+  order: -1;
+  grid-column: 1 / -1;
+  min-height: 34px;
+  border-color: rgba(255, 232, 153, 0.78);
+  color: #241603;
+  background: linear-gradient(180deg, #fff1a8, #e1a63a);
+  box-shadow: 0 0 16px rgba(255, 209, 102, 0.32), inset 0 -2px 0 rgba(0, 0, 0, 0.18);
+  font-size: 13px;
+}
+
+.v009-item-popout-actions button.sell {
+  order: 2;
+  border-color: rgba(129, 156, 164, 0.22);
+  color: rgba(198, 220, 220, 0.68);
+  background: linear-gradient(180deg, rgba(18, 33, 36, 0.68), rgba(5, 17, 20, 0.82));
 }
 
 .v009-item-popout-actions button:hover {
