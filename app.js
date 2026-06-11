@@ -2517,7 +2517,7 @@ function normalizeGearCraftRecipeOpen(openState) {
   const validIds = new Set(GEAR_CRAFT_RECIPES.map((recipe) => recipe.id));
   return Object.fromEntries(Object.entries(openState)
     .filter(([id]) => validIds.has(id))
-    .map(([id, value]) => [id, value !== false]));
+    .map(([id, value]) => [id, value === true]));
 }
 
 function normalizeNewsIndex(index) {
@@ -4760,7 +4760,7 @@ function v009GearCraftCard(recipe) {
   const canCraft = canCraftGear(recipe);
   const tracked = isGearTracked(recipe.id);
   const openState = normalizeGearCraftRecipeOpen(state.gearCraftRecipeOpen);
-  const open = openState[recipe.id] !== false;
+  const open = openState[recipe.id] === true;
   return `
     <div class="chip-craft-card v009-gear-craft-card ${open ? "open" : "collapsed"}">
       <button class="chip-craft-head v009-gear-recipe-toggle" data-toggle-gear-recipe="${escapeHtml(recipe.id)}" aria-expanded="${open ? "true" : "false"}">
@@ -4993,7 +4993,7 @@ function toggleGearCraftSet(setId) {
 function toggleGearCraftRecipe(recipeId) {
   if (!GEAR_CRAFT_RECIPES.some((recipe) => recipe.id === recipeId)) return;
   state.gearCraftRecipeOpen = normalizeGearCraftRecipeOpen(state.gearCraftRecipeOpen);
-  state.gearCraftRecipeOpen[recipeId] = state.gearCraftRecipeOpen[recipeId] === false;
+  state.gearCraftRecipeOpen[recipeId] = state.gearCraftRecipeOpen[recipeId] !== true;
   saveGame();
   render();
 }
