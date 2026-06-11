@@ -6311,6 +6311,38 @@ button.console-pulse-card.active {
   border-color: rgba(255, 209, 102, 0.28);
 }
 
+.v009-gear-craft-card.collapsed {
+  min-height: 0;
+  background: rgba(5, 20, 24, 0.72);
+}
+
+.v009-gear-recipe-toggle {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgba(255, 209, 102, 0.22);
+  border-radius: 5px;
+  padding: 8px 10px;
+  text-align: left;
+  background: rgba(10, 30, 34, 0.84);
+  cursor: pointer;
+}
+
+.v009-gear-recipe-toggle b {
+  color: #f3ffff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.v009-gear-recipe-toggle span {
+  color: #ffe59a;
+  font-size: 11px;
+  font-weight: 950;
+}
+
 .v009-gear-craft-card .chip-craft-head span {
   line-height: 1.45;
 }
@@ -6468,6 +6500,18 @@ button.console-pulse-card.active {
   grid-row: 1 / span 3;
   min-width: 62px;
   min-height: 40px;
+}
+
+.v009-market-list .market-rename-row input {
+  grid-column: 1;
+  grid-row: 3;
+  min-width: 0;
+  border: 1px solid rgba(255, 209, 102, 0.34);
+  border-radius: 5px;
+  padding: 7px 8px;
+  color: #f3ffff;
+  background: rgba(5, 22, 26, 0.9);
+  font-weight: 900;
 }
 
 .v009-exchange-stack {
@@ -7705,6 +7749,120 @@ button.console-pulse-card.active {
   z-index: 5;
 }
 
+.v009-list-row.item.bis-one {
+  border-color: rgba(255, 209, 102, 0.62);
+  box-shadow: inset 0 0 0 1px rgba(255, 209, 102, 0.18), 0 0 12px rgba(255, 209, 102, 0.12);
+}
+
+.v009-list-row.item.bis-two {
+  border-color: rgba(255, 232, 153, 0.95);
+  background:
+    linear-gradient(180deg, rgba(54, 39, 8, 0.74), rgba(7, 22, 25, 0.88));
+  box-shadow: inset 0 0 0 1px rgba(255, 232, 153, 0.34), 0 0 22px rgba(255, 209, 102, 0.3);
+}
+
+.v009-inventory-expand-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 3;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 209, 102, 0.52);
+  border-radius: 5px;
+  padding: 0;
+  color: #ffe59a;
+  background: rgba(31, 25, 8, 0.9);
+  font-size: 14px;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.v009-expanded-inventory-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 84;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.32);
+}
+
+.v009-expanded-inventory {
+  width: min(980px, calc(100vw - 64px));
+  height: min(720px, calc(100vh - 64px));
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 10px;
+  border: 1px solid rgba(125, 231, 238, 0.34);
+  border-radius: 8px;
+  padding: 14px;
+  background: linear-gradient(180deg, rgba(6, 25, 30, 0.98), rgba(2, 10, 13, 0.99));
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.52);
+}
+
+.v009-expanded-inventory-head,
+.v009-expanded-inventory-filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.v009-expanded-inventory-head {
+  justify-content: space-between;
+}
+
+.v009-expanded-inventory-head b {
+  color: #f3ffff;
+  font-size: 18px;
+}
+
+.v009-expanded-inventory-head button,
+.v009-expanded-filter-buttons button,
+.v009-expanded-inventory-filters select,
+.v009-expanded-inventory-filters input[type="search"] {
+  border: 1px solid rgba(125, 231, 238, 0.24);
+  border-radius: 5px;
+  padding: 7px 10px;
+  color: #dffcff;
+  background: rgba(5, 22, 26, 0.86);
+  font-weight: 900;
+}
+
+.v009-expanded-filter-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.v009-expanded-filter-buttons button.active {
+  border-color: rgba(255, 209, 102, 0.62);
+  color: #ffe59a;
+}
+
+.v009-expanded-inventory-filters label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #ffe59a;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.v009-expanded-inventory-list {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 8px;
+  overflow: auto;
+}
+
+.v009-item-summary {
+  position: relative;
+}
+
 .v009-list-row.item[draggable="true"] {
   cursor: grab;
 }
@@ -7904,7 +8062,7 @@ button.v009-list-row:hover {
 
 .v009-item-popout-actions {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
 }
 
@@ -7929,6 +8087,12 @@ button.v009-list-row:hover {
   border-color: rgba(125, 231, 238, 0.36);
   color: #dffcff;
   background: linear-gradient(180deg, rgba(23, 80, 86, 0.96), rgba(7, 36, 42, 0.98));
+}
+
+.v009-item-popout-actions button.equip {
+  border-color: rgba(98, 255, 182, 0.44);
+  color: #eafff5;
+  background: linear-gradient(180deg, rgba(29, 116, 78, 0.96), rgba(7, 48, 34, 0.98));
 }
 
 .v009-item-popout-actions button:hover {
@@ -8921,6 +9085,32 @@ button.v009-list-row:hover {
 
 .stage-node.battle-locked .stage-state {
   color: rgba(255, 209, 102, 0.82);
+}
+
+.stage-node.running {
+  opacity: 1;
+  filter: none;
+  border-color: rgba(255, 209, 102, 0.9);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 209, 102, 0.28),
+    0 0 0 2px rgba(255, 209, 102, 0.16),
+    0 0 24px rgba(255, 209, 102, 0.38);
+  animation: running-stage-glow 1.8s ease-in-out infinite;
+}
+
+@keyframes running-stage-glow {
+  0%, 100% {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 209, 102, 0.22),
+      0 0 0 2px rgba(255, 209, 102, 0.12),
+      0 0 18px rgba(255, 209, 102, 0.26);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 232, 153, 0.42),
+      0 0 0 3px rgba(255, 209, 102, 0.24),
+      0 0 30px rgba(255, 209, 102, 0.5);
+  }
 }
 
 .stage-node.locked {

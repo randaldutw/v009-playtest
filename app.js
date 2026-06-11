@@ -1255,8 +1255,14 @@ const state = {
   itemSort: "order",
   itemFilter: "all",
   focusedInventoryItem: null,
+  inventoryExpanded: false,
+  expandedItemFilter: "all",
+  expandedGearSlotFilter: "all",
+  expandedBisOnly: false,
+  expandedItemSearch: "",
   gearWishlist: [],
   gearCraftSetOpen: {},
+  gearCraftRecipeOpen: {},
   focusedGearRecipeId: "",
   bodySystemUnlocked: false,
   bodySlotUnlocks: {},
@@ -1266,6 +1272,9 @@ const state = {
   recruits: [],
   candidates: [],
   recruitRefreshHourKey: 0,
+  commissionRefreshHourKey: 0,
+  renameDraft: "",
+  renamePending: false,
   party: [null, null, null, null],
   inventory: {},
   inventoryOrder: [],
@@ -1373,7 +1382,7 @@ function bindDelegatedUiEvents() {
       startDragScroll(ev, dragScroller);
       return;
     }
-    if (state.focusedInventoryItem && !ev.target.closest("[data-v009-sell-focused], [data-v009-dismantle-focused]")) {
+    if (state.focusedInventoryItem && !ev.target.closest("[data-v009-sell-focused], [data-v009-dismantle-focused], [data-v009-equip-focused], [data-v009-unequip-focused]")) {
       clearFocusedInventoryItem();
       pendingItemFocusPointer = null;
       ev.preventDefault();
@@ -1541,6 +1550,11 @@ function seedNewGame() {
   state.skillTab = "equipment";
   state.itemSort = "order";
   state.itemFilter = "all";
+  state.inventoryExpanded = false;
+  state.expandedItemFilter = "all";
+  state.expandedGearSlotFilter = "all";
+  state.expandedBisOnly = false;
+  state.expandedItemSearch = "";
   state.lastUpgradeId = null;
   state.battle = null;
   state.uiRefreshTimer = null;
@@ -1558,12 +1572,16 @@ function seedNewGame() {
   state.recruits = [];
   state.party = [null, null, null, null];
   state.recruitRefreshHourKey = currentRecruitRefreshHourKey();
+  state.commissionRefreshHourKey = currentCommissionRefreshHourKey();
+  state.renameDraft = "";
+  state.renamePending = false;
   state.inventory = {};
   state.inventoryOrder = [];
   state.itemLogArchive = [];
   state.chips = [];
   state.gear = [];
   state.gearWishlist = [];
+  state.gearCraftRecipeOpen = {};
   state.focusedInventoryItem = null;
   state.focusedGearRecipeId = "";
   state.bodySystemUnlocked = false;
@@ -1624,9 +1642,17 @@ function saveGame() {
       selectedMemberId: state.selectedMemberId,
       itemSort: state.itemSort,
       itemFilter: state.itemFilter,
+      inventoryExpanded: state.inventoryExpanded,
+      expandedItemFilter: state.expandedItemFilter,
+      expandedGearSlotFilter: state.expandedGearSlotFilter,
+      expandedBisOnly: state.expandedBisOnly,
+      expandedItemSearch: state.expandedItemSearch,
       recruits: state.recruits,
       candidates: state.candidates,
       recruitRefreshHourKey: state.recruitRefreshHourKey,
+      commissionRefreshHourKey: state.commissionRefreshHourKey,
+      renameDraft: state.renameDraft,
+      renamePending: state.renamePending,
       party: state.party,
       inventory: state.inventory,
       inventoryOrder: state.inventoryOrder,
@@ -1634,6 +1660,7 @@ function saveGame() {
       chips: state.chips,
       gear: state.gear,
       gearWishlist: state.gearWishlist,
+      gearCraftRecipeOpen: state.gearCraftRecipeOpen,
       focusedGearRecipeId: state.focusedGearRecipeId,
       bodySystemUnlocked: state.bodySystemUnlocked,
       bodySlotUnlocks: state.bodySlotUnlocks,
@@ -1684,6 +1711,9 @@ function loadGame() {
     state.recruits = save.recruits;
     state.candidates = save.candidates;
     state.recruitRefreshHourKey = save.recruitRefreshHourKey;
+    state.commissionRefreshHourKey = save.commissionRefreshHourKey;
+    state.renameDraft = save.renameDraft;
+    state.renamePending = !!save.renamePending;
     state.party = save.party;
     state.inventory = save.inventory;
     state.inventoryOrder = save.inventoryOrder;
@@ -1691,6 +1721,7 @@ function loadGame() {
     state.chips = save.chips;
     state.gear = save.gear;
     state.gearWishlist = save.gearWishlist;
+    state.gearCraftRecipeOpen = save.gearCraftRecipeOpen;
     state.focusedGearRecipeId = save.focusedGearRecipeId;
     state.bodySystemUnlocked = save.bodySystemUnlocked;
     state.bodySlotUnlocks = save.bodySlotUnlocks;
@@ -1699,6 +1730,11 @@ function loadGame() {
     state.blueprints = save.blueprints;
     state.itemSort = save.itemSort;
     state.itemFilter = save.itemFilter;
+    state.inventoryExpanded = !!save.inventoryExpanded;
+    state.expandedItemFilter = save.expandedItemFilter;
+    state.expandedGearSlotFilter = save.expandedGearSlotFilter;
+    state.expandedBisOnly = !!save.expandedBisOnly;
+    state.expandedItemSearch = save.expandedItemSearch;
     state.marketMode = save.marketMode;
     state.marketStock = save.marketStock;
     state.marketStockLevel = save.marketStockLevel;
@@ -1767,9 +1803,17 @@ function migrateSave(save) {
     selectedMemberId,
     itemSort: ["order", "type", "value"].includes(save.itemSort) ? save.itemSort : "order",
     itemFilter: ["all", "gear", "chip", "material", "quest"].includes(save.itemFilter) ? save.itemFilter : "all",
+    inventoryExpanded: !!save.inventoryExpanded,
+    expandedItemFilter: ["all", "gear", "chip", "material", "quest"].includes(save.expandedItemFilter) ? save.expandedItemFilter : "all",
+    expandedGearSlotFilter: ["all", ...EQUIPMENT_SLOTS.map((slot) => slot.key)].includes(save.expandedGearSlotFilter) ? save.expandedGearSlotFilter : "all",
+    expandedBisOnly: !!save.expandedBisOnly,
+    expandedItemSearch: typeof save.expandedItemSearch === "string" ? save.expandedItemSearch.slice(0, 32) : "",
     recruits,
     candidates,
     recruitRefreshHourKey: safeNumber(save.recruitRefreshHourKey, currentRecruitRefreshHourKey(), 0),
+    commissionRefreshHourKey: safeNumber(save.commissionRefreshHourKey, currentCommissionRefreshHourKey(), 0),
+    renameDraft: typeof save.renameDraft === "string" ? save.renameDraft.slice(0, 12) : "",
+    renamePending: !!save.renamePending,
     party,
     inventory: normalizeInventory(save.inventory),
     inventoryOrder: normalizeInventoryOrder(save.inventoryOrder, save.inventory),
@@ -1777,6 +1821,7 @@ function migrateSave(save) {
     chips: normalizeChipInventory(save.chips),
     gear: normalizeGearInventory(save.gear),
     gearWishlist: normalizeGearWishlist(save.gearWishlist),
+    gearCraftRecipeOpen: normalizeGearCraftRecipeOpen(save.gearCraftRecipeOpen),
     focusedGearRecipeId: GEAR_CRAFT_RECIPES.some((recipe) => recipe.id === save.focusedGearRecipeId) ? save.focusedGearRecipeId : "",
     bodySystemUnlocked: !!save.bodySystemUnlocked || Math.min(BLACKWATER_MAX_LEVEL, safeNumber(save.maxClearedLevel, 0, 0)) >= 10,
     bodySlotUnlocks: normalizeBodySlotUnlocks(save.bodySlotUnlocks, Math.min(BLACKWATER_MAX_LEVEL, safeNumber(save.maxClearedLevel, 0, 0))),
@@ -2445,12 +2490,34 @@ function normalizeCommissionEntry(id, entry, data) {
 }
 
 function ensureDefaultCommissions() {
+  refreshCommissionsByClock();
   state.commissions = normalizeCommissions(state.commissions);
   Object.entries(COMMISSION_DATA).forEach(([id, rawData]) => {
     if (state.commissions[id]) return;
     const data = normalizeCommissionData(rawData);
     state.commissions[id] = normalizeCommissionEntry(id, { data }, data);
   });
+}
+
+function currentCommissionRefreshHourKey() {
+  return Math.floor(Date.now() / 3600000);
+}
+
+function refreshCommissionsByClock(force = false) {
+  const key = currentCommissionRefreshHourKey();
+  if (!state.commissionRefreshHourKey) state.commissionRefreshHourKey = key;
+  if (!force && key <= state.commissionRefreshHourKey) return false;
+  state.commissionRefreshHourKey = key;
+  state.commissions = {};
+  return true;
+}
+
+function normalizeGearCraftRecipeOpen(openState) {
+  if (!openState || typeof openState !== "object") return {};
+  const validIds = new Set(GEAR_CRAFT_RECIPES.map((recipe) => recipe.id));
+  return Object.fromEntries(Object.entries(openState)
+    .filter(([id]) => validIds.has(id))
+    .map(([id, value]) => [id, value !== false]));
 }
 
 function normalizeNewsIndex(index) {
@@ -3334,6 +3401,7 @@ function render() {
   if (needsCharacterCreation()) view.innerHTML += characterCreatorOverlay();
   if (state.bodySelection) view.innerHTML += bodySelectionOverlay();
   if (state.eventDialog) view.innerHTML += eventDialogueOverlay();
+  if (state.inventoryExpanded) view.innerHTML += expandedInventoryOverlay();
   if (state.autoRepeat) view.innerHTML += autoRepeatStatsPanel();
   bindEvents();
   if (!state.battle || state.battle.over) saveGame();
@@ -4691,17 +4759,22 @@ function v009GearCraftSetGroup(group) {
 function v009GearCraftCard(recipe) {
   const canCraft = canCraftGear(recipe);
   const tracked = isGearTracked(recipe.id);
+  const openState = normalizeGearCraftRecipeOpen(state.gearCraftRecipeOpen);
+  const open = openState[recipe.id] !== false;
   return `
-    <div class="chip-craft-card v009-gear-craft-card">
-      <div class="chip-craft-head">
+    <div class="chip-craft-card v009-gear-craft-card ${open ? "open" : "collapsed"}">
+      <button class="chip-craft-head v009-gear-recipe-toggle" data-toggle-gear-recipe="${escapeHtml(recipe.id)}" aria-expanded="${open ? "true" : "false"}">
         <b>${escapeHtml(recipe.name)}</b>
+        <span>${gearSlotLabel(recipe.slot)} | Lv${recipe.level}</span>
+      </button>
+      ${open ? `
         ${gearCraftAbilityRows(recipe)}
-      </div>
-      ${chipCraftCosts(recipe)}
-      <div class="v009-craft-actions">
-        <button data-craft-gear="${recipe.id}" ${canCraft ? "" : "disabled"}>鍛造</button>
-        <button class="v009-track-button ${tracked ? "active" : ""}" data-track-gear="${recipe.id}" title="${tracked ? "取消追蹤" : "追蹤材料"}">${tracked ? "追蹤中" : "追蹤"}</button>
-      </div>
+        ${chipCraftCosts(recipe)}
+        <div class="v009-craft-actions">
+          <button data-craft-gear="${recipe.id}" ${canCraft ? "" : "disabled"}>鍛造</button>
+          <button class="v009-track-button ${tracked ? "active" : ""}" data-track-gear="${recipe.id}" title="${tracked ? "取消追蹤" : "追蹤材料"}">${tracked ? "追蹤中" : "追蹤"}</button>
+        </div>
+      ` : ""}
     </div>
   `;
 }
@@ -4830,7 +4903,32 @@ function v009MarketBuyPanel() {
   const entries = marketBuyEntries();
   return `
     <div class="market-list v009-market-list">
+      ${marketRenameServiceRow()}
       ${entries.length ? entries.map(marketBuyRow).join("") : `<div class="inventory-empty">沒有可購買物品</div>`}
+    </div>
+  `;
+}
+
+function marketRenameServiceRow() {
+  const member = playerCombatMember();
+  const canBuy = member && state.money >= 5000 && bodyFragmentCount() >= 10;
+  if (state.renamePending) {
+    return `
+      <div class="market-row market-rename-row active">
+        <b>登錄身分修改</b>
+        <span>改名服務</span>
+        <input type="text" maxlength="12" value="${escapeHtml(state.renameDraft || member?.name || "")}" data-rename-draft>
+        <button data-confirm-rename ${member && (state.renameDraft || "").trim() ? "" : "disabled"}>確認</button>
+      </div>
+    `;
+  }
+  return `
+    <div class="market-row market-rename-row">
+      <b>登錄身分修改</b>
+      <span>改名服務</span>
+      <i>${itemName(BODY_FRAGMENT_ITEM_ID)} 10</i>
+      <strong>荒幣 5000</strong>
+      <button data-buy-rename-service ${canBuy ? "" : "disabled"}>${member ? "購買" : "未編入角色"}</button>
     </div>
   `;
 }
@@ -4888,6 +4986,15 @@ function toggleGearCraftSet(setId) {
   const key = setId && (GEAR_SET_DATA[setId] || setId === "loose") ? setId : "loose";
   state.gearCraftSetOpen = state.gearCraftSetOpen && typeof state.gearCraftSetOpen === "object" ? state.gearCraftSetOpen : {};
   state.gearCraftSetOpen[key] = state.gearCraftSetOpen[key] === false;
+  saveGame();
+  render();
+}
+
+function toggleGearCraftRecipe(recipeId) {
+  if (!GEAR_CRAFT_RECIPES.some((recipe) => recipe.id === recipeId)) return;
+  state.gearCraftRecipeOpen = normalizeGearCraftRecipeOpen(state.gearCraftRecipeOpen);
+  state.gearCraftRecipeOpen[recipeId] = state.gearCraftRecipeOpen[recipeId] === false;
+  saveGame();
   render();
 }
 
@@ -6935,10 +7042,83 @@ function v009InventoryList() {
     ? entries.map(v009SideInventoryRow).join("")
     : `<div class="v009-list-row empty"><b>沒有符合項目</b><span></span></div>`;
   return `
+    <button class="v009-inventory-expand-button" data-v009-expand-inventory title="展開物品清單" aria-label="展開物品清單">□</button>
     ${v009ItemFilterTabs(filter)}
     <div class="v009-side-item-list" data-gear-inventory-drop>${rows}</div>
     ${focusedEntry ? v009InventoryItemPopout(focusedEntry) : ""}
   `;
+}
+
+function expandedInventoryOverlay() {
+  const entries = expandedInventoryEntries();
+  const focusedEntry = v009FocusedInventoryEntry(entries);
+  return `
+    <div class="v009-expanded-inventory-overlay">
+      <section class="v009-expanded-inventory">
+        <div class="v009-expanded-inventory-head">
+          <b>物品清單</b>
+          <button data-v009-close-expanded-inventory>關閉</button>
+        </div>
+        ${expandedInventoryFilters()}
+        <div class="v009-expanded-inventory-list" data-gear-inventory-drop>
+          ${entries.length ? entries.map(v009SideInventoryRow).join("") : `<div class="v009-list-row empty"><b>沒有符合項目</b><span></span></div>`}
+        </div>
+        ${focusedEntry ? v009InventoryItemPopout(focusedEntry) : ""}
+      </section>
+    </div>
+  `;
+}
+
+function expandedInventoryFilters() {
+  const filter = expandedItemFilter();
+  const slotFilter = expandedGearSlotFilter();
+  const search = state.expandedItemSearch || "";
+  const categoryButtons = [
+    ["all", "全部"],
+    ["gear", "裝備"],
+    ["chip", "晶片"],
+    ["material", "素材"],
+    ["quest", "任務"],
+  ].map(([key, label]) => `<button class="${filter === key ? "active" : ""}" data-v009-expanded-filter="${key}">${label}</button>`).join("");
+  const slotOptions = [
+    `<option value="all"${slotFilter === "all" ? " selected" : ""}>全部部位</option>`,
+    ...EQUIPMENT_SLOTS.map((slot) => `<option value="${slot.key}"${slotFilter === slot.key ? " selected" : ""}>${slot.label}</option>`),
+  ].join("");
+  return `
+    <div class="v009-expanded-inventory-filters">
+      <div class="v009-expanded-filter-buttons">${categoryButtons}</div>
+      <select data-v009-expanded-slot-filter>${slotOptions}</select>
+      <label><input type="checkbox" data-v009-expanded-bis-filter ${state.expandedBisOnly ? "checked" : ""}> BIS</label>
+      <input type="search" value="${escapeHtml(search)}" placeholder="搜尋名稱" data-v009-expanded-search>
+    </div>
+  `;
+}
+
+function expandedItemFilter() {
+  return ["all", "gear", "chip", "material", "quest"].includes(state.expandedItemFilter) ? state.expandedItemFilter : "all";
+}
+
+function expandedGearSlotFilter() {
+  const valid = ["all", ...EQUIPMENT_SLOTS.map((slot) => slot.key)];
+  return valid.includes(state.expandedGearSlotFilter) ? state.expandedGearSlotFilter : "all";
+}
+
+function expandedGearSlotFilterValue(value) {
+  const valid = ["all", ...EQUIPMENT_SLOTS.map((slot) => slot.key)];
+  return valid.includes(value) ? value : "all";
+}
+
+function expandedInventoryEntries() {
+  const filter = expandedItemFilter();
+  const slotFilter = expandedGearSlotFilter();
+  const search = (state.expandedItemSearch || "").trim().toLowerCase();
+  return v009SideInventoryEntries().filter((entry) => {
+    if (filter !== "all" && entry.category !== filter) return false;
+    if (slotFilter !== "all" && (!entry.gear || entry.gear.slot !== slotFilter)) return false;
+    if (state.expandedBisOnly && (!entry.gear || gearBisMatchCount(entry.gear) <= 0)) return false;
+    if (search && !entry.name.toLowerCase().includes(search)) return false;
+    return true;
+  });
 }
 
 function v009ActiveItemFilter() {
@@ -7006,6 +7186,7 @@ function v009ItemCategoryLabel(category) {
 
 function v009SideInventoryRow(entry) {
   const focused = isFocusedInventoryEntry(entry);
+  const bisCount = entry.category === "gear" ? gearBisMatchCount(entry.gear) : 0;
   const tag = `<i class="v009-item-type-tag type-${entry.category}">${escapeHtml(entry.typeLabel)}</i>`;
   const gearAttrs = entry.category === "gear"
     ? ` draggable="true" data-inventory-gear-id="${escapeHtml(entry.id)}" data-v009-gear-quick-equip="${escapeHtml(entry.id)}"`
@@ -7017,7 +7198,19 @@ function v009SideInventoryRow(entry) {
     </span>
     <strong>${entry.count}</strong>
   `;
-  return `<div class="v009-list-row item type-${entry.category} ${focused ? "focused" : ""}" data-v009-item-focus="${entry.category}" data-v009-item-id="${escapeHtml(entry.id)}"${gearAttrs}>${content}</div>`;
+  return `<div class="v009-list-row item type-${entry.category} ${focused ? "focused" : ""} ${bisCount === 1 ? "bis-one" : bisCount >= 2 ? "bis-two" : ""}" data-v009-item-focus="${entry.category}" data-v009-item-id="${escapeHtml(entry.id)}"${gearAttrs}>${content}</div>`;
+}
+
+function gearBisMatchCount(gear, member = playerCombatMember()) {
+  if (!gear || !member) return 0;
+  const mainStats = new Set((CLASS_DATA[member.classId]?.main || []).filter((key) => STAT_KEYS.includes(key)));
+  return (gear.stats || []).filter((entry) => mainStats.has(entry.key)).length;
+}
+
+function focusedGearEquippedLocation(entry = focusedInventoryEntryForAction()) {
+  if (!entry || entry.category !== "gear") return null;
+  const location = findGearLocationById(entry.id);
+  return location?.type === "equipped" ? location : null;
 }
 
 function v009FocusedInventoryEntry(preferredEntries = []) {
@@ -7161,11 +7354,17 @@ function v009InventoryPopoutActions(entry) {
   const sellButton = sellValue > 0
     ? `<button class="sell" data-v009-sell-focused>販售 <b>${sellValue}</b></button>`
     : "";
+  const gearLocation = entry.category === "gear" && entry.gear ? findGearLocationById(entry.id) : null;
+  const gearEquipButton = entry.category === "gear" && entry.gear
+    ? gearLocation?.type === "equipped"
+      ? `<button class="equip" data-v009-unequip-focused>卸下</button>`
+      : `<button class="equip" data-v009-equip-focused>裝備</button>`
+    : "";
   const dismantleButton = entry.category === "gear" && entry.gear
     ? `<button class="dismantle" data-v009-dismantle-focused>拆解</button>`
     : "";
-  if (!sellButton && !dismantleButton) return "";
-  return `<div class="v009-item-popout-actions">${sellButton}${dismantleButton}</div>`;
+  if (!sellButton && !gearEquipButton && !dismantleButton) return "";
+  return `<div class="v009-item-popout-actions">${sellButton}${gearEquipButton}${dismantleButton}</div>`;
 }
 
 function v009InventoryDetailMember() {
@@ -7235,7 +7434,7 @@ function v009InventoryItemDetail(entry, member = null) {
       lines: gearAbilityLines(gear, member),
       body: gearAbilitySummary(gear) || "未標示能力。",
       setProgress: gearSetProgress(gear, member),
-      note: "雙擊或拖曳裝卸。",
+      note: "",
     };
   }
   if (entry.category === "chip" && entry.chip) {
@@ -8789,11 +8988,7 @@ function activeBattleDerivedBonuses(member) {
   else if (ally.evadeRateBonus) evadeNotes.push(`技能|狀態 +${Math.max(0, ally.evadeRateBonus || 0)}%`);
   if (ally.wangSoulEvadeTurns > 0) evadeNotes.push("二印銷魂 50%");
   if ((ally.evade || 0) > 0 || ally.flowActive || ally.wangSoulEvadeTurns > 0 || ally.wangBianStepActive) {
-    const activeChance = Math.min(82,
-      (ally.flowActive ? 72 : 45)
-      + Math.max(0, ally.combatBonuses?.evadeRate || 0)
-      + activeEvadeRateBonus(ally)
-    );
+    const activeChance = combatEvadeChancePercent(ally);
     evadeRateOverride = Math.round(activeChance);
     evadeNotes.push(`目前觸發率 ${evadeRateOverride}%`);
   }
@@ -8826,7 +9021,23 @@ function activeBattleDerivedBonuses(member) {
 }
 
 function activeEvadeRateBonus(ally) {
-  return Math.max(0, ally?.evadeRateBonus || 0) + (ally?.wangSoulEvadeTurns > 0 ? 5 : 0);
+  return Math.max(0, ally?.evadeRateBonus || 0) + (ally?.wangSoulEvadeTurns > 0 ? 50 : 0);
+}
+
+function combatEvadeChancePercent(ally) {
+  if (!ally) return 0;
+  const base = ally.flowActive
+    ? 72
+    : ally.wangBianStepActive || ally.wangSoulEvadeTurns > 0
+      ? 0
+      : (ally.evade || 0) > 0
+        ? 45
+        : 0;
+  return Math.min(82,
+    base
+    + Math.max(0, ally.combatBonuses?.evadeRate || 0)
+    + activeEvadeRateBonus(ally)
+  );
 }
 
 function activeBattleTargetForUi() {
@@ -9853,7 +10064,7 @@ function craftGear(recipeId) {
   state.inventoryOrder = normalizeInventoryOrder(state.inventoryOrder, state.inventory);
   if (craftedGear?.id) {
     state.itemFilter = "gear";
-    const position = v009InventoryPopoutPosition(null);
+    const position = v009CraftedGearPopoutPosition();
     state.focusedInventoryItem = {
       category: "gear",
       id: craftedGear.id,
@@ -9863,6 +10074,10 @@ function craftGear(recipeId) {
   }
   saveGame();
   render();
+}
+
+function v009CraftedGearPopoutPosition() {
+  return clampFloatingRect(1030, 180, 260, 260);
 }
 
 function randomGearStatsForRecipe(recipe) {
@@ -10820,10 +11035,11 @@ function stageNode(level) {
   const kind = stageBattleKind(level);
   const title = battleStageName(level, kind);
   const battleLocked = state.battle && !state.battle.over;
+  const activeRunning = battleLocked && state.battle.level === level;
   const autoRepeatLocked = battleLocked || !cleared;
   return `
     <div class="stage-entry">
-      <div class="stage-node unlocked ${battleLocked ? "battle-locked" : ""} ${cleared ? "cleared" : ""} ${latest ? "latest" : ""} ${kind === "boss" ? "boss" : ""}" data-stage="${level}">
+      <div class="stage-node unlocked ${battleLocked ? "battle-locked" : ""} ${activeRunning ? "running" : ""} ${cleared ? "cleared" : ""} ${latest ? "latest" : ""} ${kind === "boss" ? "boss" : ""}" data-stage="${level}">
         <div class="stage-title"><b>${title}</b></div>
         <div class="stage-level">Lv${level}</div>
         <div class="stage-state ${cleared ? "repeat" : ""}">${battleLocked ? "戰鬥中" : cleared ? "重戰" : kind === "boss" ? "頭目" : "可挑戰"}</div>
@@ -13188,7 +13404,7 @@ function enemyAct(enemy) {
   const fxKind = triggerEnemyAttackFx(enemy, target, moveLabel, 1);
   const impactDelay = v009AttackImpactDelayMs(fxKind);
   const canEvade = (target.evade || 0) > 0 || target.flowActive || target.wangSoulEvadeTurns > 0 || target.wangBianStepActive;
-  const evadeChance = Math.min(0.82, (target.flowActive ? 0.72 : 0.45) + (Math.max(0, target.combatBonuses?.evadeRate || 0) + activeEvadeRateBonus(target)) / 100);
+  const evadeChance = combatEvadeChancePercent(target) / 100;
   if (canEvade && Math.random() < evadeChance) {
     if ((target.evade || 0) > 0) target.evade -= 1;
     target.evadedSinceLastTrigger = true;
@@ -15066,6 +15282,62 @@ function bindEvents() {
       render();
     });
   });
+  document.querySelectorAll("[data-v009-expand-inventory]").forEach((el) => {
+    el.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      state.inventoryExpanded = true;
+      state.expandedItemFilter = v009ActiveItemFilter();
+      saveGame();
+      render();
+    });
+  });
+  document.querySelectorAll("[data-v009-close-expanded-inventory]").forEach((el) => {
+    el.addEventListener("click", () => {
+      state.inventoryExpanded = false;
+      saveGame();
+      render();
+    });
+  });
+  document.querySelectorAll("[data-v009-expanded-filter]").forEach((el) => {
+    el.addEventListener("click", () => {
+      if (!["all", "gear", "chip", "material", "quest"].includes(el.dataset.v009ExpandedFilter)) return;
+      state.expandedItemFilter = el.dataset.v009ExpandedFilter;
+      saveGame();
+      render();
+    });
+  });
+  document.querySelectorAll("[data-v009-expanded-slot-filter]").forEach((el) => {
+    el.addEventListener("change", () => {
+      state.expandedGearSlotFilter = expandedGearSlotFilterValue(el.value);
+      saveGame();
+      render();
+    });
+  });
+  document.querySelectorAll("[data-v009-expanded-bis-filter]").forEach((el) => {
+    el.addEventListener("change", () => {
+      state.expandedBisOnly = !!el.checked;
+      saveGame();
+      render();
+    });
+  });
+  document.querySelectorAll("[data-v009-expanded-search]").forEach((el) => {
+    el.addEventListener("input", () => {
+      state.expandedItemSearch = String(el.value || "").slice(0, 32);
+      saveGame();
+    });
+    el.addEventListener("change", () => {
+      state.expandedItemSearch = String(el.value || "").slice(0, 32);
+      saveGame();
+      render();
+    });
+    el.addEventListener("keydown", (ev) => {
+      if (ev.key !== "Enter") return;
+      state.expandedItemSearch = String(el.value || "").slice(0, 32);
+      saveGame();
+      render();
+    });
+  });
   document.querySelectorAll("[data-v009-item-focus]").forEach((el) => {
     el.addEventListener("click", (ev) => {
       ev.preventDefault();
@@ -15140,6 +15412,18 @@ function bindEvents() {
   document.querySelectorAll("[data-buy-item]").forEach((el) => {
     el.addEventListener("click", () => buyMarketItem(el.dataset.buyItem));
   });
+  document.querySelectorAll("[data-buy-rename-service]").forEach((el) => {
+    el.addEventListener("click", () => buyRenameService());
+  });
+  document.querySelectorAll("[data-rename-draft]").forEach((el) => {
+    el.addEventListener("input", () => {
+      state.renameDraft = String(el.value || "").slice(0, 12);
+      saveGame();
+    });
+  });
+  document.querySelectorAll("[data-confirm-rename]").forEach((el) => {
+    el.addEventListener("click", () => confirmRenameService());
+  });
   document.querySelectorAll("[data-resource-exchange-from]").forEach((el) => {
     el.addEventListener("click", () => performResourceExchange(el.dataset.resourceExchangeFrom, el.dataset.resourceExchangeTo));
   });
@@ -15160,6 +15444,22 @@ function bindEvents() {
       dismantleFocusedGear();
     });
   });
+  document.querySelectorAll("[data-v009-equip-focused]").forEach((el) => {
+    el.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const entry = focusedInventoryEntryForAction();
+      if (entry?.category === "gear") equipGearToFocusedMember(entry.id);
+    });
+  });
+  document.querySelectorAll("[data-v009-unequip-focused]").forEach((el) => {
+    el.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const location = focusedGearEquippedLocation();
+      if (location) unequipGearToInventory(location.member.id, location.slotKey);
+    });
+  });
   document.querySelectorAll("[data-craft-chip]").forEach((el) => {
     el.addEventListener("click", () => craftChip(el.dataset.craftChip));
   });
@@ -15171,6 +15471,9 @@ function bindEvents() {
   });
   document.querySelectorAll("[data-toggle-gear-set]").forEach((el) => {
     el.addEventListener("click", () => toggleGearCraftSet(el.dataset.toggleGearSet));
+  });
+  document.querySelectorAll("[data-toggle-gear-recipe]").forEach((el) => {
+    el.addEventListener("click", () => toggleGearCraftRecipe(el.dataset.toggleGearRecipe));
   });
   document.querySelectorAll("[data-equip-gear]").forEach((el) => {
     el.addEventListener("click", () => equipGearToFocusedMember(el.dataset.equipGear));
@@ -15368,6 +15671,31 @@ function buyMarketItem(id) {
   state.money -= entry.buyPrice;
   stockItem.stock -= 1;
   addInventoryItems([{ id, count: 1 }]);
+  saveGame();
+  render();
+}
+
+function buyRenameService() {
+  const member = playerCombatMember();
+  if (!member || state.money < 5000 || bodyFragmentCount() < 10) return;
+  state.money -= 5000;
+  consumeBodyFragments(10);
+  state.renamePending = true;
+  state.renameDraft = member.name || "";
+  addFeed("購買登錄身分修改。", "gold");
+  saveGame();
+  render();
+}
+
+function confirmRenameService() {
+  const member = playerCombatMember();
+  const nextName = String(state.renameDraft || "").trim().slice(0, 12);
+  if (!member || !state.renamePending || !nextName) return;
+  const oldName = member.name;
+  member.name = nextName;
+  state.renamePending = false;
+  state.renameDraft = "";
+  addFeed(`${oldName} 已變更登錄姓名為 ${nextName}。`, "gold");
   saveGame();
   render();
 }
