@@ -7688,7 +7688,7 @@ button.console-pulse-card.active {
   align-content: start;
   grid-template-rows: auto minmax(0, 1fr);
   gap: 8px;
-  overflow: auto;
+  overflow: visible;
 }
 
 .v009-item-filter-tabs {
@@ -7762,15 +7762,17 @@ button.console-pulse-card.active {
 }
 
 .v009-inventory-expand-button {
-  position: relative;
-  justify-self: end;
+  position: absolute;
+  top: -36px;
+  right: 0;
+  z-index: 6;
   width: 26px;
   height: 26px;
   display: grid;
   place-items: center;
   border: 1px solid rgba(255, 209, 102, 0.52);
   border-radius: 5px;
-  margin: -4px 0 4px;
+  margin: 0;
   padding: 0;
   color: #ffe59a;
   background: rgba(31, 25, 8, 0.9);
