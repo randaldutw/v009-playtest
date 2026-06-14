@@ -72,6 +72,8 @@ function loadGameRuntime() {
       TIANYA_NEWS_DATA,
       COMMISSION_DATA,
       REGION_DATA,
+      FORTUNE_READINGS,
+      FORTUNE_RESOURCE_REWARDS,
       ITEM_DATA,
       ITEM_VALUES,
       BLUEPRINT_DATA,
@@ -172,6 +174,8 @@ function run() {
   assert.ok(api.TIANYA_NEWS_DATA.length >= 6, "Tianya news data should load before app.js");
   assert.ok(Object.keys(api.COMMISSION_DATA).length >= 1, "commission data should load before app.js");
   assert.ok(api.REGION_DATA.some((region) => region.id === "blackwater"), "region data should load before app.js");
+  assert.ok(api.FORTUNE_READINGS.length >= 4, "fortune reading data should load before app.js");
+  assert.ok(api.FORTUNE_RESOURCE_REWARDS.some((reward) => reward.resource === "material"), "fortune reward data should load before app.js");
   assert.ok(api.ITEM_DATA.body_fragment, "item data should load before app.js");
   assert.equal(api.ITEM_VALUES.body_fragment, 120, "item values should load before app.js");
   assert.ok(api.BLUEPRINT_DATA.wolf_king_gear, "blueprint data should load before app.js");
