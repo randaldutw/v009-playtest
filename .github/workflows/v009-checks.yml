@@ -1,0 +1,23 @@
+name: v009 checks
+
+on:
+  push:
+    branches:
+      - main
+      - gh-pages
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Node version
+        run: node --version
+
+      - name: Run v009 checks
+        run: node tools/run_v009_checks.js
