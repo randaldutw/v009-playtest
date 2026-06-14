@@ -7,6 +7,7 @@ const repoRoot = path.resolve(__dirname, "..");
 const appPath = path.join(repoRoot, "app.js");
 const portraitCatalogPath = path.join(repoRoot, "data", "portrait_catalog.js");
 const dialoguePoolsPath = path.join(repoRoot, "data", "dialogue_pools.js");
+const codexEntriesPath = path.join(repoRoot, "data", "codex_entries.js");
 
 function readText(filePath) {
   return fs.readFileSync(filePath, "utf8");
@@ -45,6 +46,7 @@ function loadGameRuntime() {
   const context = vm.createContext(sandbox);
   vm.runInContext(readText(dialoguePoolsPath), context, { filename: dialoguePoolsPath });
   vm.runInContext(readText(portraitCatalogPath), context, { filename: portraitCatalogPath });
+  vm.runInContext(readText(codexEntriesPath), context, { filename: codexEntriesPath });
   const appSource = readText(appPath).replace(/\ninit\(\);\s*$/u, "\n");
   const testBridge = `
     globalThis.__v009TestApi = {
@@ -59,6 +61,8 @@ function loadGameRuntime() {
       MERIDIAN_CHIP_SLOTS,
       CLASS_DATA,
       GEAR_CRAFT_RECIPES,
+      CODEX_FACTION_ENTRIES,
+      CODEX_GEOGRAPHY_ENTRIES,
       normalizeGearInstance,
       normalizeChipInstance,
     };
@@ -146,6 +150,8 @@ function migrateCase(api, name, save) {
 function run() {
   const api = loadGameRuntime();
   assert.equal(api.CURRENT_SAVE_VERSION, 2, "test harness expects save version 2");
+  assert.ok(api.CODEX_FACTION_ENTRIES.length >= 2, "codex faction data should load before app.js");
+  assert.ok(api.CODEX_GEOGRAPHY_ENTRIES.length >= 3, "codex geography data should load before app.js");
 
   const preCreator = migrateCase(api, "pre creator", {
     version: 1,
