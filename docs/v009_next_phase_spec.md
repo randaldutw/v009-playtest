@@ -201,3 +201,9 @@ Director gate:
    - one UI surface polish pass
 
 Stop for director only when there is visual evidence to judge.
+
+## Current Baseline Documents
+
+- UI surface inventory: `docs/v009_ui_inventory/README.md`
+- Battle screen production spec: `docs/v009_battle_screen_production_spec.md`
+- Character creator research sources: `docs/v009_character_creator_research_sources.md`

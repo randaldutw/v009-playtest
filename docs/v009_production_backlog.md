@@ -100,3 +100,9 @@ Director gate:
 5. Add browser-level smoke tests for the confirmed core flows once the visual pilot begins touching runtime screens.
 
 The detailed next-phase spec is `docs/v009_next_phase_spec.md`.
+
+Current production-phase baseline files:
+
+- `docs/v009_ui_inventory/README.md`
+- `docs/v009_battle_screen_production_spec.md`
+- `docs/v009_character_creator_research_sources.md`
