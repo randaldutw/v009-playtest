@@ -5231,7 +5231,7 @@ function v009FighterVitals(unit, side) {
   return `
     <div class="v009-versus-card ${side}">
       <div class="v009-versus-hp-value">${hp}/${maxHp}</div>
-      ${v009FightHpBar(hp, maxHp, side === "enemy", unit.shield, unit.shieldSegments)}
+      ${v009FightHpBar(hp, maxHp, side === "enemy", unit.shield)}
       ${v009CombatStatusTags(unit, side)}
     </div>
   `;
@@ -6811,35 +6811,23 @@ function v009PartyStatusBars(party) {
         <b>${ally.name}</b>
         <span>${displayHpValue(ally.hp)}/${Math.max(1, Math.floor(ally.maxHp || 1))}</span>
       </div>
-      ${v009FightHpBar(ally.hp, ally.maxHp, false, ally.shield, ally.shieldSegments)}
+      ${v009FightHpBar(ally.hp, ally.maxHp, false, ally.shield)}
       ${v009CombatStatusTags(ally, "ally")}
     </div>
   `).join("") : `<div class="v009-party-status empty">未指定作戰角色</div>`;
 }
 
-function v009FightHpBar(value, max, reverse = false, shield = 0, shieldSegments = []) {
+function v009FightHpBar(value, max, reverse = false, shield = 0) {
   const safeMax = Math.max(1, Math.floor(max || 1));
   const safeValue = Math.max(0, Math.min(safeMax, Number(value) || 0));
   const pct = Math.max(0, Math.min(100, (safeValue / safeMax) * 100));
   const shieldValue = Math.max(0, Number(shield || 0));
-  const segments = normalizeShieldSegments({ shield: shieldValue, shieldSegments });
-  let shieldOffset = 0;
-  const segmentHtml = segments.map((segment, index) => {
-    const amount = Math.max(0, Number(segment.amount || 0));
-    if (amount <= 0 || shieldOffset >= safeMax) return "";
-    const start = Math.max(0, Math.min(100, (shieldOffset / safeMax) * 100));
-    const width = Math.max(0, Math.min(100 - start, (amount / safeMax) * 100));
-    shieldOffset += amount;
-    if (width <= 0) return "";
-    const tone = index % 6;
-    const title = escapeHtml(`${segment.label || "護盾"} ${Math.floor(amount)}`);
-    return `<i class="shield-fill shield-segment shield-tone-${tone}" title="${title}" style="--shield-start:${start.toFixed(1)}%;--shield-width:${width.toFixed(1)}%;"></i>`;
-  }).join("");
-  const style = `--hp-pct:${pct.toFixed(1)}%;`;
+  const shieldWidth = Math.max(0, Math.min(100, (shieldValue / safeMax) * 100));
+  const style = `--hp-pct:${pct.toFixed(1)}%;--shield-width:${shieldWidth.toFixed(1)}%;`;
   return `
     <div class="v009-fight-hp ${v009HpToneClass(safeValue, safeMax)} ${pct <= 0 ? "hp-empty" : ""} ${reverse ? "reverse" : ""}" style="${style}">
       <i class="hp-fill"></i>
-      ${segmentHtml}
+      ${shieldValue > 0 ? `<i class="shield-fill" title="護盾 ${Math.floor(shieldValue)}"></i>` : ""}
     </div>
   `;
 }
