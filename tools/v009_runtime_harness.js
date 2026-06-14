@@ -31,7 +31,8 @@ function assertIndexScriptOrder() {
   }
 }
 
-function createRuntimeContext() {
+function createRuntimeContext(options = {}) {
+  const storage = options.storage || {};
   const sandbox = {
     console,
     Date,
@@ -48,9 +49,15 @@ function createRuntimeContext() {
       now() { return Date.now(); },
     },
     localStorage: {
-      getItem() { return null; },
-      setItem() {},
-      removeItem() {},
+      getItem(key) {
+        return Object.prototype.hasOwnProperty.call(storage, key) ? storage[key] : null;
+      },
+      setItem(key, value) {
+        storage[key] = String(value);
+      },
+      removeItem(key) {
+        delete storage[key];
+      },
     },
   };
   sandbox.window = {
@@ -70,9 +77,9 @@ function createRuntimeContext() {
   return vm.createContext(sandbox);
 }
 
-function loadGameRuntime(bridgeSource) {
+function loadGameRuntime(bridgeSource, options = {}) {
   assertIndexScriptOrder();
-  const context = createRuntimeContext();
+  const context = createRuntimeContext(options);
   [
     "data/dialogue_pools.js",
     "data/portrait_catalog.js",
