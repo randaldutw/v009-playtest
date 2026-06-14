@@ -1,87 +1,8 @@
 const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const path = require("node:path");
-const vm = require("node:vm");
+const { assertIndexScriptOrder, loadGameRuntime } = require("./v009_runtime_harness");
 
-const repoRoot = path.resolve(__dirname, "..");
-const appPath = path.join(repoRoot, "app.js");
-const indexPath = path.join(repoRoot, "index.html");
-const portraitCatalogPath = path.join(repoRoot, "data", "portrait_catalog.js");
-const dialoguePoolsPath = path.join(repoRoot, "data", "dialogue_pools.js");
-const codexEntriesPath = path.join(repoRoot, "data", "codex_entries.js");
-const tianyaNewsPath = path.join(repoRoot, "data", "tianya_news.js");
-const progressionDataPath = path.join(repoRoot, "data", "progression_data.js");
-const itemCoreDataPath = path.join(repoRoot, "data", "item_core_data.js");
-const eventDialoguePath = path.join(repoRoot, "data", "event_dialogue.js");
-const craftingDataPath = path.join(repoRoot, "data", "crafting_data.js");
-
-function readText(filePath) {
-  return fs.readFileSync(filePath, "utf8");
-}
-
-function assertIndexScriptOrder() {
-  const html = readText(indexPath);
-  const required = [
-    "data/dialogue_pools.js",
-    "data/portrait_catalog.js",
-    "data/codex_entries.js",
-    "data/tianya_news.js",
-    "data/progression_data.js",
-    "data/item_core_data.js",
-    "data/event_dialogue.js",
-    "data/crafting_data.js",
-    "app.js",
-  ];
-  let cursor = -1;
-  for (const script of required) {
-    const next = html.indexOf(script);
-    assert.ok(next >= 0, `index.html should load ${script}`);
-    assert.ok(next > cursor, `index.html should load ${script} in dependency order`);
-    cursor = next;
-  }
-}
-
-function loadGameRuntime() {
-  const sandbox = {
-    console,
-    Date,
-    Math,
-    setTimeout() {},
-    clearTimeout() {},
-    requestAnimationFrame() { return 0; },
-    cancelAnimationFrame() {},
-    confirm() { return true; },
-    localStorage: {
-      getItem() { return null; },
-      setItem() {},
-      removeItem() {},
-    },
-  };
-  sandbox.window = {
-    innerWidth: 1600,
-    innerHeight: 900,
-    location: { href: "https://example.test/v009-playtest/index.html" },
-    addEventListener() {},
-  };
-  sandbox.document = {
-    addEventListener() {},
-    documentElement: { style: { setProperty() {} } },
-    getElementById() { return null; },
-    querySelector() { return null; },
-    querySelectorAll() { return []; },
-  };
-  sandbox.globalThis = sandbox;
-  const context = vm.createContext(sandbox);
-  vm.runInContext(readText(dialoguePoolsPath), context, { filename: dialoguePoolsPath });
-  vm.runInContext(readText(portraitCatalogPath), context, { filename: portraitCatalogPath });
-  vm.runInContext(readText(codexEntriesPath), context, { filename: codexEntriesPath });
-  vm.runInContext(readText(tianyaNewsPath), context, { filename: tianyaNewsPath });
-  vm.runInContext(readText(progressionDataPath), context, { filename: progressionDataPath });
-  vm.runInContext(readText(itemCoreDataPath), context, { filename: itemCoreDataPath });
-  vm.runInContext(readText(eventDialoguePath), context, { filename: eventDialoguePath });
-  vm.runInContext(readText(craftingDataPath), context, { filename: craftingDataPath });
-  const appSource = readText(appPath).replace(/\ninit\(\);\s*$/u, "\n");
-  const testBridge = `
+function loadTestApi() {
+  const context = loadGameRuntime(`
     globalThis.__v009TestApi = {
       migrateSave,
       normalizeSave,
@@ -117,8 +38,7 @@ function loadGameRuntime() {
       normalizeGearInstance,
       normalizeChipInstance,
     };
-  `;
-  vm.runInContext(`${appSource}\n${testBridge}`, context, { filename: appPath });
+  `);
   return context.__v009TestApi;
 }
 
@@ -200,7 +120,7 @@ function migrateCase(api, name, save) {
 
 function run() {
   assertIndexScriptOrder();
-  const api = loadGameRuntime();
+  const api = loadTestApi();
   assert.equal(api.CURRENT_SAVE_VERSION, 2, "test harness expects save version 2");
   assert.ok(api.CODEX_FACTION_ENTRIES.length >= 2, "codex faction data should load before app.js");
   assert.ok(api.CODEX_GEOGRAPHY_ENTRIES.length >= 3, "codex geography data should load before app.js");
