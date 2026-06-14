@@ -31,3 +31,9 @@ skill("tianshu_three", "三點參直", 1, "...", { coefficient: 3 })
 ```
 
 If class/skill data is externalized later, convert it into plain JSON-like records first, then rebuild skill objects inside `app.js` after `skill()` exists. Do not load raw `skill(...)` calls from an external data script before `app.js`.
+
+Class and skill integrity is currently covered by:
+
+```text
+node tools/check_class_skill_integrity.js
+```
