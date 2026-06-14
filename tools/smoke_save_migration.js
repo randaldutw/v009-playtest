@@ -12,6 +12,7 @@ const tianyaNewsPath = path.join(repoRoot, "data", "tianya_news.js");
 const progressionDataPath = path.join(repoRoot, "data", "progression_data.js");
 const itemCoreDataPath = path.join(repoRoot, "data", "item_core_data.js");
 const eventDialoguePath = path.join(repoRoot, "data", "event_dialogue.js");
+const craftingDataPath = path.join(repoRoot, "data", "crafting_data.js");
 
 function readText(filePath) {
   return fs.readFileSync(filePath, "utf8");
@@ -55,6 +56,7 @@ function loadGameRuntime() {
   vm.runInContext(readText(progressionDataPath), context, { filename: progressionDataPath });
   vm.runInContext(readText(itemCoreDataPath), context, { filename: itemCoreDataPath });
   vm.runInContext(readText(eventDialoguePath), context, { filename: eventDialoguePath });
+  vm.runInContext(readText(craftingDataPath), context, { filename: craftingDataPath });
   const appSource = readText(appPath).replace(/\ninit\(\);\s*$/u, "\n");
   const testBridge = `
     globalThis.__v009TestApi = {
@@ -87,6 +89,8 @@ function loadGameRuntime() {
       EVENT_SPEAKERS,
       INTRO_POST_CREATOR_CLASS_LINES,
       EVENT_DIALOGUE_SEQUENCES,
+      CHIP_CRAFT_RECIPES,
+      GEAR_CRAFT_RECIPES,
       normalizeGearInstance,
       normalizeChipInstance,
     };
@@ -192,6 +196,8 @@ function run() {
   assert.equal(api.EVENT_SPEAKERS.yu_xiaosui?.name, "俞小穗", "event speaker data should load before app.js");
   assert.ok(api.INTRO_POST_CREATOR_CLASS_LINES.emei?.includes("高端義體"), "class dialogue data should load before app.js");
   assert.ok(JSON.stringify(api.EVENT_DIALOGUE_SEQUENCES.body_management_intro).includes("胡說八道"), "event dialogue sequences should load before app.js");
+  assert.ok(api.CHIP_CRAFT_RECIPES.some((recipe) => recipe.id === "wolf_pack_chip_1"), "chip craft recipes should load before app.js");
+  assert.ok(api.GEAR_CRAFT_RECIPES.some((recipe) => recipe.name === "狼王式演算元件"), "gear craft recipes should load before app.js");
 
   const preCreator = migrateCase(api, "pre creator", {
     version: 1,
