@@ -5,6 +5,7 @@ const repoRoot = path.resolve(__dirname, "..");
 const checks = [
   ["tools/check_text_integrity.js"],
   ["tools/check_index_cache_keys.js"],
+  ["tools/check_save_contract.js"],
   ["tools/smoke_save_migration.js"],
   ["tools/smoke_save_roundtrip.js"],
   ["tools/check_data_references.js"],
