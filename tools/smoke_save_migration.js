@@ -5,6 +5,7 @@ const vm = require("node:vm");
 
 const repoRoot = path.resolve(__dirname, "..");
 const appPath = path.join(repoRoot, "app.js");
+const indexPath = path.join(repoRoot, "index.html");
 const portraitCatalogPath = path.join(repoRoot, "data", "portrait_catalog.js");
 const dialoguePoolsPath = path.join(repoRoot, "data", "dialogue_pools.js");
 const codexEntriesPath = path.join(repoRoot, "data", "codex_entries.js");
@@ -16,6 +17,28 @@ const craftingDataPath = path.join(repoRoot, "data", "crafting_data.js");
 
 function readText(filePath) {
   return fs.readFileSync(filePath, "utf8");
+}
+
+function assertIndexScriptOrder() {
+  const html = readText(indexPath);
+  const required = [
+    "data/dialogue_pools.js",
+    "data/portrait_catalog.js",
+    "data/codex_entries.js",
+    "data/tianya_news.js",
+    "data/progression_data.js",
+    "data/item_core_data.js",
+    "data/event_dialogue.js",
+    "data/crafting_data.js",
+    "app.js",
+  ];
+  let cursor = -1;
+  for (const script of required) {
+    const next = html.indexOf(script);
+    assert.ok(next >= 0, `index.html should load ${script}`);
+    assert.ok(next > cursor, `index.html should load ${script} in dependency order`);
+    cursor = next;
+  }
 }
 
 function loadGameRuntime() {
@@ -176,6 +199,7 @@ function migrateCase(api, name, save) {
 }
 
 function run() {
+  assertIndexScriptOrder();
   const api = loadGameRuntime();
   assert.equal(api.CURRENT_SAVE_VERSION, 2, "test harness expects save version 2");
   assert.ok(api.CODEX_FACTION_ENTRIES.length >= 2, "codex faction data should load before app.js");
