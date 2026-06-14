@@ -6,6 +6,10 @@ const repoRoot = path.resolve(__dirname, "..");
 const files = [
   "index.html",
   "README.md",
+  "app.js",
+  "styles.css",
+  "data/dialogue_pools.js",
+  "data/portrait_catalog.js",
   "data/codex_entries.js",
   "data/tianya_news.js",
   "data/progression_data.js",
