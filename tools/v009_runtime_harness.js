@@ -44,6 +44,9 @@ function createRuntimeContext() {
     cancelAnimationFrame() {},
     confirm() { return true; },
     alert() {},
+    performance: {
+      now() { return Date.now(); },
+    },
     localStorage: {
       getItem() { return null; },
       setItem() {},
