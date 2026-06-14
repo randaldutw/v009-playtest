@@ -207,3 +207,5 @@ Stop for director only when there is visual evidence to judge.
 - UI surface inventory: `docs/v009_ui_inventory/README.md`
 - Battle screen production spec: `docs/v009_battle_screen_production_spec.md`
 - Character creator research sources: `docs/v009_character_creator_research_sources.md`
+- Visual vertical slice contract: `docs/v009_visual_vertical_slice_contract.md`
+- Visual slice review package: `docs/v009_visual_slice/README.md`
