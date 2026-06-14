@@ -15,8 +15,7 @@ Do not change this key during content updates unless an explicit migration/reset
 Before pushing content or data updates, run:
 
 ```text
-node tools/check_text_integrity.js
-node tools/smoke_save_migration.js
+node tools/run_v009_checks.js
 ```
 
 These checks catch broken Chinese/control characters in externalized data, verify script load order, and confirm old v009 saves can still migrate into the current runtime without losing core progress such as recruits, party slots, inventory, gear, chips, commissions, body slots, and auto-repeat state.
