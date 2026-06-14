@@ -8,6 +8,8 @@ const appPath = path.join(repoRoot, "app.js");
 const portraitCatalogPath = path.join(repoRoot, "data", "portrait_catalog.js");
 const dialoguePoolsPath = path.join(repoRoot, "data", "dialogue_pools.js");
 const codexEntriesPath = path.join(repoRoot, "data", "codex_entries.js");
+const tianyaNewsPath = path.join(repoRoot, "data", "tianya_news.js");
+const progressionDataPath = path.join(repoRoot, "data", "progression_data.js");
 
 function readText(filePath) {
   return fs.readFileSync(filePath, "utf8");
@@ -47,6 +49,8 @@ function loadGameRuntime() {
   vm.runInContext(readText(dialoguePoolsPath), context, { filename: dialoguePoolsPath });
   vm.runInContext(readText(portraitCatalogPath), context, { filename: portraitCatalogPath });
   vm.runInContext(readText(codexEntriesPath), context, { filename: codexEntriesPath });
+  vm.runInContext(readText(tianyaNewsPath), context, { filename: tianyaNewsPath });
+  vm.runInContext(readText(progressionDataPath), context, { filename: progressionDataPath });
   const appSource = readText(appPath).replace(/\ninit\(\);\s*$/u, "\n");
   const testBridge = `
     globalThis.__v009TestApi = {
@@ -63,6 +67,9 @@ function loadGameRuntime() {
       GEAR_CRAFT_RECIPES,
       CODEX_FACTION_ENTRIES,
       CODEX_GEOGRAPHY_ENTRIES,
+      TIANYA_NEWS_DATA,
+      COMMISSION_DATA,
+      REGION_DATA,
       normalizeGearInstance,
       normalizeChipInstance,
     };
@@ -152,6 +159,9 @@ function run() {
   assert.equal(api.CURRENT_SAVE_VERSION, 2, "test harness expects save version 2");
   assert.ok(api.CODEX_FACTION_ENTRIES.length >= 2, "codex faction data should load before app.js");
   assert.ok(api.CODEX_GEOGRAPHY_ENTRIES.length >= 3, "codex geography data should load before app.js");
+  assert.ok(api.TIANYA_NEWS_DATA.length >= 6, "Tianya news data should load before app.js");
+  assert.ok(Object.keys(api.COMMISSION_DATA).length >= 1, "commission data should load before app.js");
+  assert.ok(api.REGION_DATA.some((region) => region.id === "blackwater"), "region data should load before app.js");
 
   const preCreator = migrateCase(api, "pre creator", {
     version: 1,

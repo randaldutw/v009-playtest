@@ -365,57 +365,7 @@ const CLASS_GEAR_TERMS = {
   furnace: "梅光",
 };
 
-const TIANYA_NEWS_DATA = [
-  {
-    id: "academy_index_errata",
-    type: "快訊",
-    title: "鳴鐘書院更正門派索引第七版",
-    deck: "本次更正包含三處字誤、一處輩分誤植，以及一名堅持自己還活著的編者署名。",
-    body: "鳴鐘書院今日釋出門派索引第七版勘誤。書院表示，前版將某位長老列入故人名錄，引發本人攜拐杖到館抗議。新版本已修正條目，並追加『本人抗議有效』的旁註。",
-  },
-  {
-    id: "tang_pouch_fashion",
-    type: "快訊",
-    title: "唐家生化開放藥囊外觀登記",
-    deck: "登記表新增『低調』『很低調』『師父看了會皺眉』三種樣式。",
-    body: "唐家生化近日開放藥囊外觀登記。部分弟子希望藥囊能配合衣色，長房管事回應，藥效優先於好看，但好看的藥囊確實比較不容易被同門順手拿走。",
-  },
-  {
-    id: "leishi_noise_rule",
-    type: "快訊",
-    title: "雷氏火器試行夜間降噪規範",
-    deck: "第一條規範要求弟子分清試射、校準與單純手癢。",
-    body: "雷氏火器公布夜間降噪規範，要求各房弟子在入夜後降低試射頻率。幾名年輕弟子建議改用更小聲的彈藥，管事回覆，小聲的火器通常也比較難讓師父相信已經校準完成。",
-  },
-  {
-    id: "history_rank_table",
-    type: "舊聞翻案",
-    title: "舊門派排行表可能源自酒席座次",
-    deck: "表格邊角留有菜湯痕跡，考據者稱這點相當關鍵。",
-    body: "一份流傳甚廣的舊門派排行表近日再度引發討論。本文作者認為，該表原本可能只是宴席座次，後人抄錄時誤當成門派高低。菜湯痕跡的位置，恰好落在排名最激烈的三欄旁。僅為作者個人觀點，不代表本報立場。",
-  },
-  {
-    id: "history_tianshu_star",
-    type: "野史",
-    title: "天樞派祖訓中的星象可能抄錯一筆",
-    deck: "若此說成立，三代弟子背錯口訣的責任將落到同一位抄書人身上。",
-    body: "有民間考據者指出，天樞派早年祖訓中的一處星位記錄疑似多了一筆。本文作者推測，該筆誤差原先只影響抄本美觀，後來被講師拿來解釋站位，才逐漸成為正式說法。僅為作者個人觀點，不代表本報立場。",
-  },
-  {
-    id: "faction_rank_joke",
-    type: "評論",
-    title: "門派評比能否加入飯堂速度",
-    deck: "匿名投稿者指出，這項指標比輩分爭論更容易現場驗證。",
-    body: "多數門派都有一套自認嚴謹的評比方法。本文作者建議增設『到飯堂速度』一欄，綜合觀察身法、反應、臉皮與飢餓程度。若能連續三日奪得第一，至少足以證明該門派弟子很懂得保存體力。僅為作者個人觀點，不代表本報立場。",
-  },
-  {
-    id: "special_wolf_blueprint",
-    type: "特報",
-    title: "晶片藍圖登記規範更新",
-    deck: "多地工房同業要求藍圖附註套裝來源，避免學徒把名字取得過於威風。",
-    body: "工房同業會近日更新晶片藍圖登記規範。新規要求藍圖名稱需標示套裝傾向、階級與主要能力，並保留材料來源註記。幾名工匠反映，規範有助於減少『聽起來很強但完全看不懂用途』的成品名稱。",
-  },
-];
+const TIANYA_NEWS_DATA = Array.isArray(window.LIYUAN_TIANYA_NEWS_DATA) ? window.LIYUAN_TIANYA_NEWS_DATA : [];
 
 const FORTUNE_READINGS = [
   { id: "clear", title: "小吉", text: "今日宜整備。先補缺口，再談遠征。" },
@@ -641,45 +591,12 @@ const TEST_EQUIPMENT_CHIPS = [
   "機兵套?出力",
 ];
 
-const COMMISSION_DATA = {
-  sand_patrol: {
-    name: "黑水砂原巡察",
-    summary: "完成任意 3 場黑水砂原戰鬥。",
-    target: 3,
-    reward: { money: 120, material: 30, energy: 18 },
-  },
-  caravan_guard: {
-    name: "商隊護行",
-    summary: "完成任意 2 場黑水砂原戰鬥。",
-    target: 2,
-    reward: { money: 90, material: 18, energy: 10 },
-  },
-  relic_survey: {
-    name: "遺構踏查",
-    summary: "完成任意 4 場黑水砂原戰鬥。",
-    target: 4,
-    reward: { money: 140, material: 42, energy: 16 },
-  },
-  camp_supply: {
-    name: "營地補給線",
-    summary: "完成任意 3 場黑水砂原戰鬥。",
-    target: 3,
-    reward: { money: 80, material: 24, energy: 30 },
-  },
-};
+const PROGRESSION_DATA = window.LIYUAN_PROGRESSION_DATA || {};
+const COMMISSION_DATA = PROGRESSION_DATA.commissions || {};
 const COMMISSION_BOARD_SIZE = 4;
 const COMMISSION_REFRESH_BATTLES = 3;
 
-const REGION_DATA = [
-  { id: "blackwater", name: "黑水砂原", status: "現在位置", open: true, tone: "gold" },
-  { id: "hanging-sky-rainforest", name: "垂天雨林", status: "未開放", open: false, tone: "jade" },
-  { id: "bone-wild-road", name: "裂骨荒路", status: "未開放", open: false, tone: "muted" },
-  { id: "broken-tide-rockshore", name: "碎潮岩岸", status: "未開放", open: false, tone: "cyan" },
-  { id: "red-rock-lava-valley", name: "赤岩熔谷", status: "未開放", open: false, tone: "hot" },
-  { id: "mirror-lake-swamp", name: "鏡湖沼澤", status: "未開放", open: false, tone: "cyan" },
-  { id: "frost-mist-plateau", name: "霜霧高原", status: "未開放", open: false, tone: "muted" },
-  { id: "thunder-magnetic-wasteland", name: "雷磁荒原", status: "未開放", open: false, tone: "gold" },
-];
+const REGION_DATA = Array.isArray(PROGRESSION_DATA.regions) ? PROGRESSION_DATA.regions : [];
 
 const DIALOGUE_POOLS = window.LIYUAN_DIALOGUE_POOLS || {};
 const PORTRAIT_CATALOG = window.LIYUAN_PORTRAIT_CATALOG || {};
