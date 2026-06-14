@@ -2,6 +2,11 @@
 
 Static web playtest build for GitHub Pages.
 
+## Playtest URLs
+
+- GitHub Pages: https://randaldutw.github.io/v009-playtest/
+- RawGitHack fallback: https://raw.githack.com/randaldutw/v009-playtest/main/index.html
+
 ## Save Compatibility
 
 Player progress is stored in browser `localStorage` with:
@@ -19,6 +24,8 @@ node tools/run_v009_checks.js
 ```
 
 These checks catch broken Chinese/control characters in externalized data, verify script load order, and confirm old v009 saves can still migrate into the current runtime without losing core progress such as recruits, party slots, inventory, gear, chips, commissions, body slots, and auto-repeat state.
+
+GitHub Actions also runs the same check suite on pushes to `main` and `gh-pages`.
 
 ## Runtime Notes
 
