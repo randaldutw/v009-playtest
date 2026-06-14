@@ -23,7 +23,7 @@ Before pushing content or data updates, run:
 node tools/run_v009_checks.js
 ```
 
-These checks catch broken Chinese/control characters in externalized data, verify script load order, and confirm old v009 saves can still migrate into the current runtime without losing core progress such as recruits, party slots, inventory, gear, chips, commissions, body slots, and auto-repeat state.
+These checks catch broken Chinese/control characters in externalized data, verify script load order, confirm old v009 saves can still migrate, confirm current saves can roundtrip through `saveGame()` and `loadGame()`, validate data references, verify referenced asset files exist, check skill data integrity, and smoke-test battle startup across the eight playable classes.
 
 GitHub Actions also runs the same check suite on pushes to `main` and `gh-pages`.
 
