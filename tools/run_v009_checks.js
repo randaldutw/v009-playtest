@@ -7,6 +7,7 @@ const checks = [
   ["tools/smoke_save_migration.js"],
   ["tools/smoke_save_roundtrip.js"],
   ["tools/check_data_references.js"],
+  ["tools/check_asset_paths.js"],
   ["tools/check_class_skill_integrity.js"],
   ["tools/check_battle_start_integrity.js"],
 ];
