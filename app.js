@@ -114,7 +114,7 @@ const BATTLE_EVENT_FEED_READ_MS = 150;
 const BATTLE_EVENT_FLOAT_READ_MS = 90;
 const BATTLE_EVENT_READ_MAX_MS = 1600;
 const SAVE_KEY = "liyuan_v009_playtest_save_v1";
-const CURRENT_SAVE_VERSION = 1;
+const CURRENT_SAVE_VERSION = 2;
 const APP_VERSION = "v009.0.0";
 const ACTIVE_SKILL_SLOT_COUNT = 8;
 const BODY_SLOT_COUNT = 8;
@@ -1779,7 +1779,34 @@ function loadGame() {
   }
 }
 
+const SAVE_MIGRATIONS = {
+  2: migrateSaveToV2,
+};
+
 function migrateSave(save) {
+  if (!save || typeof save !== "object") return null;
+  let migrated = { ...save };
+  let version = Math.floor(safeNumber(migrated.version, 1, 0));
+  if (version < 1) version = 1;
+  while (version < CURRENT_SAVE_VERSION) {
+    const nextVersion = version + 1;
+    const migration = SAVE_MIGRATIONS[nextVersion];
+    if (typeof migration === "function") {
+      migrated = migration(migrated) || migrated;
+    }
+    migrated.version = nextVersion;
+    version = nextVersion;
+  }
+  return normalizeSave(migrated);
+}
+
+function migrateSaveToV2(save) {
+  const next = { ...save };
+  next.version = 2;
+  return next;
+}
+
+function normalizeSave(save) {
   if (!save || typeof save !== "object") return null;
   const recruits = normalizeMemberList(save.recruits, false);
   const creatorCompleted = save.creatorCompleted === undefined ? recruits.length > 0 : !!save.creatorCompleted;
