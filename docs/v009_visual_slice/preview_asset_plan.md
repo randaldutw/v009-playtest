@@ -43,11 +43,19 @@ Purpose:
 
 First proof content:
 
-- one shared cute 3-head battle body base
+- one shared cute 3-head battle body / gender base
 - one hair option
-- one eyes/face option
-- one faction outfit pack
-- optional front overlay if the outfit needs sleeve/weapon overlap
+- one face / eyes option
+- one faction outfit pack as a single clothing unit
+
+Do not split the first outfit pack into sleeves, weapon overlays, foreground cloth, armor fragments, or other sub-parts. Those are future exceptions only if a proven runtime need appears.
+
+Director gate before generation:
+
+- stance / pose
+- first faction outfit source
+
+The first proof must use an existing approved faction clothing direction. Do not invent a generic outfit.
 
 Required output:
 
@@ -74,19 +82,25 @@ Metadata must include:
 - pelvis center
 - hit center
 - attack origin
-- exception notes
+- outfit source reference
+- stance / pose reference
+- exception notes, default `none`
 
 Pass condition:
 
 - outfit can change while body/anchor contract stays stable
 - the unit reads clearly at battle size
 - the style can plausibly support all eight factions through outfit packs
+- the four-part model is clear: body/gender, hair, face/eyes, outfit
 
 Fail condition:
 
 - faction outfit requires a unique body system
 - anchor shifts when outfit changes
 - it only works as a portrait, not as a battle unit
+- outfit is split into unnecessary sub-parts
+- outfit is not based on an approved faction direction
+- pose/stance was invented without director gate
 
 ## Package 2: Wolf King Proof
 

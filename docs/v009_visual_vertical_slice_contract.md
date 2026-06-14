@@ -105,7 +105,7 @@ The first player-side proof is a `PREVIEW_ASSET` package that proves the shared 
 
 Stable shared character parts:
 
-- body base
+- body / gender base
 - body variant key
 - head anchor
 - hair anchor
@@ -117,25 +117,25 @@ Stable shared character parts:
 
 Faction-specific parts:
 
-- outfit pack
+- outfit pack as one clothing unit
 - faction color/material language
 - outer robe/armor/prosthetic cues
-- optional weapon or front-overlay parts
-- optional faction-only silhouette accents
+- faction-only silhouette accents contained inside the outfit pack
 
 Production assumption:
 
 - one faction and eight factions should differ mainly by outfit pack, not by rewriting the character system
 - body, face, hair, anchor, and metadata rules must stay compatible across factions
-- if a faction outfit requires a unique exception, the exception must be recorded in the outfit pack metadata, not hidden in runtime code
+- the first proof uses four selectable parts only: body/gender, hair, face/eyes, outfit
+- the first proof must not split clothing into sleeves, weapons, foreground cloth, armor fragments, or other sub-parts
+- if a later faction outfit truly requires an exception, it must pass a separate gate and be recorded in the outfit pack metadata, not hidden in runtime code
 
 Required parts:
 
-- body base
+- body / gender base
 - hair
 - eyes/face
 - faction outfit
-- optional front overlay for arms, weapons, or clothing overlap
 
 Required metadata:
 
@@ -154,6 +154,8 @@ Required metadata:
 - attack origin
 - hit center
 - outfit exception notes if any
+- outfit source reference
+- stance / pose reference
 - runtime readiness
 - source notes
 
@@ -162,6 +164,8 @@ Initial expectation:
 - style direction: production-oriented cute pixel battle unit
 - creator behavior: player can select visible current combination through direct left/right controls, not dropdown-first UX
 - first proof is judged in battle context, not as isolated portrait art
+- stance / pose must be chosen before generation
+- outfit must be based on an existing approved faction direction, not invented as a generic costume
 
 The slice may display only one faction outfit. The schema must prove that adding the other seven outfits is a content expansion task, not a new system task.
 
