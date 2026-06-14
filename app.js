@@ -156,108 +156,26 @@ const XP_CURVE_TARGET_DAYS = 3;
 const V009_BASE_STAT_TOTAL = 30;
 const V009_RECRUIT_COST = 120;
 
-const RESOURCE_DATA = {
-  money: { name: "荒幣", tone: "money" },
-  material: { name: "資材", tone: "material" },
-  energy: { name: "能源", tone: "energy" },
-};
+const ITEM_CORE_DATA = window.LIYUAN_ITEM_CORE_DATA || {};
+const RESOURCE_DATA = ITEM_CORE_DATA.resources || {};
 
-const ITEM_DATA = {
-  worn_chip: { name: "殘舊晶片", type: "chip-core", note: "可在工房改造為各等級原形晶片，是後續打造晶片的核心材料。" },
-  prototype_chip_1: { name: "一階原形晶片", type: "chip-core", note: "用於打造基礎的經脈晶片。" },
-  prototype_chip_2: { name: "二階原形晶片", type: "chip-core", note: "用於打造優良的經脈晶片。" },
-  prototype_chip_3: { name: "三階原形晶片", type: "chip-core", note: "用於打造高階的經脈晶片。" },
-  black_sand: { name: "黑水砂", type: "region" },
-  xuan_sand_core: { name: "玄砂凝核", type: "region" },
-  wolf_hide: { name: "砂狼粗皮", type: "monster" },
-  wolf_core: { name: "砂狼脈核", type: "monster" },
-  wolf_king_core: { name: "狼王脈核", type: "monster", note: "擊敗 Lv5 狼王後取得的頭目專屬材料，用於鍛造狼王式外骨骼裝備。" },
-  scorpion_shell: { name: "毒蠍殼片", type: "monster" },
-  scorpion_venom: { name: "毒蠍腺晶", type: "monster" },
-  steel_scorpion_core: { name: "鋼尾蠍王核心", type: "monster", note: "擊敗 Lv10 鋼尾蠍王後取得的頭目專屬材料，用於鍛造鋼蠍式輔助武裝。" },
-  slime_gel: { name: "腐光凝膠", type: "monster" },
-  slime_seed: { name: "腐光孢核", type: "monster" },
-  raider_scrap: { name: "殘兵械片", type: "monster" },
-  raider_token: { name: "荒路銘牌", type: "monster" },
-  machine_plate: { name: "機兵耐久片", type: "monster" },
-  machine_core: { name: "機兵殘核", type: "monster" },
-  body_fragment: { name: "義體殘片", type: "quest", note: "交給姚衡舟後，可用於開放更多空白義體槽。" },
-};
+const ITEM_DATA = ITEM_CORE_DATA.items || {};
 
-const ENEMY_DROP_PROFILE = {
-  wolf: { money: 13, material: 6, energy: 2, common: "wolf_hide", rare: "wolf_core" },
-  scorpion: { money: 10, material: 10, energy: 3, common: "scorpion_shell", rare: "scorpion_venom" },
-  slime: { money: 8, material: 12, energy: 5, common: "slime_gel", rare: "slime_seed" },
-  raider: { money: 16, material: 5, energy: 2, common: "raider_scrap", rare: "raider_token" },
-  machine: { money: 18, material: 12, energy: 8, common: "machine_plate", rare: "machine_core" },
-};
+const ENEMY_DROP_PROFILE = ITEM_CORE_DATA.enemyDropProfile || {};
 
-const BLACKWATER_REGION_DROPS = [
-  { id: "black_sand", chance: 0.62, amount: [1, 2] },
-  { id: "xuan_sand_core", chance: 0.18, amount: [1, 1] },
-];
+const BLACKWATER_REGION_DROPS = Array.isArray(ITEM_CORE_DATA.blackwaterRegionDrops) ? ITEM_CORE_DATA.blackwaterRegionDrops : [];
 
-const GLOBAL_DROPS = [
-  { id: "worn_chip", chance: 0.12, amount: [1, 1] },
-];
+const GLOBAL_DROPS = Array.isArray(ITEM_CORE_DATA.globalDrops) ? ITEM_CORE_DATA.globalDrops : [];
 
-const ITEM_VALUES = {
-  worn_chip: 80,
-  prototype_chip_1: 180,
-  prototype_chip_2: 520,
-  prototype_chip_3: 1400,
-  black_sand: 18,
-  xuan_sand_core: 95,
-  wolf_hide: 22,
-  wolf_core: 150,
-  wolf_king_core: 300,
-  scorpion_shell: 28,
-  scorpion_venom: 180,
-  steel_scorpion_core: 420,
-  slime_gel: 34,
-  slime_seed: 220,
-  raider_scrap: 42,
-  raider_token: 260,
-  machine_plate: 56,
-  machine_core: 360,
-  body_fragment: 120,
-};
+const ITEM_VALUES = ITEM_CORE_DATA.itemValues || {};
 
-const ITEM_UNLOCK_LEVEL = {
-  worn_chip: 1,
-  black_sand: 1,
-  xuan_sand_core: 1,
-  wolf_hide: 1,
-  wolf_core: 5,
-  wolf_king_core: 5,
-  scorpion_shell: 1,
-  scorpion_venom: 10,
-  steel_scorpion_core: 10,
-  slime_gel: 2,
-  slime_seed: 15,
-  raider_scrap: 4,
-  raider_token: 8,
-  machine_plate: 4,
-  machine_core: 20,
-  body_fragment: 10,
-};
+const ITEM_UNLOCK_LEVEL = ITEM_CORE_DATA.itemUnlockLevel || {};
 
 const IDLE_BOSS_PROGRESS_REQUIRED = 5;
 
-const BLUEPRINT_DATA = {
-  prototype_chip_1: { name: "一階原形晶片藍圖" },
-  prototype_chip_2: { name: "二階原形晶片藍圖" },
-  prototype_chip_3: { name: "三階原形晶片藍圖" },
-  wolf_pack_chip: { name: "狼群晶片藍圖" },
-  wolf_king_gear: { name: "狼王式外骨骼" },
-  steel_scorpion_gear: { name: "鋼蠍式輔助武裝" },
-};
+const BLUEPRINT_DATA = ITEM_CORE_DATA.blueprints || {};
 
-const CHIP_TIER_DATA = {
-  1: { name: "一階", maxLevel: 20, quality: "基礎", abilityBase: 2, abilityPerLevel: 0.32, combatBase: 1, combatPerLevel: 0.12 },
-  2: { name: "二階", maxLevel: 40, quality: "優良", abilityBase: 4, abilityPerLevel: 0.38, combatBase: 2, combatPerLevel: 0.13 },
-  3: { name: "三階", maxLevel: 60, quality: "高階", abilityBase: 7, abilityPerLevel: 0.44, combatBase: 3, combatPerLevel: 0.14 },
-};
+const CHIP_TIER_DATA = ITEM_CORE_DATA.chipTiers || {};
 
 const CHIP_STAT_STYLE_LABELS = {
   output: "力量型",
@@ -267,21 +185,9 @@ const CHIP_STAT_STYLE_LABELS = {
   precision: "精準型",
 };
 
-const CHIP_COMBAT_STAT_DATA = {
-  critRate: { name: "爆擊機率", unit: "%" },
-  critDamage: { name: "爆擊傷害", unit: "%" },
-};
+const CHIP_COMBAT_STAT_DATA = ITEM_CORE_DATA.chipCombatStats || {};
 
-const CHIP_SET_DATA = {
-  wolf_pack: {
-    name: "狼群",
-    combatStats: ["critRate", "critDamage"],
-    effects: [
-      { pieces: 2, stat: "critRate", value: 5, text: "爆擊機率+5%" },
-      { pieces: 4, stat: "critDamage", value: 10, text: "爆擊傷害+10%" },
-    ],
-  },
-};
+const CHIP_SET_DATA = ITEM_CORE_DATA.chipSets || {};
 
 const GEAR_SLOT_DATA = {
   head: {

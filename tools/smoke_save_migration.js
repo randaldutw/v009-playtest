@@ -10,6 +10,7 @@ const dialoguePoolsPath = path.join(repoRoot, "data", "dialogue_pools.js");
 const codexEntriesPath = path.join(repoRoot, "data", "codex_entries.js");
 const tianyaNewsPath = path.join(repoRoot, "data", "tianya_news.js");
 const progressionDataPath = path.join(repoRoot, "data", "progression_data.js");
+const itemCoreDataPath = path.join(repoRoot, "data", "item_core_data.js");
 
 function readText(filePath) {
   return fs.readFileSync(filePath, "utf8");
@@ -51,6 +52,7 @@ function loadGameRuntime() {
   vm.runInContext(readText(codexEntriesPath), context, { filename: codexEntriesPath });
   vm.runInContext(readText(tianyaNewsPath), context, { filename: tianyaNewsPath });
   vm.runInContext(readText(progressionDataPath), context, { filename: progressionDataPath });
+  vm.runInContext(readText(itemCoreDataPath), context, { filename: itemCoreDataPath });
   const appSource = readText(appPath).replace(/\ninit\(\);\s*$/u, "\n");
   const testBridge = `
     globalThis.__v009TestApi = {
@@ -70,6 +72,11 @@ function loadGameRuntime() {
       TIANYA_NEWS_DATA,
       COMMISSION_DATA,
       REGION_DATA,
+      ITEM_DATA,
+      ITEM_VALUES,
+      BLUEPRINT_DATA,
+      CHIP_TIER_DATA,
+      CHIP_SET_DATA,
       normalizeGearInstance,
       normalizeChipInstance,
     };
@@ -162,6 +169,11 @@ function run() {
   assert.ok(api.TIANYA_NEWS_DATA.length >= 6, "Tianya news data should load before app.js");
   assert.ok(Object.keys(api.COMMISSION_DATA).length >= 1, "commission data should load before app.js");
   assert.ok(api.REGION_DATA.some((region) => region.id === "blackwater"), "region data should load before app.js");
+  assert.ok(api.ITEM_DATA.body_fragment, "item data should load before app.js");
+  assert.equal(api.ITEM_VALUES.body_fragment, 120, "item values should load before app.js");
+  assert.ok(api.BLUEPRINT_DATA.wolf_king_gear, "blueprint data should load before app.js");
+  assert.ok(api.CHIP_TIER_DATA[1], "chip tier data should load before app.js");
+  assert.ok(api.CHIP_SET_DATA.wolf_pack, "chip set data should load before app.js");
 
   const preCreator = migrateCase(api, "pre creator", {
     version: 1,
