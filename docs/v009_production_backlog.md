@@ -89,7 +89,14 @@ Director gate:
 
 ## Next Useful Work Order
 
-1. Add browser-level smoke tests for the already-confirmed core flows.
-2. Produce a current UI surface inventory with screenshots.
-3. Produce an art asset status inventory with runtime paths and placeholder labels.
-4. Only after evidence is visible, begin targeted UI polish or art-pipeline replacement.
+1. Produce a current UI surface inventory with screenshots.
+2. Produce a battle-screen art replacement inventory:
+   - faction/player characters
+   - enemies
+   - background
+   - FX
+3. Recover and summarize usable character-creator / paper-doll research.
+4. Prepare the first visual production pilot package.
+5. Add browser-level smoke tests for the confirmed core flows once the visual pilot begins touching runtime screens.
+
+The detailed next-phase spec is `docs/v009_next_phase_spec.md`.

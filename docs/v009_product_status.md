@@ -36,3 +36,12 @@ This document records director-level decisions for the current v009 playtest. Do
 - Keep GitHub Pages playable.
 - Add checks that prevent broken data, missing assets, broken save migration, and unimplemented skills.
 - Avoid revalidating already-confirmed gameplay direction unless new content changes the premise.
+
+## Next Phase Focus
+
+The next v009 phase has two priority tracks:
+
+1. production-quality battle screen visuals, built from faction/player characters, enemy characters, backgrounds, and FX
+2. production-quality UI visuals while preserving the current clear structure
+
+Detailed execution notes are in `docs/v009_next_phase_spec.md`.
