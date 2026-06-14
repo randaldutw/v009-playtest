@@ -32,3 +32,4 @@ GitHub Actions also runs the same check suite on pushes to `main` and `gh-pages`
 - `index.html` is the entry point.
 - Runtime assets are intentionally slimmed to referenced images, portraits, monster sprites, dialogue sprites, and `NotoSansTC-VF.ttf`.
 - `.nojekyll` is included so GitHub Pages serves underscore-heavy asset paths directly.
+- Current product-level decisions are recorded in `docs/v009_product_status.md`.
