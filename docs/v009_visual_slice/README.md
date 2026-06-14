@@ -1,6 +1,6 @@
 # v009 Visual Slice Review Package
 
-Status: `CONCEPT_ART_REVIEW`
+Status: `CONCEPT_ART_DIRECTION_APPROVED`
 
 This folder records the first director-facing visual exploration for the v009 production battle-screen direction.
 
@@ -8,12 +8,43 @@ These images are `CONCEPT_ART`.
 
 They are not runtime assets, not production sprites, not UI implementation, and not formal game integration.
 
+Next-stage plan:
+
+- `docs/v009_visual_slice/preview_asset_plan.md`
+
 ## Images
 
 | File | Status | Use |
 | --- | --- | --- |
 | [concept_art/v009_battle_visual_concept_mock_v001.png](concept_art/v009_battle_visual_concept_mock_v001.png) | `CONCEPT_ART / NEEDS_WORK` | Broad mood exploration. Useful for atmosphere and material direction. |
-| [concept_art/v009_battle_visual_concept_mock_v002.png](concept_art/v009_battle_visual_concept_mock_v002.png) | `CONCEPT_ART / REVIEW_CANDIDATE` | More constrained layout exploration. Useful for battle-scene polish direction. |
+| [concept_art/v009_battle_visual_concept_mock_v002.png](concept_art/v009_battle_visual_concept_mock_v002.png) | `CONCEPT_ART / DIRECTION_APPROVED` | Approved direction reference for battle mood, player/boss scale, and UI material language. |
+
+## Director Decision
+
+Date: 2026-06-14
+
+Decision:
+
+- v002 is worth pushing forward.
+- Use it as the direction reference for the next `PREVIEW_ASSET` stage.
+
+Approved from v002:
+
+- Blackwater Sand Plain production mood
+- player versus Wolf King scale relationship
+- stronger boss presence
+- dark jade / black / restrained gold / cyan / purple material language
+- cleaner HP bar and skill slot direction
+- combat field as the main visual focus
+
+Still not approved:
+
+- direct runtime use of the generated image
+- left-side thumbnail-card region list
+- oversized inventory icon grid
+- full layout redesign
+- unreadable fake text density
+- using this image as a pixel-production-safe final asset
 
 ## v001 Review
 
@@ -102,13 +133,9 @@ Prompt constraints:
 
 ## Gate
 
-Before generating runtime candidates, director should decide:
+The concept direction gate is passed for v002.
 
-- whether v002's battle-scene mood is directionally acceptable
-- whether the dark jade / black / gold / cyan UI material language is acceptable
-- whether player/boss scale relationship is acceptable
-
-If these are acceptable, the next production step is not another full-screen concept. It is a constrained `PREVIEW_ASSET` package for:
+The next production step is not another full-screen concept. It is a constrained `PREVIEW_ASSET` package for:
 
 1. one paper-doll player body/outfit proof
 2. one Wolf King enemy proof

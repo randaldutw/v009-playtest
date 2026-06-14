@@ -209,3 +209,4 @@ Stop for director only when there is visual evidence to judge.
 - Character creator research sources: `docs/v009_character_creator_research_sources.md`
 - Visual vertical slice contract: `docs/v009_visual_vertical_slice_contract.md`
 - Visual slice review package: `docs/v009_visual_slice/README.md`
+- Visual slice PREVIEW_ASSET plan: `docs/v009_visual_slice/preview_asset_plan.md`
