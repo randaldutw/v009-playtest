@@ -1,5 +1,5 @@
 const assert = require("node:assert/strict");
-const { loadGameRuntime } = require("./v009_runtime_harness");
+const { loadGameRuntime, readText } = require("./v009_runtime_harness");
 
 const expectedClasses = ["tianshu", "tang", "chanlin", "leishi", "xinhuo", "wangchuan", "emei", "furnace"];
 const requiredSkills = {
@@ -34,6 +34,8 @@ const context = loadGameRuntime(`
 const api = context.__v009ClassSkillApi;
 const classes = api.CLASS_DATA;
 const skillIds = new Set();
+const appSource = readText("app.js");
+const useSkillCases = new Set([...appSource.matchAll(/case\s+"([^"]+)"\s*:\s*return/gu)].map((match) => match[1]));
 
 assert.deepEqual(Object.keys(classes).sort(), expectedClasses.slice().sort(), "v009 should keep exactly eight playable classes");
 
@@ -64,6 +66,7 @@ for (const classId of expectedClasses) {
       assert.ok(!includesBadText(value), `${skill.id}: generated detail ${key} contains bad text`);
     }
     if (skill.type === "active") {
+      assert.ok(useSkillCases.has(skill.id), `${skill.id}: active skill should have a useSkill case`);
       assert.ok(["回合", "觸發"].includes(api.skillTimingTagLabel(skill)), `${skill.id}: timing tag should be visible`);
     }
   }
