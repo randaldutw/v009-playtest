@@ -7195,22 +7195,62 @@ button.console-pulse-card.active {
 }
 
 .v009-fight-hp .shield-fill {
-  left: var(--hp-pct, 0%);
+  left: var(--shield-start, 0%);
   z-index: 2;
-  width: max(0px, calc(var(--shield-pct, 0%) - var(--hp-pct, 0%)));
+  width: var(--shield-width, 0%);
   min-width: 0;
   border-left: 1px solid rgba(190, 252, 255, 0.75);
-  background: linear-gradient(90deg, rgba(83, 223, 255, 0.76), rgba(188, 255, 255, 0.92));
+  background: linear-gradient(90deg, rgba(75, 219, 255, 0.48), rgba(196, 255, 255, 0.72));
   box-shadow: 0 0 16px rgba(83, 223, 255, 0.58), inset 0 0 7px rgba(255, 255, 255, 0.44);
   transition: left 0.22s ease, right 0.22s ease, width 0.22s ease;
 }
 
 .v009-fight-hp.reverse .shield-fill {
-  right: var(--hp-pct, 0%);
+  right: var(--shield-start, 0%);
   left: auto;
   border-right: 1px solid rgba(190, 252, 255, 0.75);
   border-left: 0;
-  background: linear-gradient(270deg, rgba(83, 223, 255, 0.76), rgba(188, 255, 255, 0.92));
+  background: linear-gradient(270deg, rgba(75, 219, 255, 0.48), rgba(196, 255, 255, 0.72));
+}
+
+.v009-fight-hp .shield-tone-1 {
+  background: linear-gradient(90deg, rgba(92, 255, 233, 0.5), rgba(210, 255, 249, 0.76));
+}
+
+.v009-fight-hp .shield-tone-2 {
+  background: linear-gradient(90deg, rgba(74, 181, 255, 0.5), rgba(183, 231, 255, 0.76));
+}
+
+.v009-fight-hp .shield-tone-3 {
+  background: linear-gradient(90deg, rgba(126, 244, 255, 0.45), rgba(236, 255, 255, 0.72));
+}
+
+.v009-fight-hp .shield-tone-4 {
+  background: linear-gradient(90deg, rgba(64, 206, 255, 0.56), rgba(165, 250, 255, 0.8));
+}
+
+.v009-fight-hp .shield-tone-5 {
+  background: linear-gradient(90deg, rgba(116, 232, 255, 0.42), rgba(221, 255, 255, 0.68));
+}
+
+.v009-fight-hp.reverse .shield-tone-1 {
+  background: linear-gradient(270deg, rgba(92, 255, 233, 0.5), rgba(210, 255, 249, 0.76));
+}
+
+.v009-fight-hp.reverse .shield-tone-2 {
+  background: linear-gradient(270deg, rgba(74, 181, 255, 0.5), rgba(183, 231, 255, 0.76));
+}
+
+.v009-fight-hp.reverse .shield-tone-3 {
+  background: linear-gradient(270deg, rgba(126, 244, 255, 0.45), rgba(236, 255, 255, 0.72));
+}
+
+.v009-fight-hp.reverse .shield-tone-4 {
+  background: linear-gradient(270deg, rgba(64, 206, 255, 0.56), rgba(165, 250, 255, 0.8));
+}
+
+.v009-fight-hp.reverse .shield-tone-5 {
+  background: linear-gradient(270deg, rgba(116, 232, 255, 0.42), rgba(221, 255, 255, 0.68));
 }
 
 .v009-fight-hp.hp-healthy .hp-fill {

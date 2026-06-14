@@ -5231,7 +5231,7 @@ function v009FighterVitals(unit, side) {
   return `
     <div class="v009-versus-card ${side}">
       <div class="v009-versus-hp-value">${hp}/${maxHp}</div>
-      ${v009FightHpBar(hp, maxHp, side === "enemy", unit.shield)}
+      ${v009FightHpBar(hp, maxHp, side === "enemy", unit.shield, unit.shieldSegments)}
       ${v009CombatStatusTags(unit, side)}
     </div>
   `;
@@ -6811,23 +6811,35 @@ function v009PartyStatusBars(party) {
         <b>${ally.name}</b>
         <span>${displayHpValue(ally.hp)}/${Math.max(1, Math.floor(ally.maxHp || 1))}</span>
       </div>
-      ${v009FightHpBar(ally.hp, ally.maxHp, false, ally.shield)}
+      ${v009FightHpBar(ally.hp, ally.maxHp, false, ally.shield, ally.shieldSegments)}
       ${v009CombatStatusTags(ally, "ally")}
     </div>
   `).join("") : `<div class="v009-party-status empty">未指定作戰角色</div>`;
 }
 
-function v009FightHpBar(value, max, reverse = false, shield = 0) {
+function v009FightHpBar(value, max, reverse = false, shield = 0, shieldSegments = []) {
   const safeMax = Math.max(1, Math.floor(max || 1));
   const safeValue = Math.max(0, Math.min(safeMax, Number(value) || 0));
   const pct = Math.max(0, Math.min(100, (safeValue / safeMax) * 100));
-  const shieldValue = Math.max(0, Math.floor(shield || 0));
-  const shieldPct = Math.max(pct, Math.min(100, ((safeValue + shieldValue) / safeMax) * 100));
-  const style = `--hp-pct:${pct.toFixed(1)}%;--shield-pct:${shieldPct.toFixed(1)}%;`;
+  const shieldValue = Math.max(0, Number(shield || 0));
+  const segments = normalizeShieldSegments({ shield: shieldValue, shieldSegments });
+  let shieldOffset = 0;
+  const segmentHtml = segments.map((segment, index) => {
+    const amount = Math.max(0, Number(segment.amount || 0));
+    if (amount <= 0 || shieldOffset >= safeMax) return "";
+    const start = Math.max(0, Math.min(100, (shieldOffset / safeMax) * 100));
+    const width = Math.max(0, Math.min(100 - start, (amount / safeMax) * 100));
+    shieldOffset += amount;
+    if (width <= 0) return "";
+    const tone = index % 6;
+    const title = escapeHtml(`${segment.label || "護盾"} ${Math.floor(amount)}`);
+    return `<i class="shield-fill shield-segment shield-tone-${tone}" title="${title}" style="--shield-start:${start.toFixed(1)}%;--shield-width:${width.toFixed(1)}%;"></i>`;
+  }).join("");
+  const style = `--hp-pct:${pct.toFixed(1)}%;`;
   return `
     <div class="v009-fight-hp ${v009HpToneClass(safeValue, safeMax)} ${pct <= 0 ? "hp-empty" : ""} ${reverse ? "reverse" : ""}" style="${style}">
       <i class="hp-fill"></i>
-      ${shieldValue > 0 && shieldPct > pct ? `<i class="shield-fill"></i>` : ""}
+      ${segmentHtml}
     </div>
   `;
 }
@@ -11334,6 +11346,7 @@ function cloneCombatant(member) {
     action: Math.random() * 25,
     front: member.front,
     shield: 0,
+    shieldSegments: [],
     guard: 0,
     evade: 0,
     cover: null,
@@ -12520,9 +12533,7 @@ function chanlinImmovable(ally) {
 
 function chanlinStoneHeart(ally) {
   const shield = ally.maxHp * 0.3;
-  ally.shield += shield;
-  triggerHealFx(ally);
-  triggerFloat(ally, `盾 ${Math.floor(shield)}`, "shield");
+  addShield(ally, shield, "石心立");
   addFeed(`${ally.name} 立石心，護盾優先吸收傷害。`, "good");
 }
 
@@ -12563,10 +12574,7 @@ function leishiCoverReloadShield(ally, label = "掩護裝填", options = {}) {
   if (!ally || ally.classId !== "leishi") return 0;
   if (!options.force && !ally.coverReloadActive) return 0;
   const shield = Math.max(1, Math.floor((ally.maxHp || 0) * 0.25));
-  ally.shield = Math.max(0, ally.shield || 0) + shield;
-  triggerHealFx(ally);
-  triggerFloat(ally, `盾 ${shield}`, "shield");
-  return shield;
+  return addShield(ally, shield, label);
 }
 
 function setCritRateBonusSource(ally, sourceId, value) {
@@ -12688,11 +12696,9 @@ function tianshuArray(ally) {
 }
 
 function tianshuShift(ally) {
-  ally.shield += 10 + ally.stats.supply * 0.8 + ally.stats.precision * 0.4;
+  addShield(ally, 10 + ally.stats.supply * 0.8 + ally.stats.precision * 0.4, "移星步", { floatLabel: "移星" });
   ally.guard = Math.max(ally.guard || 0, 2);
   gainResource(ally, 10, "解析");
-  triggerHealFx(ally);
-  triggerFloat(ally, "移星", "shield");
   addFeed(`${ally.name} 以移星步重排劍路，解析提高。`, "good");
 }
 
@@ -12791,7 +12797,7 @@ function chanlinPalm(ally) {
 function chanlinBreath(ally) {
   ally.front = true;
   const healed = applyHealing(ally, 16 + ally.stats.supply * 1.5, ally);
-  ally.shield += 10 + ally.stats.armor;
+  addShield(ally, 10 + ally.stats.armor, "調息不動", { fx: false, float: false });
   triggerHealFx(ally);
   triggerFloat(ally, `+${Math.floor(healed)}`, "heal");
   addFeed(`${ally.name} 調息不動，穩住傷勢並建立護盾。`, "good");
@@ -12813,7 +12819,7 @@ function chanlinReturn(ally) {
 function chanlinBell(ally) {
   ally.front = true;
   ally.guard = Math.max(ally.guard || 0, 5);
-  ally.shield += 22 + ally.stats.armor * 1.6;
+  addShield(ally, 22 + ally.stats.armor * 1.6, "金剛沉鐘", { fx: false, float: false });
   damageOne(ally, "金剛沉鐘", 0.86, { preferMarked: false });
   triggerHealFx(ally);
   addFeed(`${ally.name} 沉鐘定身，以不動心換取長時間抗傷。`, "good");
@@ -12862,7 +12868,7 @@ function xinhuoJab(ally) {
 function xinhuoGuard(ally) {
   ally.front = true;
   ally.guard = Math.max(ally.guard || 0, 3);
-  ally.shield += 12 + ally.stats.armor * 1.2;
+  addShield(ally, 12 + ally.stats.armor * 1.2, "破釜護身", { fx: false, float: false });
   damageOne(ally, "破釜護身", 0.58, { preferMarked: false });
 }
 
@@ -12875,7 +12881,7 @@ function xinhuoRush(ally) {
 
 function xinhuoIronshirt(ally) {
   ally.front = true;
-  ally.shield += 22 + ally.stats.armor * 1.4;
+  addShield(ally, 22 + ally.stats.armor * 1.4, "爛蓑護體", { fx: false, float: false });
   ally.guard = Math.max(ally.guard || 0, 3);
   triggerHealFx(ally);
   triggerFloat(ally, "爛蓑護體", "shield");
@@ -12983,7 +12989,7 @@ function emeiRipple(ally) {
 }
 
 function emeiGuard(ally) {
-  ally.shield += 12 + ally.stats.reaction * 0.8;
+  addShield(ally, 12 + ally.stats.reaction * 0.8, "避影", { fx: false, float: false });
   ally.evade = Math.max(ally.evade || 0, 3);
   ally.flowActive = false;
   ally.resource = 0;
@@ -13008,7 +13014,7 @@ function furnacePlum(ally, label, scale, markGain) {
 }
 
 function furnaceGuard(ally) {
-  ally.shield += 14 + ally.stats.armor * 1.2;
+  addShield(ally, 14 + ally.stats.armor * 1.2, "寒梅護式", { fx: false, float: false });
   ally.guard = Math.max(ally.guard || 0, 2);
   triggerHealFx(ally);
   triggerFloat(ally, "寒梅護式", "shield");
@@ -13040,9 +13046,7 @@ function applyTianshuGuard(ally, amount, guardLayers, label) {
   const shield = Math.max(1, amount);
   ally.front = true;
   ally.guard = Math.max(ally.guard || 0, guardLayers);
-  ally.shield += shield;
-  triggerHealFx(ally);
-  triggerFloat(ally, `${label} ${Math.floor(shield)}`, "shield");
+  addShield(ally, shield, label, { floatLabel: label });
 }
 
 function tangPoison(ally) {
@@ -13079,17 +13083,13 @@ function tangConvert(ally) {
 function chanlinGuard(ally) {
   ally.front = true;
   ally.guard = 3;
-  ally.shield += 12 + ally.stats.armor * 1.5;
-  triggerHealFx(ally);
-  triggerFloat(ally, "防護", "shield");
+  addShield(ally, 12 + ally.stats.armor * 1.5, "不動身", { floatLabel: "防護" });
   addFeed(`${ally.name} 架起不動身，轉入防護姿態並提高承傷能力。`, "good");
 }
 
 function cleanseAll(ally) {
   for (const friend of livingAllies()) {
-    friend.shield += 12 + ally.stats.supply;
-    triggerHealFx(friend);
-    triggerFloat(friend, `盾 ${Math.floor(12 + ally.stats.supply)}`, "shield");
+    addShield(friend, 12 + ally.stats.supply, "明王淨界");
   }
   addFeed(`${ally.name} 展開明王淨界，全隊獲得護盾。`, "good");
 }
@@ -13118,9 +13118,7 @@ function xinhuoCover(ally) {
   if (!target) return xinhuoPunch(ally);
   ally.front = true;
   target.cover = ally.sourceId;
-  ally.shield += 8 + ally.stats.armor;
-  triggerHealFx(ally);
-  triggerFloat(ally, "護援", "shield");
+  addShield(ally, 8 + ally.stats.armor, "破蓑擋刀", { floatLabel: "護援" });
   addFeed(`${ally.name} 破蓑擋刀，替 ${target.name} 承接下一波攻擊。`, "good");
 }
 
@@ -13161,7 +13159,7 @@ function emeiStabilize(ally) {
   for (const friend of livingAllies()) {
     const heal = 10 + ally.stats.supply;
     const healed = applyHealing(friend, heal, ally);
-    if (friend.stats.armor < 8) friend.shield += 8 + ally.stats.supply;
+    if (friend.stats.armor < 8) addShield(friend, 8 + ally.stats.supply, "義體穩態", { fx: false, float: false });
     triggerHealFx(friend);
     triggerFloat(friend, `+${Math.floor(healed)}`, "heal");
   }
@@ -13207,14 +13205,14 @@ function healOne(ally, label, amount, cleanse = false, frontArmor = false) {
   if (!target) return;
   let heal = amount;
   if (target.front && frontArmor) {
-    target.shield += 8 + ally.stats.supply;
+    addShield(target, 8 + ally.stats.supply, label, { fx: false, float: false });
   }
   const healed = applyHealing(target, heal, ally);
   triggerHealFx(target);
   triggerFloat(target, `+${Math.floor(healed)}`, "heal");
   if (cleanse) {
-    target.shield += 6 + ally.stats.supply * 0.4;
-    if (hasPassive(ally, "tang_reflux")) target.shield += 6;
+    addShield(target, 6 + ally.stats.supply * 0.4, label, { fx: false, float: false });
+    if (hasPassive(ally, "tang_reflux")) addShield(target, 6, "丹流回湧", { fx: false, float: false });
   }
   addFeed(`${ally.name} 施展${label}，使 ${target.name} 回復 ${Math.floor(healed)} 點生命。`, "good");
 }
@@ -13227,6 +13225,67 @@ function applyHealing(target, amount, source) {
   return healed;
 }
 
+function normalizeShieldSegments(unit) {
+  const rawSegments = Array.isArray(unit?.shieldSegments) ? unit.shieldSegments : [];
+  const segments = rawSegments
+    .map((segment) => ({
+      label: String(segment?.label || "護盾"),
+      amount: Math.max(0, Number(segment?.amount || 0)),
+    }))
+    .filter((segment) => segment.amount > 0);
+  if (segments.length) return segments;
+  const fallback = Math.max(0, Number(unit?.shield || 0));
+  return fallback > 0 ? [{ label: "護盾", amount: fallback }] : [];
+}
+
+function syncShieldTotal(unit) {
+  if (!unit) return 0;
+  const segments = normalizeShieldSegments(unit);
+  unit.shieldSegments = segments;
+  unit.shield = segments.reduce((sum, segment) => sum + Math.max(0, Number(segment.amount || 0)), 0);
+  return unit.shield;
+}
+
+function addShield(unit, amount, label = "護盾", options = {}) {
+  if (!unit) return 0;
+  const shield = Math.max(0, Number(amount || 0));
+  if (shield <= 0) return 0;
+  const segments = normalizeShieldSegments(unit);
+  segments.push({ label, amount: shield });
+  if (segments.length > 10) {
+    const overflow = segments.splice(0, segments.length - 10);
+    const overflowAmount = overflow.reduce((sum, segment) => sum + Math.max(0, Number(segment.amount || 0)), 0);
+    segments.unshift({ label: "護盾", amount: overflowAmount });
+  }
+  unit.shieldSegments = segments;
+  syncShieldTotal(unit);
+  if (options.fx !== false) triggerHealFx(unit);
+  if (options.float !== false) triggerFloat(unit, `${options.floatLabel || "盾"} ${Math.floor(shield)}`, "shield");
+  return shield;
+}
+
+function absorbShieldDamage(unit, amount) {
+  if (!unit) return 0;
+  let remaining = Math.max(0, Number(amount || 0));
+  if (remaining <= 0) return 0;
+  const segments = normalizeShieldSegments(unit);
+  if (!segments.length) {
+    unit.shield = Math.max(0, Number(unit.shield || 0));
+    return 0;
+  }
+  let absorbed = 0;
+  for (const segment of segments) {
+    if (remaining <= 0) break;
+    const take = Math.min(Math.max(0, Number(segment.amount || 0)), remaining);
+    segment.amount -= take;
+    remaining -= take;
+    absorbed += take;
+  }
+  unit.shieldSegments = segments.filter((segment) => segment.amount > 0.01);
+  syncShieldTotal(unit);
+  return absorbed;
+}
+
 function addContribution(ally, key, amount) {
   if (!ally || !["damage", "heal", "taken"].includes(key)) return;
   ally.contribution = ally.contribution || { damage: 0, heal: 0, taken: 0 };
@@ -13235,9 +13294,7 @@ function addContribution(ally, key, amount) {
 
 function shieldAll(ally, label, amount, morale = false) {
   for (const friend of livingAllies()) {
-    friend.shield += amount;
-    triggerHealFx(friend);
-    triggerFloat(friend, `盾 ${Math.floor(amount)}`, "shield");
+    addShield(friend, amount, label);
   }
   state.battle.stats.shields += 1;
   if (morale) state.battle.morale += 5;
@@ -13390,13 +13447,10 @@ function triggerTianshuCalibrate(actor) {
     const sameActor = tactician.sourceId === actor.sourceId;
     gainResource(tactician, sameActor ? 7 : 3, classResourceLabel(tactician.classId));
     const shield = 5 + tactician.stats.supply * 0.45;
-    tactician.shield += shield;
-    triggerHealFx(tactician);
-    triggerFloat(tactician, `盾 ${Math.floor(shield)}`, "shield");
+    addShield(tactician, shield, "精校補償");
     if (!sameActor) {
       const allyShield = Math.max(2, shield * 0.35);
-      actor.shield += allyShield;
-      triggerFloat(actor, `盾 ${Math.floor(allyShield)}`, "shield");
+      addShield(actor, allyShield, "精校補償", { fx: false });
     }
   }
 }
@@ -13587,10 +13641,9 @@ function applyDamage(ally, amount, sourceName, moveLabel = "攻擊", options = {
   if (ally.classId === "chanlin") gainResource(ally, Math.max(10, Math.floor(amount * 0.36)), "不動心");
   let remaining = amount;
   if (ally.shield > 0) {
-    const absorbed = Math.min(ally.shield, remaining);
-    ally.shield -= absorbed;
+    const absorbed = absorbShieldDamage(ally, remaining);
     remaining -= absorbed;
-    triggerEmeiCompensate();
+    if (absorbed > 0) triggerEmeiCompensate();
   }
   ally.hp = Math.max(0, ally.hp - remaining);
   if (remaining > 0) scheduleCombatHitFeedback(ally, `-${Math.floor(remaining)}`, "damage", options.impactDelayMs);
@@ -13602,7 +13655,7 @@ function applyDamage(ally, amount, sourceName, moveLabel = "攻擊", options = {
       dealDamage(enemy, ally.maxHp * 0.5, ally, "金剛反", { suppressAttackFx: true, impactDelayMs: v009AttackImpactDelayMs("vajra-reflect-gold") });
     }
   }
-  if (hasPassive(ally, "chanlin_bone")) ally.shield += Math.max(0, remaining) * 0.12;
+  if (hasPassive(ally, "chanlin_bone")) addShield(ally, Math.max(0, remaining) * 0.12, "金剛骨", { fx: false, float: false });
   if (remaining > 0) {
     state.battle.morale += livingAllies().some((a) => hasPassive(a, "xinhuo_comrade")) ? 1 : 0;
     addFeed(`${sourceName} ${moveLabel} ${ally.name}，造成 ${Math.floor(remaining)} 點傷害。`, "bad");
