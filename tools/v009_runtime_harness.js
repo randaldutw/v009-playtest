@@ -38,9 +38,12 @@ function createRuntimeContext() {
     Math,
     setTimeout() {},
     clearTimeout() {},
+    setInterval() { return 0; },
+    clearInterval() {},
     requestAnimationFrame() { return 0; },
     cancelAnimationFrame() {},
     confirm() { return true; },
+    alert() {},
     localStorage: {
       getItem() { return null; },
       setItem() {},
