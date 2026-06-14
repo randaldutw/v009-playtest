@@ -978,7 +978,7 @@ const CLASS_DATA = {
       skill("lei_lianzhu", "連珠銃", 1, "造成總傷害係數 3 的 5 連射攻擊，消耗彈藥 1。", { coefficient: 3, ammoCost: 1 }),
       skill("lei_crack", "裂甲彈", 3, "射擊造成係數 3 傷害，使敵人進入裂甲狀態，受傷提高 15%，持續 3 回合，消耗彈藥 1。", { coefficient: 3, ammoCost: 1 }),
       skill("lei_fullshot", "全彈射擊", 6, "射擊造成剩餘彈藥數乘以係數 2 的攻擊，消耗剩餘彈藥。", { coefficient: 2, ammoCost: "all" }),
-      skill("lei_aim", "準星校正", 10, "觸發技；開場施展，提高 5% 命中率與 10% 爆擊率。", { timing: "trigger", triggerCondition: "battle_start", oncePerBattle: true }),
+      skill("lei_aim", "掩護裝填", 10, "觸發技；開局時為自己開啟等同 25% 生命的護盾，之後每次裝填同時獲得等同 25% 生命的護盾。", { timing: "trigger", triggerCondition: "battle_start", oncePerBattle: true }),
       skill("lei_quick_reload", "快速裝填", 15, "觸發技；彈藥耗盡時瞬間填滿所有彈藥，一場戰鬥發動一次。", { timing: "trigger", triggerCondition: "ammo_empty", oncePerBattle: true }),
       skill("lei_lianzhu_plus", "強化連珠銃", 20, "連珠銃上位技能；造成總傷害係數 5 的 5 連射攻擊，消耗彈藥 1。", { coefficient: 5, ammoCost: 1 }),
     ],
@@ -1133,7 +1133,7 @@ const SKILL_PRESENTATION_TEXT = {
   lei_lianzhu: "五發連射壓住目標，用一發彈藥換取穩定輸出。",
   lei_crack: "特製彈頭打裂護甲，讓目標短時間更容易被擊傷。",
   lei_fullshot: "把剩餘彈藥一次傾瀉出去，彈越多，爆發越高。",
-  lei_aim: "開場校正準星，讓後續射擊更準、更容易打出重擊。",
+  lei_aim: "開戰先展開掩護力場，之後每次裝填都會同步建立護盾。",
   lei_quick_reload: "彈倉見底時啟動快速裝填，一場戰鬥只能救一次節奏。",
   lei_lianzhu_plus: "連珠銃的強化射法，同樣消耗一發彈藥，但火力更密。",
   xinhuo_first: "不講章法先衝上去打，靠氣勢把怒氣打出來。",
@@ -9620,7 +9620,7 @@ function skillPowerText(skillData) {
     lei_lianzhu: "連射 5 下，每下造成 60% 傷害。",
     lei_crack: "造成 300% 傷害，並使目標受傷 +15%，持續 3 回合。",
     lei_fullshot: "每發剩餘彈藥造成 200% 傷害。",
-    lei_aim: "命中率 +5%，爆擊率 +10%。",
+    lei_aim: "開戰取得最大生命 25% 護盾；每次裝填時再取得最大生命 25% 護盾。",
     lei_quick_reload: "彈藥耗盡時立即補滿。",
     lei_lianzhu_plus: "連射 5 下，每下造成 100% 傷害。",
     xinhuo_life_first: "生命低於 30% 時回復最大生命 20%。",
@@ -9672,7 +9672,7 @@ function skillResourceText(skillData) {
     lei_lianzhu: "消耗彈藥 1。",
     lei_crack: "消耗彈藥 1。",
     lei_fullshot: "消耗所有剩餘彈藥。",
-    lei_aim: "開戰觸發；每場一次。",
+    lei_aim: "開戰觸發；裝填時持續生效。",
     lei_quick_reload: "彈藥耗盡時觸發；補滿 4 發；每場一次。",
     lei_lianzhu_plus: "消耗彈藥 1。",
     xinhuo_first: "取得怒氣 +14。",
@@ -9714,7 +9714,7 @@ function skillStatText(skillData) {
     tianshu_array: "精準|出力|解析",
     chanlin_vajra_reflect: "耐久|供能",
     chanlin_stone_heart: "耐久",
-    lei_aim: "精準|出力",
+    lei_aim: "耐久|供能",
     lei_quick_reload: "反應|出力",
     xinhuo_life_first: "耐久|供能",
     wang_step: "反應",
@@ -12323,6 +12323,7 @@ function basicAttack(ally) {
     if (ally.reloadTurns <= 0) {
       ally.resource = ally.maxResource;
       ally.reloadTurns = 1;
+      leishiCoverReloadShield(ally, "裝填掩護");
       addFeed(`${ally.name} 裝填完成，彈藥回滿。`, "good");
     } else {
       addFeed(`${ally.name} 彈藥耗盡，裝填中（${ally.reloadTurns}）。`, "good");
@@ -12384,7 +12385,7 @@ function useSkill(ally, id) {
     case "lei_lianzhu": return leishiBurstShots(ally, "連珠銃", 5, 3, 1);
     case "lei_crack": return leishiCrackShot(ally);
     case "lei_fullshot": return leishiFullShot(ally);
-    case "lei_aim": return leishiAim(ally);
+    case "lei_aim": return leishiCoverReload(ally);
     case "lei_quick_reload": return leiReloadNow(ally);
     case "lei_lianzhu_plus": return leishiBurstShots(ally, "強化連珠銃", 5, 5, 1);
     case "xinhuo_first": return xinhuoGainPunch(ally, "總之先揍", 3, 14);
@@ -12552,11 +12553,20 @@ function leishiFullShot(ally) {
   });
 }
 
-function leishiAim(ally) {
-  setCritRateBonusSource(ally, "lei_aim", 10);
-  ally.accuracyBonus = Math.max(ally.accuracyBonus || 0, 5);
-  triggerFloat(ally, "準星校正", "shield");
-  addFeed(`${ally.name} 校正準星，命中與爆擊提高。`, "good");
+function leishiCoverReload(ally) {
+  ally.coverReloadActive = true;
+  leishiCoverReloadShield(ally, "掩護裝填", { force: true });
+  addFeed(`${ally.name} 展開掩護裝填，後續每次裝填都會同步建立護盾。`, "good");
+}
+
+function leishiCoverReloadShield(ally, label = "掩護裝填", options = {}) {
+  if (!ally || ally.classId !== "leishi") return 0;
+  if (!options.force && !ally.coverReloadActive) return 0;
+  const shield = Math.max(1, Math.floor((ally.maxHp || 0) * 0.25));
+  ally.shield = Math.max(0, ally.shield || 0) + shield;
+  triggerHealFx(ally);
+  triggerFloat(ally, `盾 ${shield}`, "shield");
+  return shield;
 }
 
 function setCritRateBonusSource(ally, sourceId, value) {
@@ -12820,8 +12830,7 @@ function leiFocus(ally) {
 function leiReloadNow(ally) {
   ally.resource = ally.maxResource;
   ally.reloadProgress = 0;
-  triggerHealFx(ally);
-  triggerFloat(ally, "裝填", "shield");
+  leishiCoverReloadShield(ally, "裝填掩護");
   addFeed(`${ally.name} 手動裝填，彈藥回滿。`, "good");
 }
 
