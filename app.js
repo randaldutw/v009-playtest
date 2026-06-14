@@ -222,54 +222,21 @@ const GEAR_SLOT_DATA = {
   },
 };
 
-const GEAR_COMBAT_STAT_DATA = {
-  classBoost: { name: "技能傷害", unit: "%", slot: "weapon" },
-  powerAmp: { name: "威力", unit: "%" },
-  maxHpPct: { name: "生命", unit: "%" },
-  speedPct: { name: "速度", unit: "%" },
-  resourceMax: { name: "資源上限", unit: "" },
-  resourceGain: { name: "資源取得", unit: "%" },
-  guardBoost: { name: "護身", unit: "%" },
-  damageReduce: { name: "減傷", unit: "%" },
-  evadeRate: { name: "閃避", unit: "%" },
-  critRate: { name: "爆擊機率", unit: "%" },
-  critDamage: { name: "爆擊傷害", unit: "%" },
-};
+const GEAR_COMBAT_STAT_DATA = ITEM_CORE_DATA.gearCombatStats || {};
 
 const GEAR_RANDOM_COMBAT_STAT_KEYS = Object.keys(GEAR_COMBAT_STAT_DATA)
   .filter((key) => !["resourceMax", "resourceGain"].includes(key));
 
-const GEAR_SET_DATA = {
-  wolf_king: {
-    name: "狼王套裝",
-    effects: [
-      { pieces: 2, stat: "speedPct", value: 5, text: "行動速度+5%" },
-      { pieces: 4, stat: "critRate", value: 5, text: "爆擊機率+5%" },
-    ],
-  },
-  steel_scorpion: {
-    name: "鋼蠍武裝",
-    effects: [],
-  },
-};
+const GEAR_SET_DATA = ITEM_CORE_DATA.gearSets || {};
 
 const CODEX_ENTRY_DATA = window.LIYUAN_CODEX_ENTRIES || {};
 const CODEX_FACTION_ENTRIES = Array.isArray(CODEX_ENTRY_DATA.factions) ? CODEX_ENTRY_DATA.factions : [];
 const CODEX_GEOGRAPHY_ENTRIES = Array.isArray(CODEX_ENTRY_DATA.geography) ? CODEX_ENTRY_DATA.geography : [];
 
-const GEAR_NAME_PREFIXES = ["霓虹", "義脈", "黑匣", "量子", "電馭", "玄砂", "賽博", "龍骨", "星樞", "流火"];
-const GEAR_NAME_SUFFIXES = ["腕甲", "機匣", "胸甲", "腿架", "爐心", "義骨", "伺服", "護軀", "劍匣", "電池"];
-const NON_GEAR_NAME_PARTS = ["秘笈", "秘籍", "殘卷", "殘捲", "真訣", "心法", "秘鑰", "毒經"];
-const CLASS_GEAR_TERMS = {
-  tianshu: "天樞",
-  tang: "唐門",
-  chanlin: "金剛",
-  leishi: "雷銃",
-  xinhuo: "薪火",
-  wangchuan: "忘川",
-  emei: "峨眉",
-  furnace: "梅光",
-};
+const GEAR_NAME_PREFIXES = Array.isArray(ITEM_CORE_DATA.gearNamePrefixes) ? ITEM_CORE_DATA.gearNamePrefixes : [];
+const GEAR_NAME_SUFFIXES = Array.isArray(ITEM_CORE_DATA.gearNameSuffixes) ? ITEM_CORE_DATA.gearNameSuffixes : [];
+const NON_GEAR_NAME_PARTS = Array.isArray(ITEM_CORE_DATA.nonGearNameParts) ? ITEM_CORE_DATA.nonGearNameParts : [];
+const CLASS_GEAR_TERMS = ITEM_CORE_DATA.classGearTerms || {};
 
 const TIANYA_NEWS_DATA = Array.isArray(window.LIYUAN_TIANYA_NEWS_DATA) ? window.LIYUAN_TIANYA_NEWS_DATA : [];
 

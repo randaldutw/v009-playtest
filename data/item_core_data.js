@@ -105,4 +105,43 @@ window.LIYUAN_ITEM_CORE_DATA = {
     ],
   },
 },
+  gearCombatStats: {
+  classBoost: { name: "技能傷害", unit: "%", slot: "weapon" },
+  powerAmp: { name: "威力", unit: "%" },
+  maxHpPct: { name: "生命", unit: "%" },
+  speedPct: { name: "速度", unit: "%" },
+  resourceMax: { name: "資源上限", unit: "" },
+  resourceGain: { name: "資源取得", unit: "%" },
+  guardBoost: { name: "護身", unit: "%" },
+  damageReduce: { name: "減傷", unit: "%" },
+  evadeRate: { name: "閃避", unit: "%" },
+  critRate: { name: "爆擊機率", unit: "%" },
+  critDamage: { name: "爆擊傷害", unit: "%" },
+},
+  gearSets: {
+  wolf_king: {
+    name: "狼王套裝",
+    effects: [
+      { pieces: 2, stat: "speedPct", value: 5, text: "行動速度+5%" },
+      { pieces: 4, stat: "critRate", value: 5, text: "爆擊機率+5%" },
+    ],
+  },
+  steel_scorpion: {
+    name: "鋼蠍武裝",
+    effects: [],
+  },
+},
+  gearNamePrefixes: ["霓虹", "義脈", "黑匣", "量子", "電馭", "玄砂", "賽博", "龍骨", "星樞", "流火"],
+  gearNameSuffixes: ["腕甲", "機匣", "胸甲", "腿架", "爐心", "義骨", "伺服", "護軀", "劍匣", "電池"],
+  nonGearNameParts: ["秘笈", "秘籍", "殘卷", "殘捲", "真訣", "心法", "秘鑰", "毒經"],
+  classGearTerms: {
+  tianshu: "天樞",
+  tang: "唐門",
+  chanlin: "金剛",
+  leishi: "雷銃",
+  xinhuo: "薪火",
+  wangchuan: "忘川",
+  emei: "峨眉",
+  furnace: "梅光",
+},
 };

@@ -77,6 +77,9 @@ function loadGameRuntime() {
       BLUEPRINT_DATA,
       CHIP_TIER_DATA,
       CHIP_SET_DATA,
+      GEAR_COMBAT_STAT_DATA,
+      GEAR_SET_DATA,
+      GEAR_NAME_PREFIXES,
       normalizeGearInstance,
       normalizeChipInstance,
     };
@@ -174,6 +177,9 @@ function run() {
   assert.ok(api.BLUEPRINT_DATA.wolf_king_gear, "blueprint data should load before app.js");
   assert.ok(api.CHIP_TIER_DATA[1], "chip tier data should load before app.js");
   assert.ok(api.CHIP_SET_DATA.wolf_pack, "chip set data should load before app.js");
+  assert.ok(api.GEAR_COMBAT_STAT_DATA.critRate, "gear combat stat data should load before app.js");
+  assert.ok(api.GEAR_SET_DATA.wolf_king, "gear set data should load before app.js");
+  assert.ok(api.GEAR_NAME_PREFIXES.includes("霓虹"), "gear naming data should load before app.js");
 
   const preCreator = migrateCase(api, "pre creator", {
     version: 1,
