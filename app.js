@@ -12877,7 +12877,7 @@ function dealPoisonDamage(enemy, amount, actor, label) {
   trackPlayerDamage(actor, dealt);
   addContribution(actor, "damage", dealt);
   triggerHitFx(enemy);
-  triggerFloat(enemy, `-${Math.floor(amount)}`, "damage");
+  triggerFloat(enemy, `${Math.floor(dealt)}`, "bad");
   addFeed(`${enemy.name} 承受 ${label} ${Math.floor(amount)} 點傷害。`, "bad");
 }
 
@@ -12915,7 +12915,7 @@ function dealDamage(enemy, amount, actor, label, options = {}) {
   const fxKind = options.suppressAttackFx ? "" : triggerPlayerAttackFx(actor, enemy, label, 1);
   const impactDelay = Number.isFinite(options.impactDelayMs) ? Math.max(0, options.impactDelayMs) : v009AttackImpactDelayMs(fxKind);
   const critical = options.critical ?? damageCriticalFlag(amount);
-  scheduleCombatHitFeedback(enemy, `-${Math.floor(dealt)}`, critical ? "critical" : "damage", impactDelay);
+  scheduleCombatHitFeedback(enemy, `${Math.floor(dealt)}`, critical ? "critical" : "damage", impactDelay);
   const logOptions = {
     logLabel: options.logLabel || label,
     mergeTurn: options.mergeTurn ?? state.battle?.stats?.playerTurns ?? 0,
@@ -13168,7 +13168,7 @@ function applyDamage(ally, amount, sourceName, moveLabel = "攻擊", options = {
     if (absorbed > 0) triggerEmeiCompensate();
   }
   ally.hp = Math.max(0, ally.hp - remaining);
-  if (remaining > 0) scheduleCombatHitFeedback(ally, `-${Math.floor(remaining)}`, "damage", options.impactDelayMs);
+  if (remaining > 0) scheduleCombatHitFeedback(ally, `${Math.floor(remaining)}`, "bad", options.impactDelayMs);
   if (remaining > 0 && ally.vajraReflectReady) {
     ally.vajraReflectReady = false;
     const enemy = livingEnemies().find((item) => item.name === sourceName) || chooseEnemy(false);
@@ -13251,7 +13251,8 @@ function damageFeedText(data) {
   const targetName = data.targetName || "目標";
   const label = data.label || "攻擊";
   const hits = Math.max(1, Math.floor(data.hitCount || 1));
-  return `${actorName} 以${label}命中 ${targetName}，命中 ${hits} 次。`;
+  const total = Math.max(0, Math.floor(data.damageTotal || 0));
+  return `${actorName} 以${label}命中 ${targetName}，命中 ${hits} 次，造成 ${total} 點傷害。`;
 }
 
 function updateDamageFeedItem(item, dealt, critical) {
@@ -13633,34 +13634,22 @@ function feedClassName(kind = "") {
     .join(" ");
 }
 
-function feedDamageBadge(item) {
-  const data = item?.damageLog;
-  if (!data) return "";
-  const total = Math.max(0, Math.floor(data.damageTotal || 0));
-  const hits = Math.max(1, Math.floor(data.hitCount || 1));
-  const criticalClass = data.critical ? " critical" : "";
-  const bang = data.critical ? "!" : "";
-  return `
-    <span class="feed-damage-meta" aria-label="命中 ${hits} 次，總傷害 ${total}">
-      <b class="combat-float feed-damage-float${criticalClass}">-${total}${bang}</b>
-      <i>命中 ${hits}</i>
-    </span>
-  `;
-}
-
 function renderFeedItem(item) {
   const entry = typeof item === "string" ? { text: item, kind: "" } : (item || {});
   const className = feedClassName(entry.kind);
-  return `<div class="feed-chip ${className}"><span class="feed-text">${formatFeedText(entry.text || "")}</span>${feedDamageBadge(entry)}</div>`;
+  return `<div class="feed-chip ${className}"><span class="feed-text">${formatFeedText(entry.text || "", entry)}</span></div>`;
 }
 
-function formatFeedText(text) {
+function formatFeedText(text, item = null) {
   let html = escapeHtml(text);
   const protectedNames = protectFeedNames(html);
   html = protectedNames.html;
   html = html.replace(/(施展)([^，。]+?)(?=，|。)/g, '$1<span class="feed-skill">$2</span>');
   html = html.replace(/(以)([^，。]+?)(命中)/g, '$1<span class="feed-skill">$2</span>$3');
-  html = html.replace(/(造成\s*)(\d+)(\s*點傷害)/g, '$1<span class="feed-num damage">$2</span>$3');
+  html = html.replace(/(造成\s*)(\d+)(\s*點傷害)/g, (_, before, value, after) => {
+    const damageClass = item?.damageLog?.critical ? "damage critical" : item?.kind === "bad" ? "damage bad" : "damage";
+    return `${before}<span class="feed-num ${damageClass}">${value}</span>${after}`;
+  });
   html = html.replace(/(回復\s*)(\d+)/g, '$1<span class="feed-num heal">$2</span>');
   html = html.replace(/(Lv)(\d+)/g, '$1<span class="feed-num level">$2</span>');
   html = html.replace(/(荒幣|資材|能源)\s*(\d+)/g, '$1 <span class="feed-num resource">$2</span>');

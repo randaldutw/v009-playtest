@@ -13277,46 +13277,8 @@ button.v009-list-row:hover {
     radial-gradient(ellipse at 50% 100%, rgba(255, 209, 102, 0.09), transparent 68%);
 }
 
-.feed-chip.damage-feed {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  column-gap: 12px;
-}
-
 .feed-chip .feed-text {
   min-width: 0;
-}
-
-.feed-damage-meta {
-  display: inline-grid;
-  justify-items: end;
-  gap: 4px;
-  min-width: 88px;
-  white-space: nowrap;
-  pointer-events: none;
-}
-
-.feed-damage-meta .combat-float.feed-damage-float {
-  position: relative;
-  left: auto;
-  top: auto;
-  display: inline-block;
-  min-width: 0;
-  transform: none;
-  opacity: 1;
-  font-size: 24px;
-  line-height: 1;
-  letter-spacing: 0;
-  animation: none;
-}
-
-.feed-damage-meta i {
-  color: rgba(205, 226, 223, 0.72);
-  font-size: 11px;
-  font-style: normal;
-  font-weight: 900;
-  line-height: 1;
 }
 
 .v009-battle-feed .feed-chip:first-child {
@@ -13334,16 +13296,58 @@ button.v009-list-row:hover {
     0 0 20px rgba(255, 209, 102, 0.08);
 }
 
-.v009-battle-feed .feed-chip:first-child .feed-damage-meta {
-  min-width: 132px;
+.feed-num.damage {
+  display: inline-block;
+  vertical-align: -0.03em;
+  margin: 0 0.05em;
+  color: #ff7a9d;
+  font-size: 1.04em;
+  font-weight: 1000;
+  line-height: 1;
+  text-shadow:
+    0 0 6px rgba(255, 118, 158, 0.95),
+    0 0 18px rgba(255, 62, 108, 0.78),
+    0 2px 0 rgba(0, 0, 0, 0.92);
+  animation: feedDamagePulse 0.34s ease-out both;
 }
 
-.v009-battle-feed .feed-chip:first-child .feed-damage-meta .combat-float.feed-damage-float {
-  font-size: 36px;
-  animation: combatCriticalPop 0.42s ease-out both;
+.feed-num.damage.bad {
+  color: #ff4f6f;
+  text-shadow:
+    0 0 8px rgba(255, 79, 111, 1),
+    0 0 22px rgba(255, 47, 86, 0.86),
+    0 2px 0 rgba(0, 0, 0, 0.95);
+  animation: feedDamageBadShake 0.36s ease-out both;
 }
 
-.v009-battle-feed .feed-chip:first-child .feed-damage-meta i {
-  font-size: 15px;
-  color: rgba(255, 229, 154, 0.86);
+.feed-num.damage.critical {
+  color: #ffe36f;
+  text-shadow:
+    0 0 10px rgba(255, 246, 150, 1),
+    0 0 24px rgba(255, 209, 102, 0.94),
+    0 0 34px rgba(255, 76, 38, 0.66),
+    0 3px 0 rgba(0, 0, 0, 0.96);
+  animation: feedDamageCriticalShake 0.44s ease-out both;
+}
+
+@keyframes feedDamagePulse {
+  0% { transform: translateY(0) scale(0.98); }
+  38% { transform: translateY(-1px) scale(1.08); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+@keyframes feedDamageBadShake {
+  0% { transform: translateX(0) scale(1); }
+  22% { transform: translateX(-1px) scale(1.06); }
+  44% { transform: translateX(2px) scale(1.03); }
+  66% { transform: translateX(-1px) scale(1.02); }
+  100% { transform: translateX(0) scale(1); }
+}
+
+@keyframes feedDamageCriticalShake {
+  0% { transform: translate(0, 0) scale(0.98); filter: brightness(1); }
+  18% { transform: translate(-1px, -1px) scale(1.14); filter: brightness(1.35); }
+  36% { transform: translate(2px, 0) scale(1.08); }
+  54% { transform: translate(-1px, 1px) scale(1.05); }
+  100% { transform: translate(0, 0) scale(1); filter: brightness(1); }
 }
