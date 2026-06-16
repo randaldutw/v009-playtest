@@ -112,6 +112,7 @@ const BATTLE_ACTION_GAIN_MULT = 1.38;
 const BATTLE_EVENT_READ_MS = 640;
 const BATTLE_EVENT_FEED_READ_MS = 150;
 const BATTLE_EVENT_FLOAT_READ_MS = 90;
+const BATTLE_MULTI_HIT_LOG_STEP_MS = 132;
 const BATTLE_EVENT_READ_MAX_MS = 1600;
 const SAVE_KEY = "liyuan_v009_playtest_save_v1";
 const CURRENT_SAVE_VERSION = 2;
@@ -12893,10 +12894,11 @@ function dealSplitDamage(enemy, totalAmount, actor, label, hits = 1, options = {
     const amount = i === count - 1 ? remaining : remaining / partsLeft;
     const hitLabel = typeof options.labelForHit === "function" ? options.labelForHit(i + 1, count) : label;
     const hitDelay = impactDelay + i * 86;
+    const logDelay = impactDelay + i * BATTLE_MULTI_HIT_LOG_STEP_MS;
     dealDamage(enemy, amount, actor, hitLabel, {
       suppressAttackFx: true,
       impactDelayMs: hitDelay,
-      deferLogMs: hitDelay,
+      deferLogMs: logDelay,
       critical,
       logLabel: options.logLabel || label,
       mergeTurn,
@@ -13646,6 +13648,7 @@ function formatFeedText(text, item = null) {
   html = protectedNames.html;
   html = html.replace(/(施展)([^，。]+?)(?=，|。)/g, '$1<span class="feed-skill">$2</span>');
   html = html.replace(/(以)([^，。]+?)(命中)/g, '$1<span class="feed-skill">$2</span>$3');
+  html = html.replace(/(命中\s*)(\d+)(\s*次)/g, '$1<span class="feed-num hit-count">$2</span>$3');
   html = html.replace(/(造成\s*)(\d+)(\s*點傷害)/g, (_, before, value, after) => {
     const damageClass = item?.damageLog?.critical ? "damage critical" : item?.kind === "bad" ? "damage bad" : "damage";
     return `${before}<span class="feed-num ${damageClass}">${value}</span>${after}`;

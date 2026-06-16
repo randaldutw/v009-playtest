@@ -13330,6 +13330,23 @@ button.v009-list-row:hover {
   animation: feedDamageCriticalShake 0.44s ease-out both;
 }
 
+.feed-num.hit-count {
+  display: inline-block;
+  vertical-align: -0.02em;
+  min-width: 1.05em;
+  margin: 0 0.08em;
+  color: #ffe36f;
+  font-size: 1.14em;
+  font-weight: 1000;
+  line-height: 1;
+  text-align: center;
+  text-shadow:
+    0 0 8px rgba(255, 227, 111, 0.96),
+    0 0 18px rgba(255, 209, 102, 0.66),
+    0 2px 0 rgba(0, 0, 0, 0.92);
+  animation: feedHitCountStep 0.34s ease-out both;
+}
+
 @keyframes feedDamagePulse {
   0% { transform: translateY(0) scale(0.98); }
   38% { transform: translateY(-1px) scale(1.08); }
@@ -13350,4 +13367,10 @@ button.v009-list-row:hover {
   36% { transform: translate(2px, 0) scale(1.08); }
   54% { transform: translate(-1px, 1px) scale(1.05); }
   100% { transform: translate(0, 0) scale(1); filter: brightness(1); }
+}
+
+@keyframes feedHitCountStep {
+  0% { transform: translateY(0) scale(0.94); filter: brightness(1); }
+  36% { transform: translateY(-1px) scale(1.2); filter: brightness(1.35); }
+  100% { transform: translateY(0) scale(1); filter: brightness(1); }
 }
