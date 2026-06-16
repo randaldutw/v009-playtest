@@ -6973,7 +6973,7 @@ function townBattleCockpitModel(summary) {
     level,
     inBattle: !!activeBattle,
     battleKind: displayBattle?.kind || "mob",
-    battleFeed: state.battleLogArchive.length ? state.battleLogArchive : activeBattle?.feed || [],
+    battleFeed: activeBattle?.feed || (state.battleLogArchive.length ? state.battleLogArchive : []),
     stageName: battleStageName(level, displayBattle?.kind || stageBattleKind(level)),
     party,
     enemies: displayBattle ? displayBattle.enemies : [],
@@ -7338,7 +7338,7 @@ function fullBattleLogOverlay() {
   return `
     <section class="full-battle-log-panel">
       <div class="feed full-battle-log-feed">
-        ${items.slice(0, 200).reverse().map((item) => `<div class="feed-chip ${item.kind || ""}">${formatFeedText(item.text)}</div>`).join("")}
+        ${items.slice(0, 200).reverse().map(renderFeedItem).join("")}
       </div>
     </section>
   `;
@@ -7401,9 +7401,9 @@ function homeCombatTelemetry(cockpit) {
 
 function homeBattleFeedItems(cockpit) {
   const items = cockpit.battleFeed.length
-    ? cockpit.battleFeed.slice(0, 200).map((item) => ({ text: item.text, kind: item.kind || "" }))
+    ? cockpit.battleFeed.slice(0, 200)
     : cockpit.reportItems.map((text) => ({ text, kind: "" }));
-  return items.map((item) => `<div class="feed-chip ${item.kind}">${formatFeedText(item.text)}</div>`).join("");
+  return items.map(renderFeedItem).join("");
 }
 
 function v009CombatSkillLoadout(cockpit) {
@@ -11148,7 +11148,7 @@ function battleSensePanel(battle) {
       ${battlePartyStats(battle)}
       <section class="battle-log-panel">
         <div class="battle-log-title">戰況紀錄</div>
-        <div class="feed">${battle.feed.map((f) => `<div class="feed-chip ${f.kind}">${formatFeedText(f.text)}</div>`).join("")}</div>
+        <div class="feed">${battle.feed.map(renderFeedItem).join("")}</div>
       </section>
     </aside>
   `;
@@ -12887,11 +12887,20 @@ function dealSplitDamage(enemy, totalAmount, actor, label, hits = 1, options = {
   const critical = options.critical ?? damageCriticalFlag(totalAmount);
   const fxKind = triggerPlayerAttackFx(actor, enemy, label, count);
   const impactDelay = v009AttackImpactDelayMs(fxKind);
+  const mergeTurn = state.battle?.stats?.playerTurns ?? 0;
   for (let i = 0; i < count && enemy.hp > 0 && remaining > 0; i += 1) {
     const partsLeft = count - i;
     const amount = i === count - 1 ? remaining : remaining / partsLeft;
     const hitLabel = typeof options.labelForHit === "function" ? options.labelForHit(i + 1, count) : label;
-    dealDamage(enemy, amount, actor, hitLabel, { suppressAttackFx: true, impactDelayMs: impactDelay + i * 86, critical });
+    const hitDelay = impactDelay + i * 86;
+    dealDamage(enemy, amount, actor, hitLabel, {
+      suppressAttackFx: true,
+      impactDelayMs: hitDelay,
+      deferLogMs: hitDelay,
+      critical,
+      logLabel: options.logLabel || label,
+      mergeTurn,
+    });
     remaining -= amount;
   }
 }
@@ -12906,8 +12915,22 @@ function dealDamage(enemy, amount, actor, label, options = {}) {
   const fxKind = options.suppressAttackFx ? "" : triggerPlayerAttackFx(actor, enemy, label, 1);
   const impactDelay = Number.isFinite(options.impactDelayMs) ? Math.max(0, options.impactDelayMs) : v009AttackImpactDelayMs(fxKind);
   const critical = options.critical ?? damageCriticalFlag(amount);
-  scheduleCombatHitFeedback(enemy, `-${Math.floor(numericAmount)}`, critical ? "critical" : "damage", impactDelay);
-  addFeed(`${actor.name} 以${label}命中 ${enemy.name}，造成 ${Math.floor(numericAmount)} 點傷害。`, critical ? "gold" : "");
+  scheduleCombatHitFeedback(enemy, `-${Math.floor(dealt)}`, critical ? "critical" : "damage", impactDelay);
+  const logOptions = {
+    logLabel: options.logLabel || label,
+    mergeTurn: options.mergeTurn ?? state.battle?.stats?.playerTurns ?? 0,
+  };
+  const logDelay = Math.max(0, Math.floor(Number(options.deferLogMs) || 0));
+  if (logDelay > 0) {
+    const battle = state.battle;
+    setTimeout(() => {
+      if (!state.battle || state.battle !== battle || state.battle.over) return;
+      addDamageFeed(actor, enemy, label, dealt, critical, logOptions);
+      renderBattleFrame();
+    }, logDelay);
+  } else {
+    addDamageFeed(actor, enemy, label, dealt, critical, logOptions);
+  }
   if (enemy.marked) triggerTianshuCalibrate(actor);
   if (poisonCount(enemy) && hasPassive(actor, "tang_reflux")) gainResource(actor, 4, classResourceLabel(actor.classId));
   if (hasPassive(actor, "furnace_heat")) {
@@ -13193,16 +13216,83 @@ function triggerKillPassives(enemy) {
   }
 }
 
-function addFeed(text, kind = "") {
-  if (state.battle && isFormationStatusFeed(text)) return;
-  const item = { text, kind };
+function pushFeedItem(item) {
+  if (!item || !item.text) return null;
+  if (state.battle && isFormationStatusFeed(item.text)) return null;
   if (state.battle) {
     state.battle.feed.unshift(item);
     state.battle.feed = state.battle.feed.slice(0, 90);
-    showActionBannerFromFeed(state.battle, text);
+    showActionBannerFromFeed(state.battle, item.text);
   }
   state.battleLogArchive.unshift(item);
   state.battleLogArchive = state.battleLogArchive.slice(0, 200);
+  return item;
+}
+
+function addFeed(text, kind = "") {
+  if (state.battle && isFormationStatusFeed(text)) return;
+  const item = { text, kind };
+  pushFeedItem(item);
+}
+
+function damageFeedMergeKey(actor, enemy, label, turnOverride = null) {
+  const turn = Math.max(0, Math.floor(turnOverride ?? state.battle?.stats?.playerTurns ?? 0));
+  return [
+    "damage",
+    turn,
+    actor?.sourceId || actor?.id || actor?.name || "",
+    enemy?.id || enemy?.name || "",
+    label || "",
+  ].join("|");
+}
+
+function damageFeedText(data) {
+  const actorName = data.actorName || "角色";
+  const targetName = data.targetName || "目標";
+  const label = data.label || "攻擊";
+  const hits = Math.max(1, Math.floor(data.hitCount || 1));
+  return `${actorName} 以${label}命中 ${targetName}，命中 ${hits} 次。`;
+}
+
+function updateDamageFeedItem(item, dealt, critical) {
+  if (!item?.damageLog) return item;
+  item.damageLog.hitCount = Math.max(1, Math.floor(item.damageLog.hitCount || 0) + 1);
+  item.damageLog.damageTotal = Math.max(0, Math.floor(item.damageLog.damageTotal || 0) + Math.max(0, Math.floor(dealt || 0)));
+  item.damageLog.critical = !!(item.damageLog.critical || critical);
+  item.kind = item.damageLog.critical ? "gold damage-feed" : "damage-feed";
+  item.text = damageFeedText(item.damageLog);
+  return item;
+}
+
+function addDamageFeed(actor, enemy, label, dealt, critical = false, options = {}) {
+  const logLabel = options.logLabel || label || "攻擊";
+  const key = damageFeedMergeKey(actor, enemy, logLabel, options.mergeTurn);
+  const battleFeed = state.battle?.feed || [];
+  const existingIndex = battleFeed.findIndex((item) => item?.damageLog?.mergeKey === key);
+  if (existingIndex >= 0) {
+    const existing = battleFeed[existingIndex];
+    updateDamageFeedItem(existing, dealt, critical);
+    if (existingIndex > 0) {
+      battleFeed.splice(existingIndex, 1);
+      battleFeed.unshift(existing);
+    }
+    showActionBannerFromFeed(state.battle, existing.text);
+    return existing;
+  }
+  const damageLog = {
+    mergeKey: key,
+    actorName: actor?.name || "角色",
+    targetName: enemy?.name || "目標",
+    label: logLabel,
+    hitCount: 1,
+    damageTotal: Math.max(0, Math.floor(dealt || 0)),
+    critical: !!critical,
+  };
+  return pushFeedItem({
+    text: damageFeedText(damageLog),
+    kind: critical ? "gold damage-feed" : "damage-feed",
+    damageLog,
+  });
 }
 
 function showActionBannerFromFeed(battle, text) {
@@ -13533,6 +13623,35 @@ function protectFeedNames(html) {
     tokens.push({ token, html: `<span class="feed-name enemy">${escapedName}</span>` });
   });
   return { html: protectedHtml, tokens };
+}
+
+function feedClassName(kind = "") {
+  return String(kind || "")
+    .split(/\s+/)
+    .filter(Boolean)
+    .filter((token) => /^[a-z0-9_-]+$/i.test(token))
+    .join(" ");
+}
+
+function feedDamageBadge(item) {
+  const data = item?.damageLog;
+  if (!data) return "";
+  const total = Math.max(0, Math.floor(data.damageTotal || 0));
+  const hits = Math.max(1, Math.floor(data.hitCount || 1));
+  const criticalClass = data.critical ? " critical" : "";
+  const bang = data.critical ? "!" : "";
+  return `
+    <span class="feed-damage-meta" aria-label="命中 ${hits} 次，總傷害 ${total}">
+      <b class="combat-float feed-damage-float${criticalClass}">-${total}${bang}</b>
+      <i>命中 ${hits}</i>
+    </span>
+  `;
+}
+
+function renderFeedItem(item) {
+  const entry = typeof item === "string" ? { text: item, kind: "" } : (item || {});
+  const className = feedClassName(entry.kind);
+  return `<div class="feed-chip ${className}"><span class="feed-text">${formatFeedText(entry.text || "")}</span>${feedDamageBadge(entry)}</div>`;
 }
 
 function formatFeedText(text) {
@@ -15933,5 +16052,3 @@ function autoEquipIfEmpty(member) {
 }
 
 init();
-
-
