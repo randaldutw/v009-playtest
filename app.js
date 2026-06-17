@@ -116,6 +116,7 @@ const BATTLE_MULTI_HIT_LOG_STEP_MS = 132;
 const BATTLE_EVENT_READ_MAX_MS = 1600;
 const BATTLE_LOG_ENTER_ANIM_MS = 360;
 const BATTLE_LOG_NUMBER_PULSE_MS = 300;
+const BATTLE_LOG_EFFECT_MIN_VISIBLE_MS = 100;
 const SAVE_KEY = "liyuan_v009_playtest_save_v1";
 const CURRENT_SAVE_VERSION = 2;
 const APP_VERSION = "v009.0.0";
@@ -13659,17 +13660,23 @@ function renderFeedItem(item, index = 0, options = {}) {
   const updatedAt = Number(entry.feedUpdatedAt) || 0;
   const age = updatedAt ? Math.max(0, now - updatedAt) : Number.POSITIVE_INFINITY;
   const classes = [muted ? "log-muted" : feedClassName(entry.kind)];
+  if (!muted && (entry.damageLog || String(entry.kind || "").includes("damage-feed"))) classes.push("log-attack");
   const styleVars = [];
-  if (!muted && index === 0 && age < BATTLE_LOG_ENTER_ANIM_MS) {
+  if (!muted && index === 0 && age < BATTLE_LOG_ENTER_ANIM_MS + BATTLE_LOG_EFFECT_MIN_VISIBLE_MS) {
     classes.push("log-entering");
-    styleVars.push(`--feed-enter-delay:-${Math.floor(age)}ms`);
+    styleVars.push(`--feed-enter-delay:${battleLogAnimationDelay(age, BATTLE_LOG_ENTER_ANIM_MS)}ms`);
   }
-  if (!muted && age < BATTLE_LOG_NUMBER_PULSE_MS) {
+  if (!muted && age < BATTLE_LOG_NUMBER_PULSE_MS + BATTLE_LOG_EFFECT_MIN_VISIBLE_MS) {
     classes.push("log-updating");
-    styleVars.push(`--feed-number-delay:-${Math.floor(age)}ms`);
+    styleVars.push(`--feed-number-delay:${battleLogAnimationDelay(age, BATTLE_LOG_NUMBER_PULSE_MS)}ms`);
   }
   const styleAttr = styleVars.length ? ` style="${styleVars.join(";")}"` : "";
   return `<div class="feed-chip ${classes.join(" ")}"${styleAttr}><span class="feed-text">${formatFeedText(entry.text || "", entry, { plain: muted })}</span></div>`;
+}
+
+function battleLogAnimationDelay(age, duration) {
+  const maxSkipped = Math.max(0, duration - BATTLE_LOG_EFFECT_MIN_VISIBLE_MS);
+  return -Math.min(Math.max(0, Math.floor(age || 0)), maxSkipped);
 }
 
 function formatFeedText(text, item = null, options = {}) {
