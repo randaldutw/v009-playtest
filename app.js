@@ -7404,7 +7404,7 @@ function homeBattleFeedItems(cockpit) {
   const items = cockpit.battleFeed.length
     ? cockpit.battleFeed.slice(0, 200)
     : cockpit.reportItems.map((text) => ({ text, kind: "" }));
-  return items.map(renderFeedItem).join("");
+  return items.map((item, index) => renderFeedItem(item, index, { focusRows: 3 })).join("");
 }
 
 function v009CombatSkillLoadout(cockpit) {
@@ -7649,7 +7649,7 @@ function homeBattleReport(cockpit) {
       <div class="home-report-list">
         ${
           cockpit.battleFeed.length
-            ? cockpit.battleFeed.slice(0, 8).map((item) => `<p class="${item.kind || ""}">${formatFeedText(item.text)}</p>`).join("")
+            ? cockpit.battleFeed.slice(0, 8).map((item, index) => `<p class="${index >= 3 ? "log-muted" : item.kind || ""}">${formatFeedText(item.text, item, { plain: index >= 3 })}</p>`).join("")
             : cockpit.reportItems.map((item) => `<p>${formatFeedText(item)}</p>`).join("")
         }
       </div>
@@ -11149,7 +11149,7 @@ function battleSensePanel(battle) {
       ${battlePartyStats(battle)}
       <section class="battle-log-panel">
         <div class="battle-log-title">戰況紀錄</div>
-        <div class="feed">${battle.feed.map(renderFeedItem).join("")}</div>
+        <div class="feed">${battle.feed.map((item, index) => renderFeedItem(item, index, { focusRows: 3 })).join("")}</div>
       </section>
     </aside>
   `;
@@ -13636,22 +13636,24 @@ function feedClassName(kind = "") {
     .join(" ");
 }
 
-function renderFeedItem(item) {
+function renderFeedItem(item, index = 0, options = {}) {
   const entry = typeof item === "string" ? { text: item, kind: "" } : (item || {});
-  const className = feedClassName(entry.kind);
-  return `<div class="feed-chip ${className}"><span class="feed-text">${formatFeedText(entry.text || "", entry)}</span></div>`;
+  const muted = Number.isFinite(options.focusRows) && index >= options.focusRows;
+  const className = muted ? "log-muted" : feedClassName(entry.kind);
+  return `<div class="feed-chip ${className}"><span class="feed-text">${formatFeedText(entry.text || "", entry, { plain: muted })}</span></div>`;
 }
 
-function formatFeedText(text, item = null) {
+function formatFeedText(text, item = null, options = {}) {
+  if (options.plain) return escapeHtml(text);
   let html = escapeHtml(text);
   const protectedNames = protectFeedNames(html);
   html = protectedNames.html;
   html = html.replace(/(施展)([^，。]+?)(?=，|。)/g, '$1<span class="feed-skill">$2</span>');
   html = html.replace(/(以)([^，。]+?)(命中)/g, '$1<span class="feed-skill">$2</span>$3');
-  html = html.replace(/(命中\s*)(\d+)(\s*次)/g, '$1<span class="feed-num hit-count">$2</span>$3');
+  html = html.replace(/(命中\s*)(\d+)(\s*次)/g, (_, before, value, after) => `${before}<span class="feed-num hit-count" data-feed-num="${value}">${value}</span>${after}`);
   html = html.replace(/(造成\s*)(\d+)(\s*點傷害)/g, (_, before, value, after) => {
     const damageClass = item?.damageLog?.critical ? "damage critical" : item?.kind === "bad" ? "damage bad" : "damage";
-    return `${before}<span class="feed-num ${damageClass}">${value}</span>${after}`;
+    return `${before}<span class="feed-num ${damageClass}" data-feed-num="${value}">${value}</span>${after}`;
   });
   html = html.replace(/(回復\s*)(\d+)/g, '$1<span class="feed-num heal">$2</span>');
   html = html.replace(/(Lv)(\d+)/g, '$1<span class="feed-num level">$2</span>');
