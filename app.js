@@ -114,6 +114,8 @@ const BATTLE_EVENT_FEED_READ_MS = 150;
 const BATTLE_EVENT_FLOAT_READ_MS = 90;
 const BATTLE_MULTI_HIT_LOG_STEP_MS = 132;
 const BATTLE_EVENT_READ_MAX_MS = 1600;
+const BATTLE_LOG_ENTER_ANIM_MS = 360;
+const BATTLE_LOG_NUMBER_PULSE_MS = 300;
 const SAVE_KEY = "liyuan_v009_playtest_save_v1";
 const CURRENT_SAVE_VERSION = 2;
 const APP_VERSION = "v009.0.0";
@@ -130,6 +132,7 @@ const RESOURCE_EXCHANGE_VALUES = { money: 1, material: 6, energy: 10 };
 const RESOURCE_EXCHANGE_RATE = 0.8;
 const UI_DESIGN_WIDTH = 1600;
 const UI_DESIGN_HEIGHT = 900;
+let battleFeedSequence = 0;
 const EQUIPMENT_SLOTS = [
   { key: "weapon", label: "武器", empty: "未裝備", focus: "門派強化" },
   { key: "head", label: "頭部", empty: "未裝備", focus: "演算" },
@@ -7404,7 +7407,8 @@ function homeBattleFeedItems(cockpit) {
   const items = cockpit.battleFeed.length
     ? cockpit.battleFeed.slice(0, 200)
     : cockpit.reportItems.map((text) => ({ text, kind: "" }));
-  return items.map((item, index) => renderFeedItem(item, index, { focusRows: 3 })).join("");
+  const now = Date.now();
+  return items.map((item, index) => renderFeedItem(item, index, { focusRows: 3, now })).join("");
 }
 
 function v009CombatSkillLoadout(cockpit) {
@@ -11149,7 +11153,7 @@ function battleSensePanel(battle) {
       ${battlePartyStats(battle)}
       <section class="battle-log-panel">
         <div class="battle-log-title">戰況紀錄</div>
-        <div class="feed">${battle.feed.map((item, index) => renderFeedItem(item, index, { focusRows: 3 })).join("")}</div>
+        <div class="feed">${battle.feed.map((item, index) => renderFeedItem(item, index, { focusRows: 3, now: Date.now() })).join("")}</div>
       </section>
     </aside>
   `;
@@ -13221,6 +13225,7 @@ function triggerKillPassives(enemy) {
 function pushFeedItem(item) {
   if (!item || !item.text) return null;
   if (state.battle && isFormationStatusFeed(item.text)) return null;
+  markFeedItemUpdated(item, { created: true });
   if (state.battle) {
     state.battle.feed.unshift(item);
     state.battle.feed = state.battle.feed.slice(0, 90);
@@ -13228,6 +13233,16 @@ function pushFeedItem(item) {
   }
   state.battleLogArchive.unshift(item);
   state.battleLogArchive = state.battleLogArchive.slice(0, 200);
+  return item;
+}
+
+function markFeedItemUpdated(item, options = {}) {
+  if (!item) return item;
+  const now = Date.now();
+  item.feedId = item.feedId || `feed-${now}-${battleFeedSequence += 1}`;
+  if (options.created || !item.feedCreatedAt) item.feedCreatedAt = now;
+  item.feedUpdatedAt = now;
+  item.feedVersion = Math.max(0, Math.floor(item.feedVersion || 0)) + 1;
   return item;
 }
 
@@ -13264,6 +13279,7 @@ function updateDamageFeedItem(item, dealt, critical) {
   item.damageLog.critical = !!(item.damageLog.critical || critical);
   item.kind = item.damageLog.critical ? "gold damage-feed" : "damage-feed";
   item.text = damageFeedText(item.damageLog);
+  markFeedItemUpdated(item);
   return item;
 }
 
@@ -13639,8 +13655,21 @@ function feedClassName(kind = "") {
 function renderFeedItem(item, index = 0, options = {}) {
   const entry = typeof item === "string" ? { text: item, kind: "" } : (item || {});
   const muted = Number.isFinite(options.focusRows) && index >= options.focusRows;
-  const className = muted ? "log-muted" : feedClassName(entry.kind);
-  return `<div class="feed-chip ${className}"><span class="feed-text">${formatFeedText(entry.text || "", entry, { plain: muted })}</span></div>`;
+  const now = Number.isFinite(options.now) ? options.now : Date.now();
+  const updatedAt = Number(entry.feedUpdatedAt) || 0;
+  const age = updatedAt ? Math.max(0, now - updatedAt) : Number.POSITIVE_INFINITY;
+  const classes = [muted ? "log-muted" : feedClassName(entry.kind)];
+  const styleVars = [];
+  if (!muted && index === 0 && age < BATTLE_LOG_ENTER_ANIM_MS) {
+    classes.push("log-entering");
+    styleVars.push(`--feed-enter-delay:-${Math.floor(age)}ms`);
+  }
+  if (!muted && age < BATTLE_LOG_NUMBER_PULSE_MS) {
+    classes.push("log-updating");
+    styleVars.push(`--feed-number-delay:-${Math.floor(age)}ms`);
+  }
+  const styleAttr = styleVars.length ? ` style="${styleVars.join(";")}"` : "";
+  return `<div class="feed-chip ${classes.join(" ")}"${styleAttr}><span class="feed-text">${formatFeedText(entry.text || "", entry, { plain: muted })}</span></div>`;
 }
 
 function formatFeedText(text, item = null, options = {}) {

@@ -13313,6 +13313,13 @@ button.v009-list-row:hover {
   text-shadow: none;
 }
 
+.v009-battle-feed .feed-chip.log-entering {
+  overflow: hidden;
+  transform-origin: top right;
+  animation: feedLogSlideDownIn 0.36s cubic-bezier(0.15, 0.92, 0.22, 1) both;
+  animation-delay: var(--feed-enter-delay, 0ms);
+}
+
 .feed-num.damage {
   display: inline-block;
   position: relative;
@@ -13328,11 +13335,24 @@ button.v009-list-row:hover {
     0 0 4px rgba(255, 118, 158, 0.62),
     0 0 10px rgba(255, 62, 108, 0.34),
     0 2px 0 rgba(0, 0, 0, 0.92);
-  animation: feedDamagePulse 0.32s ease-out both;
 }
 
-.feed-num.damage::after,
-.feed-num.hit-count::after {
+.feed-chip.log-updating .feed-num.damage,
+.feed-chip.log-updating .feed-num.hit-count {
+  animation: feedNumberPopSettle 0.3s cubic-bezier(0.12, 0.86, 0.22, 1) both;
+  animation-delay: var(--feed-number-delay, 0ms);
+}
+
+.feed-chip.log-updating .feed-num.damage.bad {
+  animation-name: feedNumberBadPopSettle;
+}
+
+.feed-chip.log-updating .feed-num.damage.critical {
+  animation-name: feedNumberCriticalPopSettle;
+}
+
+.feed-chip.log-updating .feed-num.damage::after,
+.feed-chip.log-updating .feed-num.hit-count::after {
   content: "";
   position: absolute;
   left: 50%;
@@ -13350,6 +13370,7 @@ button.v009-list-row:hover {
   transform-origin: 18% 50%;
   z-index: -1;
   animation: feedNumberWaveBurst 0.42s ease-out both;
+  animation-delay: var(--feed-number-delay, 0ms);
 }
 
 .feed-num.damage.bad {
@@ -13359,7 +13380,6 @@ button.v009-list-row:hover {
     0 0 5px rgba(255, 79, 111, 0.68),
     0 0 12px rgba(255, 47, 86, 0.42),
     0 2px 0 rgba(0, 0, 0, 0.95);
-  animation: feedDamageBadShake 0.32s ease-out both;
 }
 
 .feed-num.damage.critical {
@@ -13370,7 +13390,6 @@ button.v009-list-row:hover {
     0 0 14px rgba(255, 209, 102, 0.52),
     0 0 22px rgba(255, 76, 38, 0.32),
     0 3px 0 rgba(0, 0, 0, 0.96);
-  animation: feedDamageCriticalShake 0.36s ease-out both;
 }
 
 .feed-num.hit-count {
@@ -13390,35 +13409,49 @@ button.v009-list-row:hover {
     0 0 5px rgba(255, 227, 111, 0.68),
     0 0 12px rgba(255, 209, 102, 0.4),
     0 2px 0 rgba(0, 0, 0, 0.92);
-  animation: feedHitCountStep 0.32s ease-out both;
 }
 
-@keyframes feedDamagePulse {
-  0% { transform: translateY(0) scale(0.98); }
-  42% { transform: translateY(-1px) scale(1.045); }
-  100% { transform: translateY(0) scale(1); }
+@keyframes feedLogSlideDownIn {
+  0% {
+    min-height: 0;
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    opacity: 0;
+    transform: translateX(34px);
+  }
+  58% {
+    opacity: 1;
+    transform: translateX(-2px);
+  }
+  100% {
+    min-height: 66px;
+    max-height: 140px;
+    padding-top: 18px;
+    padding-bottom: 18px;
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
-@keyframes feedDamageBadShake {
-  0% { transform: translateX(0) scale(1); }
-  24% { transform: translateX(-1px) scale(1.045); }
-  48% { transform: translateX(1px) scale(1.025); }
-  72% { transform: translateX(-1px) scale(1.01); }
-  100% { transform: translateX(0) scale(1); }
+@keyframes feedNumberPopSettle {
+  0% { transform: translateY(-1px) scale(1.38); filter: brightness(1.45); }
+  46% { transform: translateY(-1px) scale(1.12); filter: brightness(1.18); }
+  100% { transform: translateY(0) scale(1); filter: brightness(1); }
 }
 
-@keyframes feedDamageCriticalShake {
-  0% { transform: translate(0, 0) scale(0.98); }
-  24% { transform: translate(-1px, -1px) scale(1.08); }
-  48% { transform: translate(1px, 0) scale(1.04); }
-  72% { transform: translate(-1px, 1px) scale(1.02); }
-  100% { transform: translate(0, 0) scale(1); }
+@keyframes feedNumberBadPopSettle {
+  0% { transform: translate(-1px, -1px) scale(1.36); filter: brightness(1.42); }
+  35% { transform: translate(1px, 0) scale(1.16); filter: brightness(1.2); }
+  70% { transform: translate(-1px, 0) scale(1.04); }
+  100% { transform: translate(0, 0) scale(1); filter: brightness(1); }
 }
 
-@keyframes feedHitCountStep {
-  0% { transform: translateY(0) scale(0.96); }
-  38% { transform: translateY(-1px) scale(1.12); }
-  100% { transform: translateY(0) scale(1); }
+@keyframes feedNumberCriticalPopSettle {
+  0% { transform: translate(-1px, -1px) scale(1.48); filter: brightness(1.62); }
+  30% { transform: translate(2px, 0) scale(1.2); filter: brightness(1.28); }
+  62% { transform: translate(-1px, 1px) scale(1.08); }
+  100% { transform: translate(0, 0) scale(1); filter: brightness(1); }
 }
 
 @keyframes feedNumberWaveBurst {
